@@ -3,6 +3,8 @@ import { AvatarArt } from "../art/avatars";
 import { Product } from "../art/Product";
 import { Shelf } from "../art/Shelf";
 import { Chat } from "./Chat";
+import { RecipeModal } from "./RecipeModal";
+import { RecipeBook } from "./RecipeBook";
 import {
   nextHint,
   revealAnswer,
@@ -13,6 +15,7 @@ import {
 } from "../game/engine";
 import * as store from "../store/local";
 import type { Art } from "../../../shared/types";
+import type { Recipe } from "../../../shared/recipes";
 import { canSpeak, speak, stopSpeaking, watchVoices } from "../lib/speech";
 
 interface Solved {
@@ -45,6 +48,9 @@ export function Game({
   const [finished, setFinished] = useState<string | null>(null);
   const [voiceReady, setVoiceReady] = useState(canSpeak());
   const [nikud, setNikud] = useState(() => readNikudPreference(profile));
+  // מתכונים שנפתחו עכשיו, מוצגים אחד אחרי השני
+  const [unlockedQueue, setUnlockedQueue] = useState<Recipe[]>([]);
+  const [bookOpen, setBookOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const readsAloud = profile.level === 1;
@@ -81,6 +87,7 @@ export function Game({
     setFeedback(null);
     setGuess("");
     setChatOpen(false);
+    setUnlockedQueue([]);
   }, [profile.id, setProfile]);
 
   useEffect(() => {
@@ -104,6 +111,7 @@ export function Game({
         setProfile(result.profile);
         setSolved({ ...result, gaveUp: false });
         setFeedback(null);
+        setUnlockedQueue(result.unlockedRecipes);
         stopSpeaking();
         if (voiceReady) speak(`נכון! ${result.answer}`);
       } else {
@@ -155,6 +163,14 @@ export function Game({
         <div className="progress" aria-label={`התקדמות ברמה ${profile.level}`}>
           <div className="progress-fill" style={{ width: `${Math.round(profile.progress * 100)}%` }} />
         </div>
+
+        <button
+          className="score-btn"
+          onClick={() => setBookOpen(true)}
+          title="ספר המתכונים"
+        >
+          📖 <strong>{profile.recipes.filter((recipe) => recipe.unlocked).length}</strong>
+        </button>
 
         <div className="score" title="פריטים בעגלה">
           🛒 <strong>{profile.solvedCount}</strong>
@@ -275,6 +291,23 @@ export function Game({
           onQuotaChange={setChatLeft}
           onClose={() => setChatOpen(false)}
           onParentPanel={onParentPanel}
+        />
+      )}
+
+      {unlockedQueue.length > 0 && (
+        <RecipeModal
+          recipe={unlockedQueue[0]!}
+          nikud={nikud}
+          remaining={unlockedQueue.length - 1}
+          onClose={() => setUnlockedQueue((queue) => queue.slice(1))}
+        />
+      )}
+
+      {bookOpen && (
+        <RecipeBook
+          recipes={profile.recipes}
+          nikud={nikud}
+          onClose={() => setBookOpen(false)}
         />
       )}
 

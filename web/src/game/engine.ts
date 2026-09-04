@@ -17,6 +17,12 @@ import {
   progressInLevel,
 } from "../../../shared/difficulty";
 import { greeting } from "../../../shared/prompt";
+import {
+  newlyCompleted,
+  recipeProgress,
+  type Recipe,
+  type RecipeProgress,
+} from "../../../shared/recipes";
 import type { ActiveRound, Profile, Riddle } from "../../../shared/types";
 import * as store from "../store/local";
 
@@ -65,6 +71,8 @@ export interface PublicProfile {
   solvedCount: number;
   cart: CartItem[];
   chat: { used: number; left: number };
+  /** מצב כל המתכונים — כמה מצרכים יש, בלי לחשוף שמות של מצרכים חסרים */
+  recipes: RecipeProgress[];
 }
 
 export function publicProfile(profile: Profile): PublicProfile {
@@ -85,6 +93,7 @@ export function publicProfile(profile: Profile): PublicProfile {
       .filter((riddle) => riddle !== undefined)
       .map((riddle) => ({ id: riddle.id, name: riddle.answer, art: riddle.art })),
     chat: store.chatUsage(profile, store.getSettings().dailyLimit),
+    recipes: recipeProgress(profile.solved, profile.recipes),
   };
 }
 
@@ -171,6 +180,8 @@ export interface SolvedResult {
   art: Riddle["art"];
   levelUp: boolean;
   profile: PublicProfile;
+  /** מתכונים שנפתחו בזכות הפריט הזה — קופצים על המסך */
+  unlockedRecipes: Recipe[];
 }
 
 export interface MissResult {
@@ -193,10 +204,17 @@ export function submitAnswer(profileId: string, guess: string): AnswerResult {
 
   if (result.status === "correct") {
     const change = applySolve(profile, { hintsUsed: round.cluesRevealed });
+    const solved = [...profile.solved, riddle.id];
+
+    // הפריט החדש עשוי להשלים מתכון. בודקים לפני השמירה, כדי לדעת
+    // מה נפתח *עכשיו* ולא מה כבר היה פתוח.
+    const unlocked = newlyCompleted(solved, profile.recipes);
+
     const updated = store.updateProfile(profile.id, {
       rating: change.rating,
       streak: change.streak,
-      solved: [...profile.solved, riddle.id],
+      solved,
+      recipes: [...profile.recipes, ...unlocked.map((recipe) => recipe.id)],
     })!;
     rounds.delete(profile.id);
 
@@ -208,6 +226,7 @@ export function submitAnswer(profileId: string, guess: string): AnswerResult {
       art: riddle.art,
       levelUp: change.levelAfter > change.levelBefore,
       profile: publicProfile(updated),
+      unlockedRecipes: unlocked,
     };
   }
 

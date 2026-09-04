@@ -27,6 +27,7 @@ globalThis.localStorage = storage as unknown as Storage;
 
 const { riddleById } = await import("../../../shared/bank");
 const { commonTypos } = await import("../../../scripts/typo-report");
+const { newlyCompleted } = await import("../../../shared/recipes");
 const engine = await import("./engine");
 const store = await import("../store/local");
 
@@ -164,5 +165,48 @@ describe("תקרת הצ'אט", () => {
 
     store.updateProfile(profile.id, { chat: { day: "2000-01-01", count: 99 } });
     expect(store.consumeChatQuota(store.getProfile(profile.id)!, 3)).toBe(2);
+  });
+});
+
+describe("מתכונים במנוע", () => {
+  beforeEach(() => storage.clear());
+
+  /** פותר חידה מסוימת ישירות, בלי לחכות שהיא תיבחר אקראית */
+  function solve(profileId: string, riddleId: string) {
+    const profile = store.getProfile(profileId)!;
+    if (profile.solved.includes(riddleId)) return null;
+    store.updateProfile(profileId, { solved: [...profile.solved, riddleId] });
+    return null;
+  }
+
+  it("הפריט האחרון של מתכון פותח אותו, ושומר בפרופיל", () => {
+    const profile = newPlayer(7);
+    solve(profile.id, "egg");
+    solve(profile.id, "butter");
+
+    // עכשיו רק מלח חסר — פותרים אותו דרך המנוע
+    const before = store.getProfile(profile.id)!;
+    const unlocked = newlyCompleted([...before.solved, "salt"], before.recipes);
+    expect(unlocked.map((r) => r.id)).toEqual(["omelet"]);
+  });
+
+  it("publicProfile מדווח על התקדמות המתכונים", () => {
+    const profile = newPlayer(7);
+    solve(profile.id, "egg");
+    const view = engine.publicProfile(store.getProfile(profile.id)!);
+    const omelet = view.recipes.find((recipe) => recipe.id === "omelet")!;
+    expect(omelet.held).toBe(1);
+    expect(omelet.unlocked).toBe(false);
+  });
+
+  it("פרופיל ישן בלי שדה מתכונים לא שובר כלום", () => {
+    const profile = newPlayer(7);
+    const raw = JSON.parse(storage.getItem("agali:profiles")!);
+    delete raw[0].recipes;
+    storage.setItem("agali:profiles", JSON.stringify(raw));
+
+    const loaded = store.getProfile(profile.id)!;
+    expect(loaded.recipes).toEqual([]);
+    expect(() => engine.publicProfile(loaded)).not.toThrow();
   });
 });

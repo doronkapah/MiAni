@@ -49,7 +49,13 @@ export function storageAvailable(): boolean {
 // ------------------------------------------------------------ פרופילים
 
 export function listProfiles(): Profile[] {
-  return read<Profile[]>(KEYS.profiles, []);
+  // השלמת שדות שנוספו אחרי שפרופילים כבר נשמרו במכשיר
+  return read<Profile[]>(KEYS.profiles, []).map((profile) => ({
+    ...profile,
+    recipes: profile.recipes ?? [],
+    revealed: profile.revealed ?? [],
+    solved: profile.solved ?? [],
+  }));
 }
 
 function saveProfiles(profiles: Profile[]): void {
@@ -78,6 +84,7 @@ export function createProfile(input: NewProfile): Profile {
     streak: 0,
     solved: [],
     revealed: [],
+    recipes: [],
     createdAt: Date.now(),
     chat: { day: today(), count: 0 },
   };

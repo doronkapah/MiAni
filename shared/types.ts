@@ -49,6 +49,8 @@ export interface Profile {
   solved: string[];
   /** חידות שנחשפו ב"גלה לי" — יחזרו לתור בעוד כמה ימים */
   revealed: { id: string; at: number }[];
+  /** מזהי המתכונים שכבר נפתחו */
+  recipes: string[];
   createdAt: number;
   /** מונה הודעות צ'אט יומי */
   chat: { day: string; count: number };

@@ -1232,3 +1232,277 @@ input {
   color: var(--green-deep);
   font-weight: 700;
 }
+
+/* ----------------------------------------------------- מתכונים */
+
+.score-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 48px;
+  padding: 6px 14px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  cursor: pointer;
+  font-size: 18px;
+  white-space: nowrap;
+}
+
+.score-btn:hover {
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  background: rgba(20, 24, 18, 0.55);
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.recipe-modal,
+.recipe-book {
+  background: var(--card);
+  border: 4px solid var(--green);
+  border-radius: 22px;
+  padding: 22px 24px 24px;
+  max-width: 560px;
+  width: 100%;
+  max-height: 92dvh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.3);
+  animation: recipe-in 0.35s cubic-bezier(0.18, 0.9, 0.35, 1.2);
+}
+
+@keyframes recipe-in {
+  from {
+    transform: scale(0.85) translateY(20px);
+    opacity: 0;
+  }
+}
+
+.recipe-banner {
+  margin: 0;
+  align-self: center;
+  background: var(--tag);
+  color: var(--tag-ink);
+  padding: 8px 20px;
+  border-radius: 999px;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.recipe-head {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.recipe-head h1 {
+  font-size: clamp(28px, 6vw, 38px);
+  color: var(--green-deep);
+  margin: 0;
+}
+
+.recipe-head h1.nikud {
+  line-height: 1.5;
+}
+
+.recipe-teaser {
+  margin: 4px 0 0;
+  color: var(--ink-2);
+  font-size: 17px;
+}
+
+.recipe-teaser.nikud {
+  line-height: 1.9;
+}
+
+.recipe-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.recipe-steps li {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 12px;
+  align-items: start;
+  background: var(--green-soft);
+  border-radius: 14px;
+  padding: 12px 14px;
+}
+
+.recipe-steps p {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.55;
+}
+
+.recipe-steps.nikud p {
+  font-size: 19px;
+  line-height: 2;
+}
+
+.step-num {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--green);
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.recipe-fact {
+  margin: 0;
+  background: var(--paper-2);
+  border-radius: 14px;
+  padding: 12px 16px;
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--ink-2);
+}
+
+.recipe-fact.nikud {
+  line-height: 1.95;
+}
+
+.recipe-warning {
+  margin: 0;
+  color: var(--berry);
+  font-size: 15px;
+  text-align: center;
+}
+
+.recipe-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* ------------------------------------------------ ספר המתכונים */
+
+.book-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.book-head h1 {
+  font-size: 28px;
+}
+
+.book-count {
+  font-family: "Secular One", sans-serif;
+  color: var(--green-deep);
+  font-size: 19px;
+}
+
+.recipe-book .muted {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: 16px;
+}
+
+.book-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.book-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 16px;
+  border: 3px solid var(--line);
+  background: var(--paper);
+  text-align: start;
+  position: relative;
+}
+
+.book-card.open {
+  cursor: pointer;
+  border-color: var(--green);
+  background: var(--green-soft);
+}
+
+.book-card.open:hover {
+  background: var(--card);
+}
+
+.book-card.locked {
+  border-style: dashed;
+  color: var(--ink-3);
+}
+
+.book-lock {
+  font-size: 30px;
+  width: 64px;
+  text-align: center;
+}
+
+.book-text {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: 2px;
+}
+
+.book-text strong {
+  font-size: 19px;
+}
+
+.book-text small {
+  font-size: 14px;
+  color: var(--ink-2);
+  line-height: 1.4;
+}
+
+.book-open {
+  font-size: 15px;
+  color: var(--green-deep);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.book-progress {
+  position: absolute;
+  inset-inline: 16px;
+  bottom: 6px;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--line);
+  overflow: hidden;
+}
+
+.book-progress span {
+  display: block;
+  height: 100%;
+  background: var(--tag);
+  border-radius: 999px;
+}
