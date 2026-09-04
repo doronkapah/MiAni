@@ -1,0 +1,1189 @@
+/* עגלי — חידות בסופר. עיצוב לילדים: גדול, ברור, ובלי עומס. */
+
+:root {
+  --paper: #fdf4e6;
+  --paper-2: #f6ead6;
+  --card: #ffffff;
+  --ink: #24291f;
+  --ink-2: #5e675a;
+  --ink-3: #8d9686;
+  --line: #e6dcc8;
+
+  --green: #23955c;
+  --green-deep: #14663d;
+  --green-soft: #e1f2e7;
+  --tag: #ffc93c;
+  --tag-deep: #e8ac12;
+  --tag-ink: #4a3600;
+  --wood: #c98a45;
+  --wood-dark: #a56c31;
+  --berry: #d64b6a;
+  --berry-soft: #fde8ec;
+
+  --radius: 18px;
+  --shadow: 0 6px 0 rgba(0, 0, 0, 0.08);
+
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #1a1c16;
+    --paper-2: #22251d;
+    --card: #24271f;
+    --ink: #f0f2e8;
+    --ink-2: #a9b1a0;
+    --ink-3: #7e8677;
+    --line: #363a2f;
+
+    --green: #4fbe83;
+    --green-deep: #2c7a52;
+    --green-soft: #1f3327;
+    --tag: #ffc93c;
+    --tag-deep: #d19a10;
+    --tag-ink: #2a1e00;
+    --wood: #9c6a34;
+    --wood-dark: #7a5228;
+    --berry: #ef8199;
+    --berry-soft: #332025;
+
+    color-scheme: dark;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: "Varela Round", "Segoe UI", Arial, sans-serif;
+  font-size: 18px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  font-family: "Secular One", "Varela Round", sans-serif;
+  font-weight: 400;
+  margin: 0;
+  line-height: 1.15;
+}
+
+button,
+input {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 3px solid var(--green);
+  outline-offset: 3px;
+}
+
+/* ------------------------------------------------------------ כפתורים */
+
+.btn {
+  min-height: 52px;
+  padding: 10px 22px;
+  border: 2px solid var(--line);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--ink);
+  cursor: pointer;
+  font-size: 18px;
+  transition: transform 0.08s ease, background 0.15s ease;
+}
+
+.btn:hover:not(:disabled) {
+  background: var(--paper-2);
+}
+
+.btn:active:not(:disabled) {
+  transform: translateY(2px);
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.btn.primary {
+  background: var(--green);
+  border-color: var(--green-deep);
+  color: #ffffff;
+  box-shadow: 0 4px 0 var(--green-deep);
+}
+
+.btn.primary:hover:not(:disabled) {
+  background: var(--green-deep);
+}
+
+.btn.primary:active:not(:disabled) {
+  box-shadow: 0 1px 0 var(--green-deep);
+}
+
+.btn.big {
+  font-size: 21px;
+  min-height: 60px;
+  padding: 12px 32px;
+}
+
+.btn.ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--ink-2);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.btn.small {
+  min-height: 40px;
+  padding: 6px 16px;
+  font-size: 16px;
+}
+
+.link-btn {
+  background: none;
+  border: 0;
+  color: var(--ink-3);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  padding: 8px;
+  align-self: center;
+}
+
+.chip {
+  min-height: 48px;
+  min-width: 48px;
+  padding: 8px 16px;
+  border-radius: 14px;
+  border: 2px solid var(--line);
+  background: var(--card);
+  cursor: pointer;
+}
+
+.chip.wide {
+  padding: 8px 20px;
+}
+
+.chip.small {
+  min-height: 40px;
+  font-size: 16px;
+  border-radius: 999px;
+}
+
+.chip.on {
+  background: var(--green-soft);
+  border-color: var(--green);
+  color: var(--green-deep);
+  font-weight: 700;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* --------------------------------------------------------- מצבי טעינה */
+
+.boot {
+  min-height: 100dvh;
+  display: grid;
+  place-content: center;
+  text-align: center;
+  font-size: 22px;
+  color: var(--ink-2);
+  padding: 24px;
+}
+
+.boot.error code {
+  display: block;
+  margin-top: 12px;
+  color: var(--berry);
+  font-size: 16px;
+}
+
+/* ------------------------------------------------------ בחירת שחקנים */
+
+.picker {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 32px 20px 64px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.picker-head {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.picker-head h1 {
+  font-size: clamp(30px, 6vw, 46px);
+}
+
+.picker-head p {
+  margin: 6px 0 0;
+  color: var(--ink-2);
+}
+
+.profile-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 16px;
+}
+
+.profile-card-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.profile-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 18px 12px;
+  border-radius: var(--radius);
+  border: 3px solid var(--line);
+  background: var(--card);
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  transition: transform 0.1s ease, border-color 0.15s ease;
+  width: 100%;
+}
+
+.profile-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--green);
+}
+
+.profile-card strong {
+  font-size: 20px;
+}
+
+.profile-card.new {
+  border-style: dashed;
+  color: var(--ink-2);
+  justify-content: center;
+  min-height: 190px;
+}
+
+.plus {
+  font-size: 46px;
+  line-height: 1;
+  color: var(--green);
+}
+
+.level-pill {
+  font-size: 14px;
+  background: var(--green-soft);
+  color: var(--green-deep);
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+
+.cart-count {
+  font-size: 15px;
+  color: var(--ink-3);
+}
+
+.delete-btn {
+  border: 2px solid var(--berry);
+  background: var(--berry-soft);
+  color: var(--berry);
+  border-radius: 999px;
+  padding: 6px;
+  cursor: pointer;
+  font-size: 15px;
+}
+
+.new-profile {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  background: var(--card);
+  border: 3px solid var(--line);
+  border-radius: var(--radius);
+  padding: 24px;
+  box-shadow: var(--shadow);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.field > span {
+  font-size: 19px;
+  font-weight: 700;
+}
+
+.field input {
+  min-height: 56px;
+  padding: 10px 16px;
+  border-radius: 14px;
+  border: 2px solid var(--line);
+  background: var(--paper);
+  font-size: 20px;
+}
+
+.avatar-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+  gap: 10px;
+}
+
+.avatar-pick {
+  border: 3px solid var(--line);
+  border-radius: 16px;
+  background: var(--card);
+  padding: 6px;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+
+.avatar-pick.on {
+  border-color: var(--green);
+  background: var(--green-soft);
+}
+
+.row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* --------------------------------------------------------------- משחק */
+
+.game {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 16px;
+  background: var(--green);
+  color: #ffffff;
+}
+
+.who {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.15);
+  border: 0;
+  border-radius: 999px;
+  padding: 6px 16px 6px 8px;
+  color: #ffffff;
+  cursor: pointer;
+  min-height: 52px;
+}
+
+.who-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+  text-align: start;
+}
+
+.who-text small {
+  font-size: 13px;
+  opacity: 0.85;
+}
+
+.progress {
+  flex: 1;
+  height: 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.25);
+  overflow: hidden;
+  min-width: 60px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--tag);
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+
+.score {
+  font-size: 18px;
+  white-space: nowrap;
+}
+
+.board {
+  flex: 1;
+  display: grid;
+  grid-template-columns: minmax(260px, 0.9fr) minmax(320px, 1.1fr);
+  gap: 24px;
+  align-items: start;
+  max-width: 1120px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 24px 20px 32px;
+}
+
+/* ---------------------------------------------------------------- מדף */
+
+.shelf {
+  background: var(--paper-2);
+  border: 4px solid var(--wood-dark);
+  border-radius: var(--radius);
+  padding: 0 0 12px;
+  overflow: hidden;
+}
+
+.shelf-sign {
+  background: var(--green);
+  color: #ffffff;
+  text-align: center;
+  padding: 8px;
+  font-size: 17px;
+  letter-spacing: 0.02em;
+}
+
+.shelf-row {
+  padding: 0 10px;
+}
+
+.shelf-items {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 4px;
+  min-height: 116px;
+  padding-top: 8px;
+}
+
+.decor {
+  opacity: 0.75;
+}
+
+.mystery {
+  filter: drop-shadow(0 0 10px rgba(255, 201, 60, 0.55));
+}
+
+.mystery-pop {
+  animation: pop 0.5s ease;
+}
+
+@keyframes pop {
+  0% {
+    transform: scale(0.4) rotate(-12deg);
+  }
+  60% {
+    transform: scale(1.15) rotate(4deg);
+  }
+  100% {
+    transform: scale(1) rotate(0);
+  }
+}
+
+.shelf-plank {
+  height: 12px;
+  background: var(--wood);
+  border-radius: 4px;
+  box-shadow: 0 3px 0 var(--wood-dark);
+  margin-bottom: 10px;
+}
+
+/* --------------------------------------------------------- כרטיס חידה */
+
+.riddle-card {
+  background: var(--card);
+  border: 3px solid var(--line);
+  border-radius: var(--radius);
+  padding: 24px;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.riddle-title {
+  font-size: clamp(30px, 5vw, 42px);
+  color: var(--green-deep);
+}
+
+.clues {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.clues li {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: start;
+  gap: 10px;
+  background: var(--green-soft);
+  border-radius: 14px;
+  padding: 12px 14px;
+}
+
+.clues li.clue-locked {
+  background: transparent;
+  border: 2px dashed var(--line);
+  color: var(--ink-3);
+}
+
+.clue-num {
+  background: var(--green);
+  color: #ffffff;
+  border-radius: 999px;
+  padding: 2px 12px;
+  font-size: 14px;
+  white-space: nowrap;
+  margin-top: 3px;
+}
+
+.clue-locked .clue-num {
+  background: var(--ink-3);
+}
+
+.clues p {
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.5;
+}
+
+/* טקסט מנוקד צריך יותר אוויר, אחרת סימני הניקוד נדחסים לאותיות */
+.clues p.nikud {
+  font-size: 22px;
+  line-height: 2;
+  letter-spacing: 0.01em;
+}
+
+.btn.toggle {
+  font-size: 16px;
+  min-height: 48px;
+  padding: 8px 18px;
+}
+
+.btn.toggle.on {
+  background: var(--green-soft);
+  border-color: var(--green);
+  color: var(--green-deep);
+}
+
+.speak-btn {
+  background: none;
+  border: 0;
+  font-size: 22px;
+  cursor: pointer;
+  line-height: 1;
+  padding: 2px;
+}
+
+.guess-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.guess-row input {
+  flex: 1;
+  min-width: 160px;
+  min-height: 60px;
+  padding: 10px 18px;
+  border-radius: 16px;
+  border: 3px solid var(--green);
+  background: var(--paper);
+  font-size: 22px;
+}
+
+.feedback {
+  margin: 0;
+  padding: 12px 16px;
+  border-radius: 14px;
+  font-size: 19px;
+}
+
+.feedback.close {
+  background: var(--tag);
+  color: var(--tag-ink);
+}
+
+.feedback.wrong {
+  background: var(--berry-soft);
+  color: var(--berry);
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* ------------------------------------------------------------ פתרון */
+
+.solved {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 12px;
+}
+
+.solved h1 {
+  font-size: 34px;
+  color: var(--green-deep);
+}
+
+.solved h1.muted-title {
+  color: var(--ink-2);
+  font-size: 26px;
+}
+
+.solved-art {
+  animation: pop 0.5s ease;
+}
+
+.answer {
+  margin: 0;
+  font-family: "Secular One", sans-serif;
+  font-size: 40px;
+  color: var(--ink);
+}
+
+.reveal {
+  margin: 0;
+  color: var(--ink-2);
+  max-width: 42ch;
+  font-size: 18px;
+}
+
+.levelup {
+  margin: 0;
+  background: var(--tag);
+  color: var(--tag-ink);
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-size: 19px;
+}
+
+.finished {
+  min-height: 100dvh;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 24px;
+  text-align: center;
+  padding: 24px;
+}
+
+/* -------------------------------------------------------------- צ'אט */
+
+.chat {
+  position: sticky;
+  bottom: 0;
+  z-index: 6;
+  max-width: 1120px;
+  width: 100%;
+  margin: 0 auto;
+  background: var(--card);
+  border: 3px solid var(--green);
+  border-bottom: 0;
+  border-radius: var(--radius) var(--radius) 0 0;
+  padding: 14px 18px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.chat-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.chat-head > div {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  line-height: 1.25;
+}
+
+.chat-quota {
+  font-size: 14px;
+  color: var(--ink-3);
+}
+
+.chat-log {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 240px;
+  overflow-y: auto;
+  padding: 4px;
+}
+
+.bubble {
+  padding: 10px 16px;
+  border-radius: 16px;
+  max-width: 80%;
+  font-size: 18px;
+  white-space: pre-wrap;
+}
+
+.bubble.agali {
+  background: var(--green-soft);
+  color: var(--green-deep);
+  align-self: flex-start;
+  border-bottom-right-radius: 4px;
+}
+
+.bubble.user {
+  background: var(--paper-2);
+  color: var(--ink);
+  align-self: flex-end;
+  border-bottom-left-radius: 4px;
+}
+
+.dots {
+  display: inline-block;
+  width: 34px;
+  height: 8px;
+  background:
+    radial-gradient(circle 4px at 5px 4px, currentColor 98%, transparent),
+    radial-gradient(circle 4px at 17px 4px, currentColor 98%, transparent),
+    radial-gradient(circle 4px at 29px 4px, currentColor 98%, transparent);
+  opacity: 0.5;
+  animation: blink 1.1s infinite;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 1;
+  }
+}
+
+.chat-suggest {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.chat-input {
+  display: flex;
+  gap: 10px;
+}
+
+.chat-input input {
+  flex: 1;
+  min-height: 52px;
+  padding: 8px 16px;
+  border-radius: 14px;
+  border: 2px solid var(--line);
+  background: var(--paper);
+  font-size: 18px;
+}
+
+.chat-disabled {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: 16px;
+}
+
+.chat-disabled code {
+  background: var(--paper-2);
+  padding: 1px 6px;
+  border-radius: 5px;
+}
+
+/* -------------------------------------------------------------- עגלה */
+
+.cart {
+  background: var(--paper-2);
+  border-top: 3px solid var(--line);
+  padding: 10px 16px 14px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.cart-label {
+  font-size: 15px;
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+
+.cart-items {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.cart-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 62px;
+}
+
+.cart-item small {
+  font-size: 12px;
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------------------- מסכים */
+
+@media (max-width: 860px) {
+  .board {
+    grid-template-columns: 1fr;
+    padding: 16px 14px 24px;
+  }
+
+  .shelf {
+    order: 2;
+  }
+
+  .riddle-card {
+    order: 1;
+    padding: 18px;
+  }
+
+  .chat-log {
+    max-height: 180px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* ------------------------------------------------------- לוח הורים */
+
+.picker-links {
+  display: flex;
+  gap: 18px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.parent {
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 32px 20px 64px;
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+}
+
+.parent h1 {
+  font-size: clamp(28px, 5vw, 38px);
+}
+
+.parent h2 {
+  font-size: 22px;
+  margin-bottom: 8px;
+}
+
+.parent-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.parent .muted {
+  color: var(--ink-2);
+  margin: 0;
+}
+
+.parent .muted.small {
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.panel-section {
+  background: var(--card);
+  border: 3px solid var(--line);
+  border-radius: var(--radius);
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.notice {
+  background: var(--tag);
+  color: var(--tag-ink);
+  border-radius: 14px;
+  padding: 14px 18px;
+  margin: 0;
+}
+
+.notice code {
+  background: rgba(0, 0, 0, 0.12);
+  padding: 1px 6px;
+  border-radius: 5px;
+}
+
+.gate {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.gate label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 19px;
+}
+
+.gate input {
+  min-height: 56px;
+  width: 140px;
+  padding: 8px 16px;
+  border-radius: 14px;
+  border: 2px solid var(--line);
+  background: var(--paper);
+  font-size: 22px;
+  text-align: center;
+}
+
+.model-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.model-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: start;
+  padding: 16px 18px;
+  border: 3px solid var(--line);
+  border-radius: 14px;
+  background: var(--paper);
+  cursor: pointer;
+}
+
+.model-card:hover:not(:disabled) {
+  border-color: var(--green);
+}
+
+.model-card.on {
+  border-color: var(--green);
+  background: var(--green-soft);
+}
+
+.model-card:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.model-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.model-top strong {
+  font-size: 19px;
+}
+
+.model-rel {
+  font-size: 15px;
+  color: var(--green-deep);
+  white-space: nowrap;
+}
+
+.model-card.on .model-rel {
+  font-weight: 700;
+}
+
+.model-blurb {
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.model-price {
+  font-size: 14px;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.usage-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.usage-grid > div {
+  background: var(--paper);
+  border-radius: 14px;
+  padding: 14px 16px;
+}
+
+.usage-grid dt {
+  font-size: 14px;
+  color: var(--ink-3);
+  margin-bottom: 4px;
+}
+
+.usage-grid dd {
+  margin: 0;
+  font-size: 17px;
+}
+
+.usage-grid dd.cost {
+  font-family: "Secular One", sans-serif;
+  font-size: 26px;
+  color: var(--green-deep);
+  font-variant-numeric: tabular-nums;
+  margin-top: 2px;
+}
+
+.player-usage {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.player-usage li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  background: var(--paper);
+  border-radius: 12px;
+}
+
+/* ------------------------------------------------- מפתח וגיבוי */
+
+.storage-warning {
+  margin: 0;
+  padding: 12px 20px;
+  background: var(--tag);
+  color: var(--tag-ink);
+  text-align: center;
+  font-size: 16px;
+}
+
+.key-form {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.key-form input {
+  flex: 1;
+  min-width: 220px;
+  min-height: 56px;
+  padding: 8px 16px;
+  border-radius: 14px;
+  border: 2px solid var(--line);
+  background: var(--paper);
+  font-size: 17px;
+  direction: ltr;
+  text-align: left;
+}
+
+.key-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.key-mask {
+  flex: 1;
+  min-width: 200px;
+  direction: ltr;
+  text-align: left;
+  background: var(--paper);
+  border: 2px solid var(--line);
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 15px;
+  overflow-wrap: anywhere;
+}
+
+.warn-box {
+  background: var(--berry-soft);
+  border-inline-start: 4px solid var(--berry);
+  border-radius: 12px;
+  padding: 14px 18px;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.warn-box ul {
+  margin: 8px 0 0;
+  padding-inline-start: 20px;
+}
+
+.warn-box li {
+  margin-bottom: 6px;
+}
+
+.warn-box code {
+  background: rgba(0, 0, 0, 0.08);
+  padding: 1px 5px;
+  border-radius: 5px;
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
+.chat-disabled {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-start;
+  color: var(--ink-2);
+  font-size: 16px;
+}
+
+.chat-disabled p {
+  margin: 0;
+}

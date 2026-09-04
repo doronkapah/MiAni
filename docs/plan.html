@@ -1,0 +1,711 @@
+<title>חידות הסופר של עגלי</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Suez+One&family=Assistant:wght@300;400;600;700&family=Rubik:wght@400;500;700&display=swap">
+<style>
+  :root{
+    --paper:#F4F6F1; --card:#FFFFFF; --sunk:#EDF1E9;
+    --ink:#191E16; --ink2:#5A6355; --ink3:#8A9384;
+    --line:#DDE3D7; --line2:#C9D2C2;
+    --green:#1B7A4B; --green-soft:#E2EFE6; --green-ink:#0F5233;
+    --tag:#F5C518; --tag-ink:#3A2E00; --lnum:#D9A800;
+    --berry:#A62D4E; --berry-soft:#F7E5EA;
+    --code-bg:#1D2219; --code-ink:#DCE4D5;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper:#12150F; --card:#1B1F18; --sunk:#161A13;
+      --ink:#ECEFE6; --ink2:#A2AB9B; --ink3:#79826F;
+      --line:#2B3127; --line2:#3A4235;
+      --green:#5EC98D; --green-soft:#1B2C22; --green-ink:#9FE0BB;
+      --tag:#F5C518; --tag-ink:#241C00; --lnum:#F5C518;
+      --berry:#EE8AA0; --berry-soft:#2E1A20;
+      --code-bg:#0B0E09; --code-ink:#D7E0D0;
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#12150F; --card:#1B1F18; --sunk:#161A13;
+    --ink:#ECEFE6; --ink2:#A2AB9B; --ink3:#79826F;
+    --line:#2B3127; --line2:#3A4235;
+    --green:#5EC98D; --green-soft:#1B2C22; --green-ink:#9FE0BB;
+    --tag:#F5C518; --tag-ink:#241C00; --lnum:#F5C518;
+    --berry:#EE8AA0; --berry-soft:#2E1A20;
+    --code-bg:#0B0E09; --code-ink:#D7E0D0;
+  }
+
+  *{box-sizing:border-box}
+  body{
+    direction:rtl;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:"Assistant","Segoe UI",Arial,sans-serif;
+    font-size:17px; line-height:1.72;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:960px;margin:0 auto;padding:0 24px 90px}
+
+  .rail{
+    background:var(--green); color:#fff;
+    padding:11px 24px;
+    font-family:"Rubik",sans-serif; font-size:12.5px; font-weight:500;
+    letter-spacing:.06em;
+    display:flex; gap:16px; flex-wrap:wrap; align-items:center;
+  }
+  .rail b{font-weight:700}
+  .rail .dot{opacity:.5}
+
+  header{padding:54px 0 40px; border-bottom:2px solid var(--ink)}
+  .eyebrow{
+    font-family:"Rubik",sans-serif; font-size:12px; font-weight:500;
+    letter-spacing:.16em; color:var(--ink2); margin:0 0 18px;
+  }
+  h1{
+    font-family:"Suez One",Georgia,serif; font-weight:400;
+    font-size:clamp(36px,6.2vw,60px); line-height:1.08; margin:0 0 20px;
+    text-wrap:balance;
+  }
+  h1 .y{
+    background:linear-gradient(transparent 60%, var(--tag) 60%, var(--tag) 93%, transparent 93%);
+  }
+  .lede{font-size:19.5px; line-height:1.62; color:var(--ink2); max-width:62ch; margin:0}
+
+  .facts{
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+    gap:1px; background:var(--line); border:1px solid var(--line);
+    margin:36px 0 0;
+  }
+  .facts > div{background:var(--paper); padding:14px 16px}
+  .facts dt{
+    font-family:"Rubik",sans-serif; font-size:11px; letter-spacing:.12em;
+    color:var(--ink3); margin:0 0 4px;
+  }
+  .facts dd{margin:0; font-size:16px; font-weight:600; line-height:1.4}
+
+  section{padding:52px 0 10px; border-bottom:1px solid var(--line)}
+  section:last-of-type{border-bottom:0}
+  .tag{
+    display:inline-block; background:var(--tag); color:var(--tag-ink);
+    font-family:"Rubik",sans-serif; font-size:11.5px; font-weight:700;
+    letter-spacing:.09em; padding:4px 11px 3px; margin-bottom:14px;
+  }
+  h2{
+    font-family:"Suez One",Georgia,serif; font-weight:400;
+    font-size:clamp(25px,3.5vw,33px); line-height:1.24; margin:0 0 14px;
+    text-wrap:balance;
+  }
+  h3{
+    font-family:"Assistant",sans-serif; font-weight:700; font-size:19px;
+    margin:30px 0 8px;
+  }
+  p{max-width:66ch; margin:0 0 16px}
+  .muted{color:var(--ink2)}
+  strong,b{font-weight:700}
+  code{
+    font-family:"Rubik",ui-monospace,monospace; font-size:.88em;
+    background:var(--sunk); border:1px solid var(--line);
+    padding:1px 5px; border-radius:3px; unicode-bidi:isolate;
+  }
+
+  ul,ol{max-width:66ch; padding-inline-start:22px; margin:0 0 16px}
+  li{margin-bottom:8px}
+  li::marker{color:var(--green)}
+
+  figure{margin:28px 0 8px}
+  figure svg{width:100%; height:auto; display:block; border:1px solid var(--line)}
+  figcaption{
+    font-family:"Rubik",sans-serif; font-size:12px; color:var(--ink3);
+    margin-top:9px;
+  }
+
+  .flow{
+    list-style:none; padding:0; margin:22px 0 14px; max-width:none;
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:1px;
+    background:var(--line2); border:1px solid var(--line2);
+  }
+  .flow li{background:var(--card); padding:16px 16px 18px; margin:0}
+  .flow .n{
+    font-family:"Rubik",sans-serif; font-size:11px; font-weight:700; letter-spacing:.1em;
+    color:var(--green-ink); display:block; margin-bottom:6px;
+  }
+  .flow b{display:block; font-size:16px; margin-bottom:4px}
+  .flow .d{font-size:14.5px; line-height:1.52; color:var(--ink2)}
+
+  .levels{display:grid; gap:0; margin:24px 0 10px}
+  .level{
+    display:grid; grid-template-columns:62px 1fr; gap:18px; align-items:start;
+    border-top:1px solid var(--line); padding:18px 0;
+  }
+  .level:first-child{border-top:2px solid var(--ink)}
+  .lnum{
+    font-family:"Suez One",Georgia,serif; font-size:38px; line-height:1;
+    color:var(--lnum); text-align:center;
+  }
+  .level h3{margin:0 0 3px; font-size:20px}
+  .lmeta{
+    font-family:"Rubik",sans-serif; font-size:12px; letter-spacing:.04em;
+    color:var(--ink3); margin:0 0 9px;
+  }
+  .level p{margin:0 0 9px; font-size:16px}
+  .samples{
+    font-size:15px; color:var(--ink2);
+    border-inline-start:3px solid var(--green-soft); padding-inline-start:12px;
+  }
+
+  .demo{
+    background:var(--card); border:1px solid var(--line);
+    padding:22px 24px; margin:24px 0 10px;
+  }
+  .demo .q{font-family:"Suez One",Georgia,serif; font-size:22px; margin:0 0 16px}
+  .clue{display:flex; gap:12px; align-items:baseline; margin-bottom:11px}
+  .clue .k{
+    flex:0 0 auto; font-family:"Rubik",sans-serif; font-size:11px; font-weight:700;
+    letter-spacing:.06em; color:var(--green-ink); background:var(--green-soft);
+    padding:3px 9px; white-space:nowrap;
+  }
+  .clue p{margin:0; font-size:16.5px}
+  .said{
+    margin-top:18px; padding-top:16px; border-top:1px dashed var(--line2);
+    display:grid; gap:9px;
+  }
+  .bub{padding:9px 14px; font-size:16px; max-width:44ch}
+  .bub.kid{background:var(--sunk); border:1px solid var(--line); justify-self:start}
+  .bub.bot{background:var(--green-soft); color:var(--green-ink); justify-self:end; font-weight:600}
+
+  .tw{overflow-x:auto; margin:22px 0 12px; border:1px solid var(--line)}
+  table{border-collapse:collapse; width:100%; min-width:560px; font-size:15.5px}
+  th,td{text-align:right; padding:11px 14px; border-bottom:1px solid var(--line); vertical-align:top}
+  thead th{
+    background:var(--sunk); font-family:"Rubik",sans-serif; font-size:11.5px;
+    letter-spacing:.09em; font-weight:700; color:var(--ink2); white-space:nowrap;
+  }
+  tbody tr:last-child td{border-bottom:0}
+  td.num{font-variant-numeric:tabular-nums; white-space:nowrap; font-family:"Rubik",sans-serif}
+  .ok{color:var(--green-ink); font-weight:700}
+  .no{color:var(--berry); font-weight:700}
+
+  pre{
+    direction:ltr; text-align:left; unicode-bidi:isolate;
+    background:var(--code-bg); color:var(--code-ink);
+    padding:18px 20px; overflow-x:auto; margin:20px 0 12px;
+    font-family:"Rubik",ui-monospace,"Cascadia Mono",monospace;
+    font-size:13.5px; line-height:1.62; border:1px solid var(--line2);
+    white-space:pre;
+  }
+  pre b{color:#F0C64A; font-weight:400}
+  pre i{color:#8FC7A6; font-style:normal}
+  pre u{color:#8C9686; text-decoration:none}
+
+  .arch{
+    display:grid; grid-template-columns:1fr auto 1fr; gap:16px; align-items:center;
+    margin:22px 0 14px; border:1px solid var(--line2);
+  }
+  .arch-side{background:var(--card); padding:18px 20px; height:100%}
+  .arch-side h4{
+    margin:0 0 4px; font-family:"Suez One",Georgia,serif; font-weight:400; font-size:19px;
+  }
+  .arch-note{
+    margin:0 0 10px; font-family:"Rubik",sans-serif; font-size:12px;
+    letter-spacing:.06em; color:var(--ink3);
+  }
+  .arch-api{margin:12px 0 0; color:var(--green-ink)}
+  .arch-side ul{margin:0; padding-inline-start:18px; font-size:15px}
+  .arch-side li{margin-bottom:4px}
+  .arch-arrows{
+    display:flex; flex-direction:column; gap:10px; padding:0 4px;
+    font-family:"Rubik",sans-serif; font-size:12px; color:var(--ink3); white-space:nowrap;
+  }
+  .arch-direct{color:var(--green-ink); font-weight:700}
+  @media (max-width:640px){
+    .arch{grid-template-columns:1fr}
+    .arch-arrows{flex-direction:row; justify-content:center; padding:0 0 12px}
+  }
+
+  .note{
+    background:var(--green-soft); color:var(--green-ink);
+    border-inline-start:4px solid var(--green);
+    padding:14px 18px; margin:22px 0 10px; font-size:16px;
+  }
+  .warn{
+    background:var(--berry-soft); color:var(--berry);
+    border-inline-start:4px solid var(--berry);
+    padding:14px 18px; margin:22px 0 10px; font-size:16px;
+  }
+
+  footer{
+    padding:40px 0 0; color:var(--ink3); font-size:14px;
+    font-family:"Rubik",sans-serif; border-top:2px solid var(--ink); margin-top:52px;
+  }
+
+  :focus-visible{outline:3px solid var(--green); outline-offset:2px}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+  @media (max-width:560px){
+    body{font-size:16px}
+    .level{grid-template-columns:42px 1fr; gap:12px}
+    .lnum{font-size:29px}
+    .wrap{padding:0 16px 70px}
+  }
+</style>
+
+<div class="rail">
+  <b>נבנה ועובד</b><span class="dot">·</span>
+  <span>גילאי 4–10</span><span class="dot">·</span>
+  <span>רמזים מנוקדים</span><span class="dot">·</span>
+  <span>עברית מלאה, RTL</span><span class="dot">·</span>
+  <span>אתר סטטי · React + Vite · Claude Opus 5</span>
+</div>
+
+<div class="wrap">
+
+<header>
+  <p class="eyebrow">תוכנית בנייה · גרסה 1</p>
+  <h1>עַגְלִי — <span class="y">מי אני</span> בסופר</h1>
+  <p class="lede">משחק חידות "מי אני" בעברית, שמתרחש בין מדפי הסופר. כל ילד בוחר פרופיל משלו, מקבל רמזים שנחשפים אחד־אחד, ויכול לפטפט עם עַגְלִי — עגלת קניות מדברת — כדי לצאת מהתקיעות. הניחוש נסלח לשגיאות כתיב, והחידות נעשות קשות ככל שפותרים.</p>
+
+  <dl class="facts">
+    <div><dt>שחקנים</dt><dd>פרופילים ללא הגבלה, אחד פעיל</dd></div>
+    <div><dt>רמות קושי</dt><dd>4, מותאמות אוטומטית</dd></div>
+    <div><dt>בנק חידות</dt><dd>80 חידות כתובות מראש</dd></div>
+    <div><dt>אחסון</dt><dd>הכול על המכשיר</dd></div>
+  </dl>
+</header>
+
+<section>
+  <span class="tag">מצב</span>
+  <h2>מה כבר עובד</h2>
+  <p>המשחק נבנה. השרת רץ מקומית, 80 החידות בבנק, ומנוע ההתאמה עבר את כל הבדיקות. הצ'אט עם עגלי דורש מפתח API בקובץ <code>.env</code> — בלעדיו כל השאר עובד כרגיל.</p>
+  <div class="tw">
+    <table>
+      <thead><tr><th>מה נבדק</th><th>תוצאה</th></tr></thead>
+      <tbody>
+        <tr><td>בדיקות אוטומטיות</td><td class="num ok">62 / 62 עוברות</td></tr>
+        <tr><td>שגיאות כתיב נפוצות שמתקבלות</td><td class="num ok">297 / 297 (100%)</td></tr>
+        <tr><td>ניחושים מוצלבים בין כל פריטי הבנק</td><td class="num ok">29,783 — 0 דליפות</td></tr>
+        <tr><td>זוגות תשובות קרובות שכלל ההבחנה מטפל בהן</td><td class="num">139</td></tr>
+        <tr><td>בנק החידות</td><td class="num">80 חידות, 260 רמזים, כולם מנוקדים</td></tr>
+        <tr><td>דמויות לבחירה בפרופיל</td><td class="num">16</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="note"><b>שינוי אחד מהתוכנית:</b> הסף למילים קצרות ירד מ־1.0 ל־0.75, ונוסף כלל ההבחנה. בלעדיהם <code>חלד</code> היה מתקבל כ<code>חלב</code>, ו<code>חלה</code> — פריט אמיתי בבנק — הייתה מתקבלת גם היא. הפרטים בסעיף עמידות בשגיאות כתיב.</div>
+</section>
+
+<section>
+  <span class="tag">מה רואים על המסך</span>
+  <h2>מסך המשחק</h2>
+  <p>מסך אחד, בלי תפריטים מקוננים: מדף סופר מצויר, החידה הפעילה לצידו, ועַגְלִי בפינה מוכן לשאלות. פריט שנפתר נכנס לעגלה שלמטה ונשאר שם — זה כל לוח ההישגים שילד בן חמש צריך.</p>
+
+  <figure>
+    <svg viewBox="0 0 880 400" role="img" aria-label="סקיצה של מסך המשחק: מדף סופר עם מוצרים, כרטיס חידה עם שלושה רמזים, ועגלת קניות מדברת">
+      <rect width="880" height="400" fill="var(--card)"/>
+
+      <rect x="30" y="34" width="330" height="332" fill="var(--sunk)" stroke="var(--line2)"/>
+      <rect x="30" y="34" width="330" height="26" fill="var(--green)"/>
+      <text x="195" y="52" text-anchor="middle" font-family="Rubik,sans-serif" font-size="13" font-weight="700" fill="#FFFFFF" direction="rtl">מדף 3 · יבשים</text>
+
+      <rect x="46" y="128" width="298" height="7" fill="var(--line2)"/>
+      <rect x="62" y="80" width="34" height="48" fill="var(--tag)"/>
+      <rect x="108" y="90" width="28" height="38" fill="var(--green)" opacity="0.8"/>
+      <rect x="148" y="74" width="40" height="54" fill="var(--berry)" opacity="0.6"/>
+      <circle cx="222" cy="108" r="20" fill="var(--green)" opacity="0.45"/>
+      <rect x="262" y="86" width="30" height="42" fill="var(--ink2)" opacity="0.35"/>
+
+      <rect x="46" y="222" width="298" height="7" fill="var(--line2)"/>
+      <rect x="66" y="176" width="44" height="46" fill="var(--green)" opacity="0.55"/>
+      <rect x="124" y="164" width="26" height="58" fill="var(--tag)" opacity="0.85"/>
+      <rect x="164" y="182" width="38" height="40" fill="var(--ink2)" opacity="0.28"/>
+      <circle cx="242" cy="200" r="22" fill="var(--berry)" opacity="0.5"/>
+      <rect x="284" y="170" width="30" height="52" fill="var(--green)" opacity="0.35"/>
+
+      <rect x="46" y="316" width="298" height="7" fill="var(--line2)"/>
+      <rect x="70" y="268" width="36" height="48" fill="var(--tag)" opacity="0.6"/>
+      <rect x="120" y="278" width="46" height="38" fill="var(--green)" opacity="0.6"/>
+      <rect x="182" y="260" width="28" height="56" fill="var(--ink2)" opacity="0.3"/>
+      <circle cx="256" cy="292" r="24" fill="var(--tag)" opacity="0.45"/>
+      <rect x="298" y="272" width="26" height="44" fill="var(--berry)" opacity="0.4"/>
+
+      <rect x="392" y="34" width="458" height="196" fill="var(--paper)" stroke="var(--line2)"/>
+      <rect x="392" y="34" width="458" height="4" fill="var(--tag)"/>
+      <text x="826" y="76" text-anchor="end" font-family="Suez One,Georgia,serif" font-size="26" fill="var(--ink)" direction="rtl">מי אני?</text>
+      <rect x="744" y="92" width="82" height="20" fill="var(--green-soft)"/>
+      <text x="785" y="107" text-anchor="middle" font-family="Rubik,sans-serif" font-size="11" font-weight="700" fill="var(--green-ink)" direction="rtl">רמז 1</text>
+      <text x="728" y="107" text-anchor="end" font-family="Assistant,sans-serif" font-size="15" fill="var(--ink)" direction="rtl">אני גר בסופר, על מדף עם חבילות.</text>
+      <rect x="744" y="124" width="82" height="20" fill="var(--green-soft)"/>
+      <text x="785" y="139" text-anchor="middle" font-family="Rubik,sans-serif" font-size="11" font-weight="700" fill="var(--green-ink)" direction="rtl">רמז 2</text>
+      <text x="728" y="139" text-anchor="end" font-family="Assistant,sans-serif" font-size="15" fill="var(--ink)" direction="rtl">צריך לבשל אותי במים רותחים.</text>
+      <rect x="744" y="156" width="82" height="20" fill="var(--line)"/>
+      <text x="785" y="171" text-anchor="middle" font-family="Rubik,sans-serif" font-size="11" font-weight="700" fill="var(--ink3)" direction="rtl">רמז 3</text>
+      <text x="728" y="171" text-anchor="end" font-family="Assistant,sans-serif" font-size="15" fill="var(--ink3)" direction="rtl">סגור — אפשר לפתוח בכל רגע</text>
+      <rect x="412" y="190" width="418" height="28" fill="var(--card)" stroke="var(--green)"/>
+      <text x="818" y="209" text-anchor="end" font-family="Assistant,sans-serif" font-size="15" fill="var(--ink3)" direction="rtl">מה אני? כתבו כאן…</text>
+
+      <path d="M420 300 h96 l-14 44 h-68 z" fill="var(--green)"/>
+      <path d="M406 292 h18 l6 12" fill="none" stroke="var(--green)" stroke-width="6" stroke-linecap="round"/>
+      <circle cx="440" cy="356" r="7" fill="var(--ink)"/>
+      <circle cx="502" cy="356" r="7" fill="var(--ink)"/>
+      <circle cx="452" cy="316" r="5" fill="#FFFFFF"/>
+      <circle cx="490" cy="316" r="5" fill="#FFFFFF"/>
+      <path d="M456 330 q15 12 30 0" fill="none" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round"/>
+
+      <rect x="546" y="268" width="290" height="74" fill="var(--sunk)" stroke="var(--line2)"/>
+      <path d="M546 300 l-18 12 18 12 z" fill="var(--sunk)" stroke="var(--line2)"/>
+      <text x="818" y="298" text-anchor="end" font-family="Assistant,sans-serif" font-size="15" fill="var(--ink)" direction="rtl">אני לא ירק ולא פרי. רוצה עוד רמז,</text>
+      <text x="818" y="322" text-anchor="end" font-family="Assistant,sans-serif" font-size="15" fill="var(--ink)" direction="rtl">או שננסה לנחש?</text>
+    </svg>
+    <figcaption>סקיצת פריסה — מדף מצויר מימין, כרטיס החידה משמאלו, עַגְלִי למטה. הכול RTL.</figcaption>
+  </figure>
+</section>
+
+<section>
+  <span class="tag">מהלך המשחק</span>
+  <h2>מבחירת פרופיל עד הפריט בעגלה</h2>
+  <ol class="flow">
+    <li><span class="n">שלב א</span><b>בוחרים פרופיל</b><span class="d">רשת אווטארים — עגבנייה, בננה, בקבוק חלב. שם, גיל, ולשון פנייה (זכר/נקבה). אין סיסמאות.</span></li>
+    <li><span class="n">שלב ב</span><b>מקבלים חידה</b><span class="d">המערכת בוחרת חידה ברמה הנוכחית של הפרופיל, מבין אלו שהילד עוד לא פתר.</span></li>
+    <li><span class="n">שלב ג</span><b>רמז אחרי רמז</b><span class="d">הרמז הראשון פתוח. כל לחיצה על "עוד רמז" חושפת את הבא — ומורידה מעט מהניקוד.</span></li>
+    <li><span class="n">שלב ד</span><b>מנחשים</b><span class="d">כותבים תשובה. השרת מקבל גם ניחוש עם שגיאות כתיב, וגם שמות נרדפים.</span></li>
+    <li><span class="n">שלב ה</span><b>נתקעים? שואלים</b><span class="d">צ'אט עם עַגְלִי: "זה משהו מתוק?", "אפשר לאכול את זה קר?" — הוא עונה, אבל לעולם לא מגלה.</span></li>
+    <li><span class="n">שלב ו</span><b>הפריט נכנס לעגלה</b><span class="d">אנימציה קצרה, כוכב, והפריט נשאר בעגלה של הפרופיל. הדירוג מתעדכן.</span></li>
+  </ol>
+  <p class="muted">אין טיימר, אין "הפסדת", ואי אפשר להיתקע: אחרי הרמז האחרון מופיע כפתור "גלה לי" שמראה את התשובה עם הסבר קצר, והחידה חוזרת לתור בעוד כמה ימים.</p>
+</section>
+
+<section>
+  <span class="tag">דוגמה מלאה</span>
+  <h2>חידה אחת, מהתחלה עד הסוף</h2>
+  <div class="demo">
+    <p class="q">מי אני?</p>
+    <div class="clue"><span class="k">רמז 1</span><p>אני גר בסופר, על מדף עם חבילות וקופסאות.</p></div>
+    <div class="clue"><span class="k">רמז 2</span><p>צריך לבשל אותי במים רותחים.</p></div>
+    <div class="clue"><span class="k">רמז 3</span><p>אני ארוך ודק, ואוהבים אותי עם רוטב עגבניות.</p></div>
+    <div class="said">
+      <div class="bub kid">אני חושבת שזה פסתה</div>
+      <div class="bub bot">כן! פַּסְטָה. הכנסתי אותה לעגלה שלך ⭐</div>
+    </div>
+  </div>
+  <p class="muted">הניחוש נכתב <code>פסתה</code> — ט הוחלפה ב־ת. המשחק מקבל את זה בלי להעיר על האיות, אבל מציג את המילה הנכונה ומנוקדת בתשובה, כך שהתיקון קורה מעצמו.</p>
+</section>
+
+<section>
+  <span class="tag">מנוע הקושי</span>
+  <h2>ארבע רמות שנפתחות לפי הצלחה</h2>
+  <p>לכל פרופיל יש דירוג עשרוני, שנקודת הפתיחה שלו נקבעת לפי הגיל. פתרון עם רמז אחד מעלה ב־0.34, פתרון עם שלושה רמזים מעלה ב־0.1, ולחיצה על "גלה לי" מורידה ב־0.2. הרמה בפועל היא הערך המעוגל כלפי מטה, וקפיצת רמה דורשת שלושה פתרונות רצופים בקצה העליון — כדי שילד לא ייזרק לרמה קשה בגלל ניחוש מוצלח אחד.</p>
+
+  <div class="levels">
+    <div class="level">
+      <div class="lnum">1</div>
+      <div>
+        <h3>מדף הגן</h3>
+        <p class="lmeta">גיל 4–5 · 2 רמזים · ציור לצד החידה · הקראה אוטומטית</p>
+        <p>רמזים קונקרטיים לחלוטין — צבע, טעם, מה עושים עם זה. אף מילה שילד בגן לא שומע בבית.</p>
+        <p class="samples">בננה · חלב · ביצה · לחם · גבינה לבנה · תפוח</p>
+      </div>
+    </div>
+    <div class="level">
+      <div class="lnum">2</div>
+      <div>
+        <h3>מדף א׳–ב׳</h3>
+        <p class="lmeta">גיל 6–7 · 3 רמזים · הקראה בלחיצה</p>
+        <p>נוסף שיוך לקטגוריה ("אני ירק, אבל הרבה חושבים שאני פרי") ותכונה פיזית אחת שדורשת חשיבה.</p>
+        <p class="samples">עגבנייה · דבש · אבטיח · יוגורט · תירס · שוקולד</p>
+      </div>
+    </div>
+    <div class="level">
+      <div class="lnum">3</div>
+      <div>
+        <h3>מדף ג׳–ד׳</h3>
+        <p class="lmeta">גיל 8–9 · 3–4 רמזים · שלילה ותהליך</p>
+        <p>רמזים לפי תפקיד ותהליך ייצור, ורמז שלילה אחד. הילד צריך לפסול אפשרויות, לא רק לזהות.</p>
+        <p class="samples">קמח · שמרים · חומץ · נייר אפייה · טחינה · אבקת אפייה</p>
+      </div>
+    </div>
+    <div class="level">
+      <div class="lnum">4</div>
+      <div>
+        <h3>אלופי הסופר</h3>
+        <p class="lmeta">גיל 10 · 4 רמזים · משחקי מילים</p>
+        <p>דו־משמעות, שורשים משותפים ומקור המילה. הרמז הראשון מטעה בכוונה, והרמז האחרון מיישר את זה.</p>
+        <p class="samples">כרוב ניצנים · תבלין · קפה נמס · שמן זית · פטרוזיליה · ג׳ינג׳ר</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="note"><b>למה לא רמה אחת לכל המשפחה:</b> אחים בני 5 ו־10 משחקים על אותו מכשיר. הרמה שמורה על הפרופיל, לא על המכשיר — כשמחליפים פרופיל, כל המשחק משנה קושי, אוצר מילים והקראה.</div>
+</section>
+
+<section>
+  <span class="tag">עמידות בשגיאות כתיב</span>
+  <h2>איך פסתה, פאסטה ופסטא כולן נכונות</h2>
+  <p>זה החלק הכי חשוב טכנית. ילד בן שש שיודע את התשובה ולא יודע לאיית אותה חייב לקבל כוכב. הבדיקה רצה בשרת, בשישה שלבים, וכל שלב שמצליח עוצר את השרשרת.</p>
+
+  <ol>
+    <li><b>ניקוי</b> — הסרת ניקוד (U+0591–U+05C7), גרש וגרשיים, סימני פיסוק ורווחים, ותחיליות שכיחות: <code>ה</code>, <code>זה</code>, <code>זאת</code>, <code>אני חושב ש</code>.</li>
+    <li><b>אותיות סופיות וריבוי</b> — ם→מ, ן→נ, ץ→צ, ף→פ, ך→כ; וסיומות <code>ים</code>, <code>ות</code> נגזרות גם הן.</li>
+    <li><b>התאמה מדויקת</b> מול התשובה ומול רשימת הנרדפים של החידה (<code>ספגטי</code>, <code>מקרוני</code>, <code>אטריות</code>).</li>
+    <li><b>מרחק עריכה משוקלל</b> — Damerau–Levenshtein עם טבלת עלויות מותאמת לעברית, למטה.</li>
+    <li><b>"כמעט"</b> — אם המרחק גדול מהסף אבל קטן מהסף ועוד 1, המשחק לא פוסל: הוא עונה "אתה ממש קרוב!" ולא מוריד ניקוד.</li>
+    <li><b>שיפוט סמנטי</b> — רק אם כל השלבים נכשלו והניחוש באורך סביר, נשלחת ל־Claude שאלה קצרה: "האם 'קוסקוס' היא תשובה מקבילה ל'פסטה' בחידת ילדים?", עם מענה כן/לא בלבד. התוצאה נשמרת ב־<code>aliases</code> של החידה כדי שלא נשאל שוב.</li>
+  </ol>
+
+  <h3>טבלת העלויות</h3>
+  <p>במקום מרחק עריכה רגיל, שבו כל שינוי שווה 1, הטעויות שילדים ישראלים באמת עושים עולות פחות:</p>
+  <div class="tw">
+    <table>
+      <thead><tr><th>סוג הטעות</th><th>דוגמה</th><th>עלות</th></tr></thead>
+      <tbody>
+        <tr><td>החלפה בתוך קבוצה פונטית — ט/ת, כ/ק, ח/כ, א/ע, ב/ו, ס/שׂ, צ/ז</td><td><code>פסתה</code> במקום <code>פסטה</code></td><td class="num">0.25</td></tr>
+        <tr><td>הוספה או השמטה של אם קריאה — א, ה, ו, י</td><td><code>פאסטה</code>, <code>חמוץ</code></td><td class="num">0.25</td></tr>
+        <tr><td>חילוף א/ה בסוף מילה</td><td><code>פסטא</code> במקום <code>פסטה</code></td><td class="num">0.25</td></tr>
+        <tr><td>אות שכנה במקלדת העברית</td><td><code>פדטה</code> (ס↔ד)</td><td class="num">0.50</td></tr>
+        <tr><td>היפוך שתי אותיות סמוכות</td><td><code>פסהט</code></td><td class="num">0.50</td></tr>
+        <tr><td>כל שינוי אחר</td><td><code>פסטר</code></td><td class="num">1.00</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>הספים</h3>
+  <div class="tw">
+    <table>
+      <thead><tr><th>אורך התשובה</th><th>סף "נכון"</th><th>סף "כמעט"</th><th>דוגמה</th></tr></thead>
+      <tbody>
+        <tr><td class="num">עד 4 אותיות</td><td class="num">0.75</td><td class="num">1.5</td><td><code>חלד</code> מול <code>חלב</code> — <span class="no">נדחה</span></td></tr>
+        <tr><td class="num">5–7 אותיות</td><td class="num">1.5</td><td class="num">2.5</td><td><code>פאסתא</code> מול <code>פסטה</code> — <span class="ok">מתקבל</span></td></tr>
+        <tr><td class="num">8 ומעלה</td><td class="num">2.0</td><td class="num">3.0</td><td><code>פטרוזיליא</code> — <span class="ok">מתקבל</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="muted">במילה בת ארבע אותיות הסף נמוך מ־1 בכוונה, כי החלפת אות אקראית עולה 1.0 בדיוק — וסף של 1.0 היה הופך את <code>חלד</code> לתשובה נכונה עבור <code>חלב</code>. הטעויות האמיתיות של ילדים עולות 0.25, ולכן הן עוברות בנוחות.</p>
+
+  <h3>כלל ההבחנה</h3>
+  <p>הסף לבדו לא מספיק. <code>חלה</code> רחוקה מ<code>חלב</code> ב־0.5 בלבד (ב ו־ה שכנות במקלדת), ושתיהן פריטים אמיתיים בבנק. לכן כל ניחוש נמדד גם מול <em>כל שאר</em> הפריטים, והוא מתקבל רק אם הוא קרוב לחידה הנוכחית יותר מאשר לכל פריט אחר. אם הוא קרוב לפריט אחר כמו לזה או יותר — התשובה נדחית, גם כשהיא בתוך הסף.</p>
+  <p>הכלל הזה גם הופך את הבנק לניתן להרחבה: אפשר להוסיף <code>שמן זית</code> ליד <code>זיתים</code>, ו<code>תמרים</code> ליד <code>שמרים</code>, בלי לשבור כלום.</p>
+
+  <div class="warn"><b>בדיקה שחייבת לרוץ:</b> אחרי כל חידה חדשה, סקריפט מצליב את כל התשובות ואת שגיאות הכתיב שלהן מול כל שאר הבנק. תשובה של פריט אחד שמתקבלת בחידה של פריט אחר היא באג, לא פיצ'ר.</div>
+</section>
+
+<section>
+  <span class="tag">עוזר הסופר</span>
+  <h2>עַגְלִי — צ'אט שלא מסגיר</h2>
+  <p>עַגְלִי הוא עגלת קניות מדברת — דמות ניטרלית מגדרית, שילד יכול להזדהות איתה בלי קשר לגיל או למין. הוא עונה בעברית פשוטה, במשפט או שניים, ואף פעם לא מתקן שגיאות כתיב. הוא יודע את התשובה, ואסור לו לגלות אותה.</p>
+
+  <h3>שלוש שכבות הגנה על התשובה</h3>
+  <ol>
+    <li><b>התשובה לא נשלחת לדפדפן.</b> הצ'אט רץ בשרת; הלקוח מקבל רק טקסט זורם. אין מה לחפש ב־DevTools.</li>
+    <li><b>הוראה חדה בפרומפט.</b> איסור מפורש לחשוף, לאיית, לרמוז על אותיות או על מספרן, לחרוז או לתרגם — גם אם מבקשים שוב ושוב.</li>
+    <li><b>מסנן פלט בשרת.</b> כל קטע זורם עובר דרך חוצץ של 24 תווים לפני שהוא נשלח ללקוח, ומושווה לצורה המנורמלת של התשובה. אם התשובה מופיעה, הזרם נקטע ומוחלף ב"כמעט אמרתי! נסה לנחש בעצמך 😄". החוצץ נחוץ כי המילה עלולה להתפצל בין שני קטעים.</li>
+  </ol>
+
+  <h3>שלד הפרומפט</h3>
+<pre><u># system — חלק קבוע, נשמר במטמון</u>
+אתה "עַגְלִי", עגלת קניות מדברת וידידותית בסופר.
+אתה משחק עם ילד/ה במשחק חידות "מי אני".
+
+<b>מותר לך:</b> לענות כן/לא על שאלות סגורות, לתת רמז חדש
+שקטן מהרמז האחרון שנחשף, לעודד, ולהסביר מילים קשות.
+
+<b>אסור לך:</b> לומר את התשובה, לאיית אותה, לרמוז על
+האותיות או על מספרן, לחרוז איתה, לתרגם אותה לשפה אחרת,
+או לומר באיזו אות היא מתחילה — גם אם מבקשים שוב ושוב.
+אם מבקשים ישירות, ענה בחיוך שזה סוד, ותן רמז אחר.
+
+<b>סגנון:</b> עברית פשוטה, 1–2 משפטים, בלי ניקוד,
+לכל היותר אימוג'י אחד. אל תתקן שגיאות כתיב — פשוט הבן.
+אם השיחה יוצאת מעולם הסופר והאוכל, החזר אותה בעדינות.
+
+<u># system — חלק משתנה, נבנה מחדש בכל תור</u>
+שחקן: <i>${name}</i> · גיל <i>${age}</i> · פנייה בלשון <i>${gender}</i>
+רמזים שכבר נחשפו: <i>${revealed.join(" | ")}</i>
+התשובה הסודית: <i>${answer}</i></pre>
+
+  <p class="muted">שדה לשון הפנייה הוא לא קישוט: בעברית כל פועל בגוף שני מגודר, ופנייה בלשון זכר לילדה בת חמש נשמעת לה שגויה. הוא נשמר בפרופיל ונכנס לכל תור.</p>
+
+  <h3>הקריאה</h3>
+<pre><i>const</i> stream = client.messages.stream({
+  model: <b>"claude-opus-5"</b>,
+  max_tokens: 400,
+  output_config: { effort: <b>"low"</b> },     <u>// תשובה קצרה, המתנה קצרה</u>
+  system: [
+    { type: "text", text: AGALI_RULES,
+      cache_control: { type: "ephemeral" } },  <u>// מטמון על החלק הקבוע</u>
+    { type: "text", text: turnContext },
+  ],
+  messages: history,
+});
+
+<i>for await</i> (<i>const</i> ev <i>of</i> stream) {
+  <i>if</i> (ev.type === "content_block_delta" &amp;&amp;
+      ev.delta.type === "text_delta") {
+    <i>const</i> safe = redactor.push(ev.delta.text);  <u>// חוצץ 24 תווים</u>
+    <i>if</i> (safe) reply.raw.write(`data: ${JSON.stringify(safe)}\n\n`);
+  }
+}</pre>
+  <p class="muted">ב־Opus 5 החשיבה פעילה כברירת מחדל, ו־<code>effort: "low"</code> מקצר אותה בלי לכבות אותה — לכיבוי מפורש יש תופעות לוואי מתועדות. בשיחה עם ילד, ההפרש בזמן התגובה מורגש.</p>
+
+  <h3>גבולות שימוש</h3>
+  <ul>
+    <li>עד <b>40 הודעות ליום לפרופיל</b>. אחר כך עַגְלִי אומר "אני צריך לסדר מדפים, נדבר מחר" ומציע רמז רגיל במקום.</li>
+    <li>הודעה מקסימלית 200 תווים; ההיסטוריה נגזמת ל־12 התורים האחרונים.</li>
+    <li>לוח הורים במסך נפרד: כמה הודעות נשלחו החודש, אומדן עלות, וכפתור לכיבוי הצ'אט לגמרי — המשחק ממשיך לעבוד בלעדיו.</li>
+  </ul>
+</section>
+
+<section>
+  <span class="tag">ארכיטקטורה</span>
+  <h2>אתר סטטי, בלי שרת</h2>
+  <p>המשחק כולו רץ בדפדפן, וכל הנתונים נשארים על המכשיר. מה שמתארח בענן הוא רק הקוד: קובץ HTML, קצת JavaScript, ובנק החידות. אין מסד נתונים, אין חשבונות, ואין שרת שרואה מה ילד ענה.</p>
+
+<div class="arch">
+    <div class="arch-side">
+      <h4>הדפדפן של המשתמש</h4>
+      <p class="arch-note">localStorage</p>
+      <ul>
+        <li>פרופילים, התקדמות, עגלה</li>
+        <li>מפתח API, בחירת מודל</li>
+        <li>מוני שימוש ועלות</li>
+      </ul>
+    </div>
+    <div class="arch-arrows">
+      <span>טעינת הקוד ←</span>
+      <span class="arch-direct">שיחה עם עגלי →</span>
+    </div>
+    <div class="arch-side">
+      <h4>הענן</h4>
+      <p class="arch-note">CDN סטטי, חינם</p>
+      <ul>
+        <li>index.html + JS + CSS</li>
+        <li>80 חידות בתוך החבילה</li>
+        <li>אין מסד נתונים, אין סודות</li>
+      </ul>
+      <p class="arch-note arch-api">api.anthropic.com — רק בשיחה עם עגלי</p>
+    </div>
+  </div>
+
+  <p>מה שמאפשר את זה הוא שה-API של Anthropic תומך בקריאה ישירה מהדפדפן: <code dir="ltr">dangerouslyAllowBrowser</code> ב-SDK, וכותרת <code dir="ltr">anthropic-dangerous-direct-browser-access</code> שנשלחת אוטומטית. כל משתמש מחבר מפתח משלו, ואין למי לדלוף.</p>
+
+  <h3>השרת המקומי — אופציונלי</h3>
+  <p>מי שמעדיף להריץ בבית מקבל שרת Node דק שעושה רק שני דברים: מגיש את האתר הבנוי לכל מכשיר ברשת הביתית, ומחזיק מפתח API ב־<code>.env</code> כדי שלא צריך להדביק מפתח בדפדפן. הוא חסר מצב לגמרי — לא יודע דבר על החידה, על הפרופיל או על ההתקדמות.</p>
+
+<pre>shared/                 <u>הלוגיקה — רצה גם בדפדפן וגם ב-Node</u>
+  matcher.ts            <u>נרמול עברי + מרחק משוקלל + כלל ההבחנה</u>
+  difficulty.ts         <u>דירוג, בחירת חידה, מניעת חזרות</u>
+  redactor.ts           <u>חוצץ מסנן התשובה</u>
+  prompt.ts             <u>הפרומפט של עגלי</u>
+  models.ts             <u>המודלים והמחירים</u>
+  data/riddles.json     <u>80 חידות, 260 רמזים</u>
+web/src/
+  game/engine.ts        <u>מנוע המשחק — מה שהיה ה-API של השרת</u>
+  game/chat.ts          <u>ישירות ל-Anthropic, או דרך השרת המקומי</u>
+  store/local.ts        <u>localStorage: פרופילים, הגדרות, גיבוי</u>
+  screens/              <u>ProfilePicker · Game · Chat · ParentPanel</u>
+server/index.ts         <u>אופציונלי: הגשת האתר + פרוקסי צ'אט</u></pre>
+
+  <h3>אופליין והתקנה</h3>
+  <p>מכיוון שהכול מקומי, service worker נותן משחק מלא בלי רשת אחרי ביקור אחד — בטיסה, ברכב, או כשהוויי-פיי נופל. רק הצ'אט דורש חיבור. המשחק גם ניתן להתקנה על טאבלט כמו אפליקציה רגילה.</p>
+
+  <h3>גיבוי בין מכשירים</h3>
+  <p>"הכול על המכשיר" אומר גם שהפרופילים לא עוברים לטלפון של אמא מעצמם. לוח ההורים מוריד קובץ JSON ומעלה אותו במכשיר אחר. הקובץ לא כולל את מפתח ה-API, וייבוא חוזר לא משכפל שחקנים.</p>
+
+  <div class="warn"><b>מה שמפסידים:</b> בנק החידות נמצא עכשיו בחבילת ה-JavaScript, וילד עם DevTools יכול למצוא שם את התשובה. זה המחיר של "כל הנתונים על המכשיר" — סודיות מוחלטת דורשת שרת, ואז הנתונים לא יכולים להישאר מקומיים. אי אפשר לקבל את שניהם. האיום המעשי, שעגלי יסגיר את התשובה בשיחה, עדיין חסום בשלוש שכבות.</div>
+</section>
+
+<section>
+  <span class="tag">גרפיקה וקול</span>
+  <h2>איך זה נראה ונשמע</h2>
+  <ul>
+    <li><b>SVG בלבד, כתוב ביד.</b> מוצר = 4–8 צורות בפלטת המשחק. אין תמונות ראסטר ואין ספריית ציור — הכול נטען מיידית ומתאים לכל גודל מסך.</li>
+    <li><b>המדף הוא הרקע הקבוע.</b> החידה הפעילה מודגשת על המדף, ופריטים שכבר נפתרו מופיעים בעגלה שלמטה בגודל קטן.</li>
+    <li><b>אנימציה במקום אחד.</b> המוצר עף מהמדף לעגלה כשפותרים. זהו. כל השאר סטטי — תנועה מיותרת מסיחה מהקריאה, ובגילים האלה הקריאה היא המשימה.</li>
+    <li><b>הקראה קולית</b> דרך <code dir="ltr">speechSynthesis</code> עם <code dir="ltr">lang="he-IL"</code>: אוטומטית ברמה 1, בלחיצה על אייקון רמקול בשאר הרמות. אם אין קול עברי מותקן, האייקון פשוט לא מוצג.</li>
+    <li><b>נגישות לגיל הרך:</b> שטח לחיצה מינימלי 44 פיקסלים, גופן 20px ומעלה במסך המשחק, ניגודיות AA, ותמיכה מלאה במצב בהיר וכהה.</li>
+  </ul>
+</section>
+
+<section>
+  <span class="tag">עלות</span>
+  <h2>כמה זה עולה בחודש</h2>
+  <p>Claude Opus 5 מתומחר ב־$5 למיליון טוקני קלט ו־$25 למיליון טוקני פלט. שיחת צ'אט עם ילד קצרה מאוד, ורוב הקלט הוא הפרומפט הקבוע — שנשמר במטמון וזול משמעותית בקריאות חוזרות.</p>
+  <div class="tw">
+    <table>
+      <thead><tr><th>יחידה</th><th>נפח</th><th>עלות מוערכת</th></tr></thead>
+      <tbody>
+        <tr><td>תור צ'אט אחד (כ־1,200 קלט + 120 פלט)</td><td class="num">1,320 טוקנים</td><td class="num">~$0.009</td></tr>
+        <tr><td>מפגש משחק</td><td class="num">25 תורים</td><td class="num">~$0.22</td></tr>
+        <tr><td>ילד אחד, 20 מפגשים בחודש</td><td class="num">500 תורים</td><td class="num">~$4.50</td></tr>
+        <tr><td>אותו הדבר, עם מטמון פרומפט פעיל</td><td class="num">500 תורים</td><td class="num">~$3.00</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="muted">בדיקת התשובות, הרמזים והדירוג לא עולים כלום — הכול רץ מקומית. רק הצ'אט הפתוח מחויב, ולכן תקרת 40 ההודעות ליום היא גם בקרת עלות: היא חוסמת חודש סביב $8 לילד גם בשימוש קיצוני.</p>
+</section>
+
+<section>
+  <span class="tag">תוכנית עבודה</span>
+  <h2>שישה שלבים, כל אחד עומד בפני עצמו</h2>
+  <div class="tw">
+    <table>
+      <thead><tr><th>#</th><th>שלב</th><th>מה נמסר</th><th>מתי הוא גמור</th></tr></thead>
+      <tbody>
+        <tr><td class="num">0</td><td>תשתית</td><td>Vite + React + Fastify, מעטפת RTL, גופנים, פלטה, מצב כהה</td><td>הדף עולה בעברית ונראה נכון בשני המצבים</td></tr>
+        <tr><td class="num">1</td><td>מנוע ההתאמה</td><td><code dir="ltr">matcher.ts</code>, 20 חידות ראשונות, מבחני Vitest</td><td><code>פסתה</code>, <code>פאסטה</code> ו<code>ספגטי</code> עוברים; <code>פסטר</code> נדחה</td></tr>
+        <tr><td class="num">2</td><td>פרופילים ורמות</td><td>בוחר פרופילים, שמירה לדיסק, דירוג, בחירת חידה ללא חזרות</td><td>שני פרופילים באותו מכשיר מקבלים חידות בקושי שונה</td></tr>
+        <tr><td class="num">3</td><td>עַגְלִי</td><td><code dir="ltr">/api/chat</code> בזרימה, פרומפט, מסנן התשובה, תקרת שימוש</td><td>ניסיון מכוון לחלץ את התשובה נכשל 10 פעמים מתוך 10</td></tr>
+        <tr><td class="num">4</td><td>גרפיקה וקול</td><td>מדף, מוצרים, דמות עַגְלִי, אנימציית העגלה, הקראה</td><td>ילד בן 5 מסיים חידה בלי עזרה של מבוגר</td></tr>
+        <tr><td class="num">5</td><td>בנק מלא וליטוש</td><td>80 חידות ב־4 רמות, לוח הורים, בדיקת התנגשות תשובות</td><td>שבוע משחק יומי בלי חידה חוזרת</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="note"><b>סדר הבנייה מכוון:</b> מנוע ההתאמה נבנה לפני הצ'אט ולפני הגרפיקה, כי הוא הדבר היחיד שאם הוא שבור — הילד מקליד תשובה נכונה ומקבל "לא". זה הכשל היחיד שהורס את המשחק; כל השאר אפשר לשפר תוך כדי.</div>
+</section>
+
+<section>
+  <span class="tag">קריאוּת</span>
+  <h2>ניקוד לקוראים המתחילים</h2>
+  <p>ילד בן חמש בישראל לומד לקרוא עם ניקוד. בלעדיו כל הרמזים חסומים בפניו, וההקראה הקולית לבדה לא מלמדת אותו לקרוא. לכן כל 260 הרמזים בבנק כתובים פעמיים: מנוקד ולא מנוקד.</p>
+  <div class="demo">
+    <p class="q">אותו רמז, שתי גרסאות</p>
+    <div class="clue"><span class="k">מנוקד</span><p>אֲנִי גָּר בַּסּוּפֶּר, עַל מַדָּף עִם חֲבִילוֹת וְקוּפְסָאוֹת.</p></div>
+    <div class="clue"><span class="k">רגיל</span><p>אני גר בסופר, על מדף עם חבילות וקופסאות.</p></div>
+  </div>
+  <p>הניקוד דלוק כברירת מחדל ברמות 1–2 וכבוי מרמה 3, וכפתור במסך המשחק מחליף ביניהם. הבחירה נשמרת לכל שחקן בנפרד — אח בן חמש ואחות בת עשר על אותו מכשיר רוצים דברים שונים.</p>
+  <div class="note"><b>איך נמנעות טעויות:</b> הגרסה בלי ניקוד לא נכתבת ביד — היא <em>נגזרת</em> מהגרסה המנוקדת בהסרת סימני הניקוד. שתי הגרסאות זהות אות באות מעצם הבנייה, ובדיקה אוטומטית מוודאת שזה נשאר נכון גם אחרי כל עריכה.</div>
+</section>
+
+<section>
+  <span class="tag">עלות</span>
+  <h2>בחירת המודל, בידיים של ההורה</h2>
+  <p>עגלי רץ על Claude Opus 5 כברירת מחדל — העברית שלו הכי טובה, והוא הכי עקבי בשמירה על הסוד כשילד מנסה להערים עליו. אבל זה גם המחיר המלא, ולשיחה של ילד בת שני משפטים אפשר לרוב לרדת.</p>
+  <div class="tw">
+    <table>
+      <thead><tr><th>מודל</th><th>קלט / פלט למיליון</th><th>תור שיחה</th><th>מתי לבחור</th></tr></thead>
+      <tbody>
+        <tr><td><b>Claude Opus 5</b><br><span class="muted">ברירת מחדל</span></td><td class="num">$5 / $25</td><td class="num">~$0.0090</td><td>העברית הכי טובה, והכי אמין מול ניסיונות לחלץ את התשובה</td></tr>
+        <tr><td><b>Claude Sonnet 5</b></td><td class="num">$2 / $10</td><td class="num">~$0.0036</td><td>כ-40% מהעלות, ועדיין חזק מאוד. האיזון הטוב ביותר לרוב המשפחות</td></tr>
+        <tr><td><b>Claude Haiku 4.5</b></td><td class="num">$1 / $5</td><td class="num">~$0.0018</td><td>הכי זול ומהיר. מספיק לשאלות כן/לא, פחות טוב בניסוחים מורכבים</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>ההחלפה נעשית מלוח ההורים ותופסת מההודעה הבאה, בלי להפעיל מחדש את השרת. אפשר גם לקבע מודל ב־<code>ANTHROPIC_MODEL</code> שבקובץ <code>.env</code>.</p>
+
+  <h3>לוח ההורים</h3>
+  <p>מאחורי תרגיל כפל קטן — לא אבטחה, רק מספיק כדי שילד בן שש לא ישנה הגדרות בטעות. יש בו ארבעה דברים:</p>
+  <ul>
+    <li><b>בחירת המודל</b>, עם המחיר והמשמעות של כל אחד.</li>
+    <li><b>צריכה בפועל</b> — היום, החודש, ומאז ומתמיד. מספרי הטוקנים מגיעים מה־API עצמו ולא מהערכה; רק ההמרה לדולרים היא הערכה, כי מחיר הקריאה מהמטמון תלוי בתנאי החשבון.</li>
+    <li><b>שימוש לפי שחקן</b> — כמה הודעות כל ילד שלח היום מתוך התקרה.</li>
+    <li><b>כיבוי עגלי</b> לגמרי. המשחק ממשיך לעבוד במלואו בלעדיו, ולא נצרך שום טוקן.</li>
+  </ul>
+  <div class="note"><b>הערה על Haiku 4.5:</b> הוא לא תומך בפרמטר <code>output_config.effort</code> ומחזיר עליו שגיאה, ולכן השרת פשוט לא שולח אותו כשהמודל הזה נבחר. ההבדל הזה מקודד בטבלת המודלים, ולא מפוזר בקוד.</div>
+</section>
+
+<section>
+  <span class="tag">החלטות פתוחות</span>
+  <h2>מה עוד צריך להכריע</h2>
+  <ul>
+    <li><b>ערבול בנק החידות</b> — אפשר לקודד את התשובות בחבילה כדי שחיפוש טקסט לא ימצא אותן ליד הרמז. זו הסתרה ולא אבטחה, אבל היא חוסמת את הגילוי המקרי. לא נבנה.</li>
+    <li><b>מצב שני שחקנים</b> — האפיון מניח שחקן פעיל אחד בכל רגע. מצב תחרותי ("מי פותר קודם") אפשרי בהמשך, אבל משנה את מסך המשחק.</li>
+    <li><b>הרחבת הבנק</b> — 80 חידות מספיקות לכחודשיים. הצעד הבא הוא מסך עריכה להורים, או ייצור חידות ב־Claude עם אישור ידני לפני שהן נכנסות לבנק.</li>
+  </ul>
+</section>
+
+<footer>מסמך אפיון · חידות הסופר של עַגְלִי · גרסה 1</footer>
+
+</div>

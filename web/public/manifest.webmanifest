@@ -1,0 +1,27 @@
+{
+  "name": "עגלי — חידות בסופר",
+  "short_name": "עגלי",
+  "description": "משחק חידות מי אני בעברית לילדים, בין מדפי הסופר",
+  "lang": "he",
+  "dir": "rtl",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#fdf4e6",
+  "theme_color": "#23955c",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "./icon-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}
