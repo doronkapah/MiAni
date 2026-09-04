@@ -1,5 +1,7 @@
 # עַגְלִי — חידות "מי אני" בסופר
 
+**משחקים כאן: <https://doronkapah.github.io/MiAni/>**
+
 משחק חידות בעברית לילדים בגילאי 4–10. כל ילד בוחר פרופיל, מקבל חידה עם רמזים
 שנחשפים אחד־אחד, ויכול לשאול את עַגְלִי — עגלת קניות מדברת — שאלות כן/לא.
 התשובות של הילדים נבדקות בסלחנות מלאה לשגיאות כתיב; החידות עצמן כתובות
@@ -48,12 +50,18 @@ npm run build          # יוצר dist-web/
 npm run preview        # בדיקה מקומית של הבנייה
 ```
 
-מעלים את `dist-web` לכל אירוח סטטי — Cloudflare Pages, Netlify, GitHub Pages,
-Vercel. כולם חינם לזה. **צריך HTTPS** כדי שה-service worker וההתקנה יעבדו.
+### GitHub Pages — מוגדר ועובד
 
-הגדרה אחת נדרשת בכל האירוחים: **SPA fallback** — כל נתיב שלא נמצא צריך להחזיר
-את `index.html`. ב-Netlify ו-Cloudflare Pages זו ברירת המחדל; ב-GitHub Pages
-מעתיקים את `index.html` גם ל-`404.html`.
+כל דחיפה ל-`main` מריצה את `.github/workflows/deploy.yml`, שמריץ בדיקות, בונה
+ומפרסם. הבנייה מקבלת `BASE_PATH=/<repo>/` כי Pages מגיש תחת תת-נתיב, ומעתיקה
+את `index.html` גם ל-`404.html` כ-SPA fallback.
+
+### אירוח אחר
+
+מעלים את `dist-web` לכל אירוח סטטי — Cloudflare Pages, Netlify, Vercel. כולם
+חינם לזה. **צריך HTTPS** כדי שה-service worker וההתקנה יעבדו, ו-**SPA fallback**
+כדי שכל נתיב יחזיר את `index.html`. אם האתר יושב בשורש הדומיין, אין צורך
+ב-`BASE_PATH`.
 
 אין משתני סביבה, אין סודות, ואין מה להגדיר בצד השרת.
 
