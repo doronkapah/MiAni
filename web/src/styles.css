@@ -1187,3 +1187,48 @@ input {
 .chat-disabled p {
   margin: 0;
 }
+
+/* --------------------------------------------- קבוצות אווטארים */
+
+.avatar-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.avatar-group + .avatar-group {
+  margin-top: 6px;
+}
+
+.avatar-group-title {
+  font-family: "Secular One", "Varela Round", sans-serif;
+  font-size: 17px;
+  font-weight: 400;
+  margin: 0;
+  color: var(--ink-2);
+}
+
+/* הקבוצה הראשונה היא ההמלצה — מסומנת בצהוב של שלטי המדף */
+.avatar-group:first-of-type .avatar-group-title {
+  display: inline-flex;
+  align-self: flex-start;
+  background: var(--tag);
+  color: var(--tag-ink);
+  padding: 5px 14px;
+  border-radius: 999px;
+}
+
+.avatar-pick {
+  gap: 2px;
+}
+
+.avatar-pick small {
+  font-size: 12px;
+  color: var(--ink-2);
+  line-height: 1.2;
+}
+
+.avatar-pick.on small {
+  color: var(--green-deep);
+  font-weight: 700;
+}

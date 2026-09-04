@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { AVATARS, AvatarArt } from "../art/avatars";
+import { AVATARS, AVATAR_GROUPS, AvatarArt } from "../art/avatars";
 import { Agali } from "../art/Agali";
 import type { PublicProfile } from "../game/engine";
 
@@ -141,18 +141,25 @@ export function ProfilePicker({
 
           <div className="field">
             <span>בחרו דמות</span>
-            <div className="avatar-grid">
-              {AVATARS.map((option) => (
-                <button
-                  key={option.id}
-                  className={`avatar-pick ${avatar === option.id ? "on" : ""}`}
-                  onClick={() => setAvatar(option.id)}
-                  aria-label={option.label}
-                >
-                  <AvatarArt id={option.id} size={64} />
-                </button>
-              ))}
-            </div>
+            {AVATAR_GROUPS.map((group) => (
+              <div className="avatar-group" key={group.title}>
+                <h3 className="avatar-group-title">{group.title}</h3>
+                <div className="avatar-grid">
+                  {group.avatars.map((option) => (
+                    <button
+                      key={option.id}
+                      className={`avatar-pick ${avatar === option.id ? "on" : ""}`}
+                      onClick={() => setAvatar(option.id)}
+                      aria-label={option.label}
+                      title={option.label}
+                    >
+                      <AvatarArt id={option.id} size={64} />
+                      <small>{option.label}</small>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
 
           <div className="row">
