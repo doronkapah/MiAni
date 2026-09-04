@@ -11,6 +11,7 @@ export function ProfilePicker({
   onCreate,
   onDelete,
   onParentPanel,
+  onParentMode,
 }: {
   profiles: PublicProfile[];
   onPick: (profile: PublicProfile) => void;
@@ -22,6 +23,7 @@ export function ProfilePicker({
   }) => void;
   onDelete: (id: string) => void;
   onParentPanel: () => void;
+  onParentMode: () => void;
 }) {
   const [creating, setCreating] = useState(profiles.length === 0);
   const [name, setName] = useState("");
@@ -55,6 +57,17 @@ export function ProfilePicker({
 
       {!creating && (
         <>
+          <div className="play-modes">
+            <div className="play-mode on">
+              <strong>🧒 ילד משחק</strong>
+              <small>בוחרים שחקן ומתחילים. הילד מקליד את התשובות.</small>
+            </div>
+            <button className="play-mode" onClick={onParentMode}>
+              <strong>🚗 הורה שואל</strong>
+              <small>אתם מקריאים, הילדים עונים בפה. לנסיעה ולארוחה.</small>
+            </button>
+          </div>
+
           <div className="profile-grid">
             {profiles.map((profile) => (
               <div className="profile-card-wrap" key={profile.id}>

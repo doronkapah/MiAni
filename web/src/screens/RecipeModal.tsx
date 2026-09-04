@@ -14,12 +14,15 @@ export function RecipeModal({
   recipe,
   nikud,
   remaining,
+  owner,
   onClose,
 }: {
   recipe: Recipe;
   nikud: boolean;
   /** כמה מתכונים נוספים נפתחו באותו רגע */
   remaining: number;
+  /** במצב "הורה שואל" — של מי המתכון */
+  owner?: string;
   onClose: () => void;
 }) {
   const closeRef = useRef<HTMLButtonElement>(null);
@@ -56,7 +59,9 @@ export function RecipeModal({
         aria-label={`מתכון חדש: ${recipe.name}`}
         onClick={(event) => event.stopPropagation()}
       >
-        <p className="recipe-banner">🎉 פתחת מתכון חדש!</p>
+        <p className="recipe-banner">
+          {owner ? `🎉 ${owner} פתח/ה מתכון חדש!` : "🎉 פתחת מתכון חדש!"}
+        </p>
 
         <div className="recipe-head">
           <RecipeArt art={recipe.art} size={110} title={recipe.name} />

@@ -1506,3 +1506,269 @@ input {
   background: var(--tag);
   border-radius: 999px;
 }
+
+/* -------------------------------------------- מצבי משחק והסבר */
+
+.play-modes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.play-mode {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: start;
+  padding: 16px 18px;
+  border-radius: var(--radius);
+  border: 3px solid var(--line);
+  background: var(--card);
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+
+.play-mode:hover {
+  border-color: var(--green);
+}
+
+.play-mode.on {
+  border-color: var(--green);
+  background: var(--green-soft);
+  cursor: default;
+}
+
+.play-mode strong {
+  font-size: 19px;
+}
+
+.play-mode small {
+  font-size: 14.5px;
+  color: var(--ink-2);
+  line-height: 1.45;
+}
+
+.mode-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+}
+
+.mode-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: start;
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 3px solid var(--line);
+  background: var(--paper);
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+
+.mode-card.on {
+  border-color: var(--green);
+  background: var(--green-soft);
+}
+
+.mode-card small {
+  font-size: 14.5px;
+  color: var(--ink-2);
+  line-height: 1.45;
+}
+
+.howto {
+  background: var(--card);
+  border: 4px solid var(--green);
+  border-radius: 22px;
+  padding: 24px;
+  max-width: 520px;
+  width: 100%;
+  max-height: 92dvh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  animation: recipe-in 0.3s ease;
+}
+
+.howto h1 {
+  font-size: 30px;
+  color: var(--green-deep);
+}
+
+.howto-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.howto-list li {
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  gap: 12px;
+  align-items: start;
+}
+
+.howto-icon {
+  font-size: 28px;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.howto-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.howto-text strong {
+  font-size: 18px;
+}
+
+.howto-text small {
+  font-size: 15.5px;
+  color: var(--ink-2);
+  line-height: 1.5;
+}
+
+/* -------------------------------------------- מסך ההורה */
+
+.shelf-sign.vague {
+  background: var(--ink-3);
+  font-style: italic;
+}
+
+.scoreboard {
+  display: flex;
+  gap: 8px;
+  flex: 1;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.score-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  padding: 4px 12px 4px 6px;
+  font-size: 15px;
+  white-space: nowrap;
+}
+
+.score-chip strong {
+  background: var(--tag);
+  color: var(--tag-ink);
+  border-radius: 999px;
+  min-width: 24px;
+  text-align: center;
+  padding: 0 6px;
+}
+
+.parent-answer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  background: var(--tag);
+  color: var(--tag-ink);
+  border-radius: 14px;
+  padding: 12px 16px;
+}
+
+.parent-answer-label {
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  opacity: 0.8;
+}
+
+.parent-answer-value {
+  flex: 1;
+  min-width: 140px;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  text-align: start;
+  font-family: "Secular One", sans-serif;
+  font-size: 26px;
+  color: inherit;
+}
+
+.parent-answer small {
+  font-size: 14px;
+  opacity: 0.75;
+}
+
+.who-solved {
+  border-top: 2px dashed var(--line);
+  padding-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.who-solved-title {
+  margin: 0;
+  font-family: "Secular One", sans-serif;
+  font-size: 21px;
+  color: var(--green-deep);
+}
+
+.who-solved-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.winner-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 92px;
+  padding: 10px 14px;
+  border-radius: 16px;
+  border: 3px solid var(--green);
+  background: var(--green-soft);
+  cursor: pointer;
+  font: inherit;
+  color: var(--green-deep);
+  font-weight: 700;
+}
+
+.winner-btn:hover {
+  background: var(--card);
+}
+
+.winner-btn:active {
+  transform: translateY(2px);
+}
+
+.awarded {
+  margin: 0;
+  background: var(--green-soft);
+  color: var(--green-deep);
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-size: 18px;
+}
+
+@media (max-width: 620px) {
+  .scoreboard {
+    justify-content: flex-start;
+  }
+
+  .score-chip {
+    font-size: 13.5px;
+  }
+}

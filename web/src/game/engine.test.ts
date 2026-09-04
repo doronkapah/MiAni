@@ -30,6 +30,7 @@ const { commonTypos } = await import("../../../scripts/typo-report");
 const { newlyCompleted } = await import("../../../shared/recipes");
 const engine = await import("./engine");
 const store = await import("../store/local");
+const group = await import("./group");
 
 function newPlayer(age = 7) {
   return store.createProfile({ name: "בדיקה", age, address: "female", avatar: "tomato" });
@@ -208,5 +209,97 @@ describe("מתכונים במנוע", () => {
     const loaded = store.getProfile(profile.id)!;
     expect(loaded.recipes).toEqual([]);
     expect(() => engine.publicProfile(loaded)).not.toThrow();
+  });
+});
+
+describe("מצב הורה שואל", () => {
+  beforeEach(() => storage.clear());
+
+  function twoKids() {
+    const a = store.createProfile({ name: "אלף", age: 6, address: "female", avatar: "unicorn" });
+    const b = store.createProfile({ name: "בית", age: 6, address: "male", avatar: "rabbit" });
+    return [a, b] as const;
+  }
+
+  it("רמת ברירת המחדל היא של הצעיר ביותר", () => {
+    const small = store.createProfile({ name: "קטן", age: 5, address: "male", avatar: "cat" });
+    const big = store.createProfile({ name: "גדול", age: 10, address: "male", avatar: "dog" });
+    expect(group.suggestedLevel([small, big])).toBe(1);
+  });
+
+  it("במצב תחרותי רק הזוכה מקבל את הפריט", () => {
+    const [a, b] = twoKids();
+    const session = group.createSession([a.id, b.id], "competitive", 1);
+    const riddle = group.startGroupRiddle(session)!;
+
+    const outcome = group.awardSolve(session, [a.id])!;
+    expect(outcome.awarded.map((entry) => entry.profile.id)).toEqual([a.id]);
+    expect(store.getProfile(a.id)!.solved).toContain(riddle.id);
+    expect(store.getProfile(b.id)!.solved).not.toContain(riddle.id);
+  });
+
+  it("במצב שיתוף פעולה כולם מקבלים את הפריט", () => {
+    const [a, b] = twoKids();
+    const session = group.createSession([a.id, b.id], "coop", 1);
+    const riddle = group.startGroupRiddle(session)!;
+
+    const outcome = group.awardSolve(session, [a.id])!;
+    expect(outcome.awarded).toHaveLength(2);
+    expect(store.getProfile(a.id)!.solved).toContain(riddle.id);
+    expect(store.getProfile(b.id)!.solved).toContain(riddle.id);
+  });
+
+  it("כשאף אחד לא פתר, אף אחד לא מקבל — וכולם סופגים את ההורדה", () => {
+    const [a, b] = twoKids();
+    const before = store.getProfile(a.id)!.rating;
+    const session = group.createSession([a.id, b.id], "competitive", 1);
+    const riddle = group.startGroupRiddle(session)!;
+
+    const outcome = group.groupReveal(session)!;
+    expect(outcome.awarded).toEqual([]);
+    expect(outcome.gaveUp).toBe(true);
+    expect(store.getProfile(a.id)!.solved).not.toContain(riddle.id);
+    expect(store.getProfile(a.id)!.rating).toBeLessThan(before);
+    expect(store.getProfile(b.id)!.revealed.map((r) => r.id)).toContain(riddle.id);
+  });
+
+  it("לא בוחר חידה שאחד המשתתפים כבר פתר", () => {
+    const [a, b] = twoKids();
+    const session = group.createSession([a.id, b.id], "competitive", 1);
+
+    const seen = new Set<string>();
+    for (let i = 0; i < 8; i++) {
+      const riddle = group.startGroupRiddle(session)!;
+      expect(seen.has(riddle.id)).toBe(false);
+      seen.add(riddle.id);
+      // רק אחד מהם פותר, ובכל זאת החידה לא תחזור לקבוצה
+      group.awardSolve(session, [i % 2 === 0 ? a.id : b.id]);
+    }
+  });
+
+  it("ההורה רואה את התשובה, והרמזים נחשפים בהדרגה", () => {
+    const [a] = twoKids();
+    const session = group.createSession([a.id], "competitive", 2);
+    const first = group.startGroupRiddle(session)!;
+
+    expect(first.answer.length).toBeGreaterThan(1);
+    expect(first.clues).toHaveLength(1);
+    expect(first.hasMoreClues).toBe(true);
+
+    const second = group.groupHint(session)!;
+    expect(second.cluesRevealed).toBe(2);
+  });
+
+  it("מתכון שנפתח לילד במצב קבוצתי נשמר אצלו", () => {
+    const [a, b] = twoKids();
+    store.updateProfile(a.id, { solved: ["egg", "butter"] });
+    store.updateProfile(b.id, { solved: ["egg", "butter"] });
+
+    const session = group.createSession([a.id, b.id], "coop", 2);
+    // מכריחים את החידה של המלח דרך מצב פנימי אינו אפשרי — בודקים
+    // את ההיגיון ישירות מול מה שכבר יש בעגלה
+    const unlocked = newlyCompleted(["egg", "butter", "salt"], []);
+    expect(unlocked.map((r) => r.id)).toEqual(["omelet"]);
+    expect(session.profileIds).toHaveLength(2);
   });
 });

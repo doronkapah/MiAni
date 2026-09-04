@@ -17,6 +17,7 @@ import {
   progressInLevel,
 } from "../../../shared/difficulty";
 import { greeting } from "../../../shared/prompt";
+import { aisleView, solvedAisleView, type AisleView } from "../../../shared/aisles";
 import {
   newlyCompleted,
   recipeProgress,
@@ -104,6 +105,8 @@ export interface PublicRiddle {
   cluesRevealed: number;
   cluesTotal: number;
   hasMoreClues: boolean;
+  /** המדף שעליו יושב הפריט — רמז חזותי שנחלש ככל שהרמה עולה */
+  aisle: AisleView;
 }
 
 function publicRound(riddle: Riddle, cluesRevealed: number, level: number): PublicRiddle {
@@ -115,6 +118,7 @@ function publicRound(riddle: Riddle, cluesRevealed: number, level: number): Publ
     cluesRevealed,
     cluesTotal: max,
     hasMoreClues: cluesRevealed < max,
+    aisle: aisleView(riddle.aisle, level),
   };
 }
 
@@ -182,6 +186,7 @@ export interface SolvedResult {
   profile: PublicProfile;
   /** מתכונים שנפתחו בזכות הפריט הזה — קופצים על המסך */
   unlockedRecipes: Recipe[];
+  aisleView: AisleView;
 }
 
 export interface MissResult {
@@ -227,6 +232,7 @@ export function submitAnswer(profileId: string, guess: string): AnswerResult {
       levelUp: change.levelAfter > change.levelBefore,
       profile: publicProfile(updated),
       unlockedRecipes: unlocked,
+      aisleView: solvedAisleView(riddle.aisle),
     };
   }
 
@@ -245,6 +251,7 @@ export interface RevealResult {
   aisle: string;
   art: Riddle["art"];
   profile: PublicProfile;
+  aisleView: AisleView;
 }
 
 /** "גלה לי" — מסיים את החידה ומראה את התשובה */
@@ -271,6 +278,7 @@ export function revealAnswer(profileId: string): RevealResult {
     aisle: riddle.aisle,
     art: riddle.art,
     profile: publicProfile(updated),
+    aisleView: solvedAisleView(riddle.aisle),
   };
 }
 

@@ -5,6 +5,7 @@ import { Shelf } from "../art/Shelf";
 import { Chat } from "./Chat";
 import { RecipeModal } from "./RecipeModal";
 import { RecipeBook } from "./RecipeBook";
+import { HowToPlay, hasSeenHowTo, markHowToSeen } from "./HowToPlay";
 import {
   nextHint,
   revealAnswer,
@@ -16,6 +17,7 @@ import {
 import * as store from "../store/local";
 import type { Art } from "../../../shared/types";
 import type { Recipe } from "../../../shared/recipes";
+import type { AisleView } from "../../../shared/aisles";
 import { canSpeak, speak, stopSpeaking, watchVoices } from "../lib/speech";
 
 interface Solved {
@@ -25,6 +27,7 @@ interface Solved {
   art: Art;
   levelUp: boolean;
   gaveUp: boolean;
+  aisleView: AisleView;
 }
 
 export function Game({
@@ -51,12 +54,21 @@ export function Game({
   // מתכונים שנפתחו עכשיו, מוצגים אחד אחרי השני
   const [unlockedQueue, setUnlockedQueue] = useState<Recipe[]>([]);
   const [bookOpen, setBookOpen] = useState(false);
+  const [howTo, setHowTo] = useState(() => !hasSeenHowTo(profile.id));
   const inputRef = useRef<HTMLInputElement>(null);
 
   const readsAloud = profile.level === 1;
   const chatEnabled = store.getSettings().chatSource !== "off";
 
   useEffect(() => watchVoices(() => setVoiceReady(canSpeak())), []);
+
+  // ההסבר מוצג פעם אחת לכל שחקן, ואחר כך רק לפי בקשה
+  useEffect(() => setHowTo(!hasSeenHowTo(profile.id)), [profile.id]);
+
+  function closeHowTo() {
+    markHowToSeen(profile.id);
+    setHowTo(false);
+  }
 
   // הניקוד נשמר לכל שחקן בנפרד — אח בן 5 ואחות בת 10 רוצים דברים שונים
   useEffect(() => setNikud(readNikudPreference(profile)), [profile.id, profile.level]);
@@ -164,6 +176,10 @@ export function Game({
           <div className="progress-fill" style={{ width: `${Math.round(profile.progress * 100)}%` }} />
         </div>
 
+        <button className="score-btn" onClick={() => setHowTo(true)} title="איך משחקים">
+          ?
+        </button>
+
         <button
           className="score-btn"
           onClick={() => setBookOpen(true)}
@@ -178,11 +194,13 @@ export function Game({
       </header>
 
       <main className="board">
-        <Shelf
-          aisleName={solved ? solved.aisle : "מדף החידה"}
-          solvedArt={solved?.art ?? null}
-          celebrating={Boolean(solved && !solved.gaveUp)}
-        />
+        {(solved || riddle) && (
+          <Shelf
+            aisle={solved ? solved.aisleView : riddle!.aisle}
+            solvedArt={solved?.art ?? null}
+            celebrating={Boolean(solved && !solved.gaveUp)}
+          />
+        )}
 
         <section className="riddle-card">
           {!solved && riddle && (
@@ -293,6 +311,8 @@ export function Game({
           onParentPanel={onParentPanel}
         />
       )}
+
+      {howTo && <HowToPlay onClose={closeHowTo} />}
 
       {unlockedQueue.length > 0 && (
         <RecipeModal
