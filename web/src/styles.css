@@ -2459,3 +2459,47 @@ body {
   max-height: 260px;
   overflow-y: auto;
 }
+
+/* ---------------------------------------- תוכן לפני שהאפליקציה עולה */
+
+/*
+ * מה שיושב ב-#root לפני ש-React מחליף אותו. קיים בשביל זוחלים שלא
+ * מריצים JavaScript, ומשמש בינתיים גם כמסך הטעינה.
+ */
+.prerender {
+  max-width: 620px;
+  margin: 0 auto;
+  padding: 48px 24px;
+  text-align: center;
+  color: var(--ink-2);
+}
+
+.prerender h1 {
+  font-size: clamp(28px, 6vw, 40px);
+  color: var(--green-deep);
+  margin-bottom: 14px;
+}
+
+.prerender p {
+  font-size: 18px;
+  line-height: 1.6;
+  margin: 0 0 16px;
+}
+
+.prerender ul {
+  display: inline-block;
+  text-align: start;
+  padding-inline-start: 22px;
+  margin: 0 0 20px;
+  font-size: 16px;
+  line-height: 1.8;
+}
+
+.prerender li::marker {
+  color: var(--green);
+}
+
+.prerender-loading {
+  font-size: 20px;
+  color: var(--ink-3);
+}
