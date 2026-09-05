@@ -16,6 +16,7 @@ import { publicProfile, type PublicProfile } from "../game/engine";
 import type { Recipe } from "../../../shared/recipes";
 import * as store from "../store/local";
 import { canSpeak, speak, stopSpeaking, watchVoices } from "../lib/speech";
+import { log } from "../lib/log";
 
 /**
  * המסך של ההורה.
@@ -60,6 +61,9 @@ export function ParentGame({
     setRiddle(next);
     setOutcome(null);
     refreshPlayers();
+    log("parent", `חידה חדשה: ${next.answer}`, {
+      data: { mode: session.mode, level: session.level, players: session.profileIds.length },
+    });
   }, [session, refreshPlayers]);
 
   useEffect(() => {
@@ -80,6 +84,9 @@ export function ParentGame({
     setOutcome(result);
     refreshPlayers();
     collectRecipes(result);
+    log("parent", `פתרו: ${result.answer}`, {
+      who: result.awarded.map((entry) => entry.profile.name).join(", "),
+    });
     setWins((current) => {
       const next = { ...current };
       for (const entry of result.awarded) {
@@ -93,6 +100,7 @@ export function ParentGame({
   function nobody() {
     const result = groupReveal(session);
     if (!result) return;
+    log("parent", `אף אחד לא פתר: ${result.answer}`);
     setOutcome(result);
     refreshPlayers();
     stopSpeaking();
@@ -136,15 +144,16 @@ export function ParentGame({
       </header>
 
       <main className="board">
-        {(riddle || outcome) && (
-          <Shelf
-            aisle={outcome ? outcome.aisleView : riddle!.aisle}
-            solvedArt={outcome?.art ?? null}
-            celebrating={Boolean(outcome && !outcome.gaveUp)}
-          />
-        )}
+        <div className="stage" key={riddle?.id ?? "none"}>
+          {(riddle || outcome) && (
+            <Shelf
+              aisle={outcome ? outcome.aisleView : riddle!.aisle}
+              solvedArt={outcome?.art ?? null}
+              celebrating={Boolean(outcome && !outcome.gaveUp)}
+            />
+          )}
 
-        <section className="riddle-card">
+          <section className="riddle-card">
           {!outcome && riddle && (
             <>
               <div className="parent-answer">
@@ -231,8 +240,9 @@ export function ParentGame({
                 החידה הבאה
               </button>
             </div>
-          )}
-        </section>
+            )}
+          </section>
+        </div>
       </main>
 
       {recipeQueue.length > 0 && (

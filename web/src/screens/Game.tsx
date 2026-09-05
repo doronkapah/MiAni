@@ -3,6 +3,7 @@ import { AvatarArt } from "../art/avatars";
 import { Product } from "../art/Product";
 import { Shelf } from "../art/Shelf";
 import { Chat } from "./Chat";
+import { Cart } from "./Cart";
 import { RecipeModal } from "./RecipeModal";
 import { RecipeBook } from "./RecipeBook";
 import { HowToPlay, hasSeenHowTo, markHowToSeen } from "./HowToPlay";
@@ -15,6 +16,8 @@ import {
   type PublicRiddle,
 } from "../game/engine";
 import * as store from "../store/local";
+import { FEATURES } from "../config";
+import { log } from "../lib/log";
 import type { Art } from "../../../shared/types";
 import type { Recipe } from "../../../shared/recipes";
 import type { AisleView } from "../../../shared/aisles";
@@ -51,27 +54,25 @@ export function Game({
   const [finished, setFinished] = useState<string | null>(null);
   const [voiceReady, setVoiceReady] = useState(canSpeak());
   const [nikud, setNikud] = useState(() => readNikudPreference(profile));
-  // מתכונים שנפתחו עכשיו, מוצגים אחד אחרי השני
   const [unlockedQueue, setUnlockedQueue] = useState<Recipe[]>([]);
-  const [bookOpen, setBookOpen] = useState(false);
-  const [howTo, setHowTo] = useState(() => !hasSeenHowTo(profile.id));
+  const [overlay, setOverlay] = useState<"none" | "cart" | "book" | "howto">("none");
   const inputRef = useRef<HTMLInputElement>(null);
 
   const readsAloud = profile.level === 1;
-  const chatEnabled = store.getSettings().chatSource !== "off";
+  const chatEnabled = FEATURES.agaliChat && store.getSettings().chatSource !== "off";
 
   useEffect(() => watchVoices(() => setVoiceReady(canSpeak())), []);
 
   // ההסבר מוצג פעם אחת לכל שחקן, ואחר כך רק לפי בקשה
-  useEffect(() => setHowTo(!hasSeenHowTo(profile.id)), [profile.id]);
+  useEffect(() => {
+    if (!hasSeenHowTo(profile.id)) setOverlay("howto");
+    setNikud(readNikudPreference(profile));
+  }, [profile.id, profile.level]);
 
   function closeHowTo() {
     markHowToSeen(profile.id);
-    setHowTo(false);
+    setOverlay("none");
   }
-
-  // הניקוד נשמר לכל שחקן בנפרד — אח בן 5 ואחות בת 10 רוצים דברים שונים
-  useEffect(() => setNikud(readNikudPreference(profile)), [profile.id, profile.level]);
 
   function toggleNikud() {
     setNikud((on) => {
@@ -90,6 +91,7 @@ export function Game({
     const data = startRiddle(profile.id);
     if (data.done) {
       setFinished(data.message ?? "פתרת הכול!");
+      log("riddle", "נגמרו החידות", { who: profile.name });
       return;
     }
     setRiddle(data.riddle ?? null);
@@ -100,7 +102,11 @@ export function Game({
     setGuess("");
     setChatOpen(false);
     setUnlockedQueue([]);
-  }, [profile.id, setProfile]);
+    log("riddle", "חידה חדשה", {
+      who: profile.name,
+      data: { id: data.riddle?.id, level: profile.level, aisle: data.riddle?.aisle.sign },
+    });
+  }, [profile.id, profile.name, profile.level, setProfile]);
 
   useEffect(() => {
     loadRiddle();
@@ -119,6 +125,11 @@ export function Game({
     if (!text || solved) return;
     try {
       const result = submitAnswer(profile.id, text);
+      log("answer", `ניחוש: ${text}`, {
+        who: profile.name,
+        data: { riddle: riddle?.id, status: result.status },
+      });
+
       if (result.status === "correct") {
         setProfile(result.profile);
         setSolved({ ...result, gaveUp: false });
@@ -126,12 +137,16 @@ export function Game({
         setUnlockedQueue(result.unlockedRecipes);
         stopSpeaking();
         if (voiceReady) speak(`נכון! ${result.answer}`);
+        for (const recipe of result.unlockedRecipes) {
+          log("recipe", `נפתח מתכון: ${recipe.name}`, { who: profile.name });
+        }
       } else {
         setFeedback({ text: result.message, tone: result.status });
         setGuess("");
         inputRef.current?.focus();
       }
     } catch (error) {
+      log("answer", (error as Error).message, { who: profile.name, level: "error" });
       setFeedback({ text: (error as Error).message, tone: "wrong" });
     }
   }
@@ -140,6 +155,7 @@ export function Game({
     if (!riddle?.hasMoreClues) return;
     setRiddle(nextHint(profile.id));
     setFeedback(null);
+    log("riddle", "רמז נוסף", { who: profile.name, data: { riddle: riddle.id } });
   }
 
   function giveUp() {
@@ -148,6 +164,7 @@ export function Game({
     setProfile(data.profile);
     setSolved({ ...data, levelUp: false, gaveUp: true });
     stopSpeaking();
+    log("riddle", `גלה לי: ${data.answer}`, { who: profile.name });
   }
 
   if (finished) {
@@ -161,143 +178,175 @@ export function Game({
     );
   }
 
+  const recipesOpen = profile.recipes.filter((recipe) => recipe.unlocked).length;
+
   return (
     <div className="game">
       <header className="topbar">
         <button className="who" onClick={onSwitchProfile}>
-          <AvatarArt id={profile.avatar} size={44} />
+          <AvatarArt id={profile.avatar} size={38} />
           <span className="who-text">
             <strong>{profile.name}</strong>
             <small>{profile.levelName}</small>
           </span>
         </button>
 
-        <div className="progress" aria-label={`התקדמות ברמה ${profile.level}`}>
-          <div className="progress-fill" style={{ width: `${Math.round(profile.progress * 100)}%` }} />
-        </div>
-
-        <button className="score-btn" onClick={() => setHowTo(true)} title="איך משחקים">
-          ?
-        </button>
-
-        <button
-          className="score-btn"
-          onClick={() => setBookOpen(true)}
-          title="ספר המתכונים"
-        >
-          📖 <strong>{profile.recipes.filter((recipe) => recipe.unlocked).length}</strong>
-        </button>
-
-        <div className="score" title="פריטים בעגלה">
-          🛒 <strong>{profile.solvedCount}</strong>
+        <div className="topbar-actions">
+          <button className="icon-btn" onClick={() => setOverlay("howto")} aria-label="איך משחקים">
+            ?
+          </button>
+          <button
+            className="icon-btn"
+            onClick={() => setOverlay("book")}
+            aria-label={`ספר המתכונים, ${recipesOpen} פתוחים`}
+          >
+            📖<b>{recipesOpen}</b>
+          </button>
+          <button
+            className="icon-btn"
+            onClick={() => setOverlay("cart")}
+            aria-label={`העגלה שלי, ${profile.solvedCount} פריטים`}
+          >
+            🛒<b>{profile.solvedCount}</b>
+          </button>
         </div>
       </header>
 
+      <div className="progress" aria-label={`התקדמות ברמה ${profile.level}`}>
+        <div className="progress-fill" style={{ width: `${Math.round(profile.progress * 100)}%` }} />
+      </div>
+
       <main className="board">
-        {(solved || riddle) && (
-          <Shelf
-            aisle={solved ? solved.aisleView : riddle!.aisle}
-            solvedArt={solved?.art ?? null}
-            celebrating={Boolean(solved && !solved.gaveUp)}
-          />
-        )}
+        {/* המפתח מכריח ריצה מחדש של האנימציה בכל חידה */}
+        <div className="stage" key={riddle?.id ?? "none"}>
+          {(solved || riddle) && (
+            <Shelf
+              aisle={solved ? solved.aisleView : riddle!.aisle}
+              solvedArt={solved?.art ?? null}
+              celebrating={Boolean(solved && !solved.gaveUp)}
+            />
+          )}
 
-        <section className="riddle-card">
-          {!solved && riddle && (
-            <>
-              <h1 className="riddle-title">מי אני?</h1>
+          <section className="riddle-card">
+            {!solved && riddle && (
+              <>
+                <h1 className="riddle-title">מי אני?</h1>
 
-              <ol className="clues">
-                {riddle.clues.map((clue, index) => (
-                  <li key={index}>
-                    <span className="clue-num">רמז {index + 1}</span>
-                    <p className={nikud ? "nikud" : ""}>
-                      {nikud ? (riddle.cluesNikud[index] ?? clue) : clue}
-                    </p>
-                    {voiceReady && (
-                      <button
-                        className="speak-btn"
-                        onClick={() => speak(clue)}
-                        aria-label="הקראת הרמז"
-                      >
-                        🔊
-                      </button>
-                    )}
-                  </li>
-                ))}
-                {riddle.hasMoreClues && (
-                  <li className="clue-locked">
-                    <span className="clue-num">רמז {riddle.cluesRevealed + 1}</span>
-                    <p>עדיין סגור</p>
-                  </li>
-                )}
-              </ol>
+                <ol className="clues">
+                  {riddle.clues.map((clue, index) => (
+                    <li key={index}>
+                      <span className="clue-num">רמז {index + 1}</span>
+                      <p className={nikud ? "nikud" : ""}>
+                        {nikud ? (riddle.cluesNikud[index] ?? clue) : clue}
+                      </p>
+                      {voiceReady && (
+                        <button
+                          className="speak-btn"
+                          onClick={() => speak(clue)}
+                          aria-label="הקראת הרמז"
+                        >
+                          🔊
+                        </button>
+                      )}
+                    </li>
+                  ))}
+                  {riddle.hasMoreClues && (
+                    <li className="clue-locked">
+                      <span className="clue-num">רמז {riddle.cluesRevealed + 1}</span>
+                      <p>עדיין סגור</p>
+                    </li>
+                  )}
+                </ol>
 
-              <form
-                className="guess-row"
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  checkGuess();
-                }}
-              >
-                <input
-                  ref={inputRef}
-                  value={guess}
-                  onChange={(event) => setGuess(event.target.value)}
-                  placeholder="מה אני? כתבו כאן…"
-                  maxLength={40}
-                  autoComplete="off"
-                />
-                <button className="btn primary big" type="submit" disabled={!guess.trim()}>
-                  בדקו!
-                </button>
-              </form>
-
-              {feedback && (
-                <p className={`feedback ${feedback.tone}`} role="status">
-                  {feedback.text}
-                </p>
-              )}
-
-              <div className="actions">
-                <button className="btn" onClick={askHint} disabled={!riddle.hasMoreClues}>
-                  {riddle.hasMoreClues ? "עוד רמז" : "אין עוד רמזים"}
-                </button>
-                <button className="btn" onClick={() => setChatOpen((open) => !open)}>
-                  {chatOpen ? "סגירת עגלי" : "שאלו את עגלי"}
-                </button>
-                <button
-                  className={`btn toggle ${nikud ? "on" : ""}`}
-                  onClick={toggleNikud}
-                  aria-pressed={nikud}
+                <form
+                  className="guess-row"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    checkGuess();
+                  }}
                 >
-                  נִיקּוּד {nikud ? "פועל" : "כבוי"}
-                </button>
-                <button className="btn ghost" onClick={giveUp}>
-                  גלה לי
-                </button>
-              </div>
-            </>
-          )}
+                  <input
+                    ref={inputRef}
+                    value={guess}
+                    onChange={(event) => setGuess(event.target.value)}
+                    placeholder="מה אני? כתבו כאן…"
+                    maxLength={40}
+                    autoComplete="off"
+                  />
+                  <button className="btn primary big" type="submit" disabled={!guess.trim()}>
+                    בדקו!
+                  </button>
+                </form>
 
-          {solved && (
-            <div className="solved">
-              <div className="solved-art">
-                <Product shape={solved.art.shape} color={solved.art.color} size={120} />
+                {feedback && (
+                  <p className={`feedback ${feedback.tone}`} role="status">
+                    {feedback.text}
+                  </p>
+                )}
+
+                <div className="actions">
+                  <button className="btn" onClick={askHint} disabled={!riddle.hasMoreClues}>
+                    {riddle.hasMoreClues ? "עוד רמז" : "אין עוד רמזים"}
+                  </button>
+                  {chatEnabled && (
+                    <button className="btn" onClick={() => setChatOpen((open) => !open)}>
+                      {chatOpen ? "סגירת עגלי" : "שאלו את עגלי"}
+                    </button>
+                  )}
+                  <button
+                    className={`btn toggle ${nikud ? "on" : ""}`}
+                    onClick={toggleNikud}
+                    aria-pressed={nikud}
+                  >
+                    נִיקּוּד {nikud ? "פועל" : "כבוי"}
+                  </button>
+                  <button className="btn ghost" onClick={giveUp}>
+                    גלה לי
+                  </button>
+                </div>
+              </>
+            )}
+
+            {solved && (
+              <div className="solved">
+                <div className="solved-art">
+                  <Product shape={solved.art.shape} color={solved.art.color} size={104} />
+                </div>
+                <h1 className={solved.gaveUp ? "muted-title" : ""}>
+                  {solved.gaveUp ? "התשובה היא" : "כל הכבוד!"}
+                </h1>
+                <p className="answer">{solved.answer}</p>
+                <p className="reveal">{solved.reveal}</p>
+                {solved.levelUp && (
+                  <p className="levelup">🎉 עלית רמה! עכשיו {profile.levelName}</p>
+                )}
+                <button className="btn primary big" onClick={loadRiddle}>
+                  החידה הבאה
+                </button>
               </div>
-              <h1 className={solved.gaveUp ? "muted-title" : ""}>
-                {solved.gaveUp ? "התשובה היא" : "כל הכבוד!"}
-              </h1>
-              <p className="answer">{solved.answer}</p>
-              <p className="reveal">{solved.reveal}</p>
-              {solved.levelUp && <p className="levelup">🎉 עלית רמה! עכשיו {profile.levelName}</p>}
-              <button className="btn primary big" onClick={loadRiddle}>
-                החידה הבאה
-              </button>
-            </div>
-          )}
-        </section>
+            )}
+          </section>
+        </div>
       </main>
+
+      {overlay === "howto" && <HowToPlay onClose={closeHowTo} />}
+      {overlay === "cart" && <Cart items={profile.cart} onClose={() => setOverlay("none")} />}
+      {overlay === "book" && (
+        <RecipeBook
+          recipes={profile.recipes}
+          nikud={nikud}
+          onClose={() => setOverlay("none")}
+        />
+      )}
+
+      {unlockedQueue.length > 0 && (
+        <RecipeModal
+          recipe={unlockedQueue[0]!}
+          nikud={nikud}
+          remaining={unlockedQueue.length - 1}
+          onClose={() => setUnlockedQueue((queue) => queue.slice(1))}
+        />
+      )}
 
       {chatOpen && riddle && !solved && (
         <Chat
@@ -310,39 +359,6 @@ export function Game({
           onClose={() => setChatOpen(false)}
           onParentPanel={onParentPanel}
         />
-      )}
-
-      {howTo && <HowToPlay onClose={closeHowTo} />}
-
-      {unlockedQueue.length > 0 && (
-        <RecipeModal
-          recipe={unlockedQueue[0]!}
-          nikud={nikud}
-          remaining={unlockedQueue.length - 1}
-          onClose={() => setUnlockedQueue((queue) => queue.slice(1))}
-        />
-      )}
-
-      {bookOpen && (
-        <RecipeBook
-          recipes={profile.recipes}
-          nikud={nikud}
-          onClose={() => setBookOpen(false)}
-        />
-      )}
-
-      {profile.cart.length > 0 && (
-        <footer className="cart" aria-label="העגלה שלי">
-          <span className="cart-label">העגלה שלי</span>
-          <div className="cart-items">
-            {profile.cart.slice(-24).map((item) => (
-              <div className="cart-item" key={item.id} title={item.name}>
-                <Product shape={item.art.shape} color={item.art.color} size={40} />
-                <small>{item.name}</small>
-              </div>
-            ))}
-          </div>
-        </footer>
       )}
     </div>
   );

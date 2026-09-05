@@ -8,6 +8,8 @@ import { publicProfile, type PublicProfile } from "./game/engine";
 import { createSession, type GroupMode, type GroupSession } from "./game/group";
 import { probeServer } from "./game/server";
 import * as store from "./store/local";
+import { FEATURES } from "./config";
+import { log } from "./lib/log";
 
 type Screen = "picker" | "solo" | "parent-setup" | "parent-game" | "settings";
 
@@ -34,6 +36,13 @@ export default function App() {
     if (match) {
       setActive(match);
       setScreen("solo");
+    }
+
+    log("app", "המשחק נטען", { data: { profiles: list.length } });
+
+    if (!FEATURES.agaliChat) {
+      setReady(true);
+      return;
     }
 
     // אם המשחק מוגש מהשרת המקומי ויש בו מפתח, זו ברירת המחדל —

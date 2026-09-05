@@ -3,9 +3,15 @@ import { MODELS } from "../../../shared/models";
 import * as store from "../store/local";
 import { usageSummaries } from "../game/usage";
 import { probeServer, type ServerInfo } from "../game/server";
+import { clearLog, formatTime, readLog, type LogEntry } from "../lib/log";
+import { FEATURES } from "../config";
+import { Terms } from "./Terms";
 
 /**
- * לוח ההורים: מפתח ה-API, בחירת המודל, מעקב עלות, וגיבוי.
+ * לוח ההורים: יומן המשחק, גיבוי, ותנאי שימוש.
+ *
+ * החלק של עוזר הסופר — מפתח API, בחירת מודל ומעקב עלות — מוצג רק
+ * כשהתכונה פעילה (web/src/config.ts). כרגע היא כבויה.
  *
  * לפני הכניסה יש שאלת חשבון קטנה — לא אבטחה, רק מספיק כדי
  * שילד בן שש לא ישנה בטעות את ההגדרות.
@@ -30,15 +36,20 @@ export function ParentPanel({ onClose }: { onClose: () => void }) {
   const [settings, setSettings] = useState(store.getSettings);
   const [server, setServer] = useState<ServerInfo | null>(null);
   const [usage, setUsage] = useState(usageSummaries);
+  const [entries, setEntries] = useState<LogEntry[]>([]);
   const [keyDraft, setKeyDraft] = useState("");
   const [keyVisible, setKeyVisible] = useState(false);
   const [note, setNote] = useState<string | null>(null);
+  const [terms, setTerms] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!open) return;
-    probeServer().then(setServer);
-    setUsage(usageSummaries());
+    setEntries(readLog());
+    if (FEATURES.agaliChat) {
+      probeServer().then(setServer);
+      setUsage(usageSummaries());
+    }
   }, [open]);
 
   function patch(change: Partial<store.Settings>) {
@@ -58,16 +69,18 @@ export function ParentPanel({ onClose }: { onClose: () => void }) {
     setNote("המפתח נמחק מהמכשיר.");
   }
 
-  function downloadBackup() {
-    const blob = new Blob([JSON.stringify(store.exportBackup(), null, 2)], {
-      type: "application/json",
-    });
+  function download(name: string, content: unknown) {
+    const blob = new Blob([JSON.stringify(content, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `agali-${new Date().toISOString().slice(0, 10)}.json`;
+    link.download = name;
     link.click();
     URL.revokeObjectURL(url);
+  }
+
+  function downloadBackup() {
+    download(`agali-${new Date().toISOString().slice(0, 10)}.json`, store.exportBackup());
     setNote("הגיבוי ירד. הוא לא כולל את מפתח ה-API.");
   }
 
@@ -84,6 +97,8 @@ export function ParentPanel({ onClose }: { onClose: () => void }) {
       setNote((error as Error).message);
     }
   }
+
+  if (terms) return <Terms onClose={() => setTerms(false)} />;
 
   if (!open) {
     return (
@@ -137,176 +152,197 @@ export function ParentPanel({ onClose }: { onClose: () => void }) {
       {note && <p className="notice">{note}</p>}
 
       <section className="panel-section">
-        <h2>עגלי — עוזר הסופר</h2>
+        <h2>יומן המשחק</h2>
         <p className="muted">
-          הצ׳אט הוא החלק היחיד שדורש אינטרנט וכסף. כל שאר המשחק — חידות, רמזים, בדיקת
-          תשובות, פרופילים ורמות — רץ במלואו על המכשיר.
+          המשחק רץ כולו בדפדפן, ולכן אין שרת עם לוגים. במקום זה נשמר כאן יומן מקומי של
+          מה שקרה — {entries.length} רשומות אחרונות. הוא נשאר על המכשיר, כמו כל שאר
+          הנתונים. אותן שורות מודפסות גם לקונסולת הדפדפן.
         </p>
 
-        <div className="chips">
-          <button
-            className={`chip wide ${settings.chatSource === "off" ? "on" : ""}`}
-            onClick={() => patch({ chatSource: "off" })}
-          >
-            כבוי
-          </button>
-          <button
-            className={`chip wide ${settings.chatSource === "direct" ? "on" : ""}`}
-            onClick={() => patch({ chatSource: "direct" })}
-            disabled={!hasKey}
-          >
-            מפתח משלי
-          </button>
-          {server?.serverKey && (
-            <button
-              className={`chip wide ${settings.chatSource === "server" ? "on" : ""}`}
-              onClick={() => patch({ chatSource: "server" })}
-            >
-              המפתח שבשרת המקומי
-            </button>
-          )}
-        </div>
-
-        {server?.serverKey && (
-          <p className="muted small">
-            המשחק מוגש מהשרת המקומי, ויש בו מפתח ב־<code>.env</code>. במצב הזה אין צורך
-            להדביק מפתח בדפדפן בכלל.
-          </p>
-        )}
-      </section>
-
-      <section className="panel-section">
-        <h2>מפתח ה-API</h2>
-        {hasKey ? (
-          <div className="key-row">
-            <code className="key-mask">{keyVisible ? settings.apiKey : masked}</code>
-            <button className="btn small" onClick={() => setKeyVisible((v) => !v)}>
-              {keyVisible ? "הסתרה" : "הצגה"}
-            </button>
-            <button className="btn small" onClick={clearKey}>
-              מחיקה
-            </button>
-          </div>
+        {entries.length === 0 ? (
+          <p className="muted small">עוד לא קרה כלום מאז שהיומן נוקה.</p>
         ) : (
-          <form
-            className="key-form"
-            onSubmit={(event) => {
-              event.preventDefault();
-              saveKey();
-            }}
+          <div className="log-view">
+            {entries.slice(0, 60).map((entry, index) => (
+              <div className={`log-row ${entry.level}`} key={`${entry.at}-${index}`}>
+                <span className="log-time">{formatTime(entry.at)}</span>
+                <span className="log-scope">{entry.scope}</span>
+                <span className="log-msg">
+                  {entry.who ? `${entry.who}: ` : ""}
+                  {entry.message}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className="row">
+          <button className="btn" onClick={() => setEntries(readLog())}>
+            רענון
+          </button>
+          <button
+            className="btn"
+            onClick={() =>
+              download(`agali-log-${new Date().toISOString().slice(0, 10)}.json`, readLog())
+            }
+            disabled={entries.length === 0}
           >
-            <input
-              type="password"
-              value={keyDraft}
-              onChange={(event) => setKeyDraft(event.target.value)}
-              placeholder="sk-ant-..."
-              autoComplete="off"
-              spellCheck={false}
-            />
-            <button className="btn primary" type="submit" disabled={!keyDraft.trim()}>
-              שמירה
-            </button>
-          </form>
-        )}
-
-        <div className="warn-box">
-          <strong>לפני שמדביקים מפתח:</strong>
-          <ul>
-            <li>
-              המפתח נשמר ב־<code>localStorage</code> של הדפדפן הזה, ונשלח אך ורק אל{" "}
-              <code>api.anthropic.com</code>. הוא לא עובר בשום שרת שלנו.
-            </li>
-            <li>
-              מי שיש לו גישה לדפדפן הזה יכול לחלץ אותו. אל תשתמשו במפתח הראשי של החשבון.
-            </li>
-            <li>
-              מומלץ ליצור ב־Anthropic Console מפתח ייעודי ב־workspace נפרד, עם{" "}
-              <strong>תקרת הוצאה חודשית</strong>. זו ההגנה האמיתית מפני הפתעות.
-            </li>
-          </ul>
+            הורדת היומן
+          </button>
+          <button
+            className="btn ghost"
+            onClick={() => {
+              clearLog();
+              setEntries([]);
+            }}
+            disabled={entries.length === 0}
+          >
+            ניקוי
+          </button>
         </div>
       </section>
 
-      <section className="panel-section">
-        <h2>המודל של עגלי</h2>
-        <p className="muted">
-          המודל משפיע על איכות העברית ועל העלות. ההחלפה חלה על ההודעה הבאה.
-        </p>
-        <div className="model-list">
-          {MODELS.map((model) => (
-            <button
-              key={model.id}
-              className={`model-card ${model.id === settings.model ? "on" : ""}`}
-              onClick={() => patch({ model: model.id })}
-              aria-pressed={model.id === settings.model}
-            >
-              <span className="model-top">
-                <strong>{model.label}</strong>
-                <span className="model-rel">{model.relativeCost}</span>
-              </span>
-              <span className="model-blurb">{model.blurb}</span>
-              <span className="model-price">
-                ${model.inputPerMTok} קלט · ${model.outputPerMTok} פלט למיליון טוקנים
-              </span>
-            </button>
-          ))}
-        </div>
-        {selected && (
-          <p className="muted small">
-            תור שיחה אחד עולה בערך {money(perTurn)} עם {selected.label}.
-          </p>
-        )}
-      </section>
+      {FEATURES.agaliChat && (
+        <>
+          <section className="panel-section">
+            <h2>עגלי — עוזר הסופר</h2>
+            <p className="muted">
+              הצ׳אט הוא החלק היחיד שדורש אינטרנט וכסף. כל שאר המשחק רץ במלואו על
+              המכשיר.
+            </p>
 
-      <section className="panel-section">
-        <h2>מה נצרך בפועל</h2>
-        <div className="usage-grid">
-          <div>
-            <dt>היום</dt>
-            <dd>{usage.today.requests} הודעות</dd>
-            <dd className="cost">{money(usage.today.cost)}</dd>
-          </div>
-          <div>
-            <dt>החודש</dt>
-            <dd>{usage.month.requests} הודעות</dd>
-            <dd className="cost">{money(usage.month.cost)}</dd>
-          </div>
-          <div>
-            <dt>מאז ומתמיד</dt>
-            <dd>{usage.total.requests} הודעות</dd>
-            <dd className="cost">{money(usage.total.cost)}</dd>
-          </div>
-        </div>
-        <p className="muted small">
-          מספרי הטוקנים מגיעים מה-API עצמו: {thousands(usage.month.tokens.input)} קלט,{" "}
-          {thousands(usage.month.tokens.output)} פלט,{" "}
-          {thousands(usage.month.tokens.cacheRead)} מהמטמון החודש. המרת הטוקנים לדולרים היא
-          הערכה, כי מחיר הקריאה מהמטמון תלוי בתנאי החשבון. החיוב האמיתי נמצא ב-Anthropic
-          Console.
-        </p>
-      </section>
+            <div className="chips">
+              <button
+                className={`chip wide ${settings.chatSource === "off" ? "on" : ""}`}
+                onClick={() => patch({ chatSource: "off" })}
+              >
+                כבוי
+              </button>
+              <button
+                className={`chip wide ${settings.chatSource === "direct" ? "on" : ""}`}
+                onClick={() => patch({ chatSource: "direct" })}
+                disabled={!hasKey}
+              >
+                מפתח משלי
+              </button>
+              {server?.serverKey && (
+                <button
+                  className={`chip wide ${settings.chatSource === "server" ? "on" : ""}`}
+                  onClick={() => patch({ chatSource: "server" })}
+                >
+                  המפתח שבשרת המקומי
+                </button>
+              )}
+            </div>
+          </section>
 
-      <section className="panel-section">
-        <h2>תקרה יומית</h2>
-        <p className="muted">כמה הודעות כל שחקן יכול לשלוח לעגלי ביום.</p>
-        <div className="chips">
-          {[10, 20, 40, 80].map((limit) => (
-            <button
-              key={limit}
-              className={`chip ${settings.dailyLimit === limit ? "on" : ""}`}
-              onClick={() => patch({ dailyLimit: limit })}
-            >
-              {limit}
-            </button>
-          ))}
-        </div>
-      </section>
+          <section className="panel-section">
+            <h2>מפתח ה-API</h2>
+            {hasKey ? (
+              <div className="key-row">
+                <code className="key-mask">{keyVisible ? settings.apiKey : masked}</code>
+                <button className="btn small" onClick={() => setKeyVisible((v) => !v)}>
+                  {keyVisible ? "הסתרה" : "הצגה"}
+                </button>
+                <button className="btn small" onClick={clearKey}>
+                  מחיקה
+                </button>
+              </div>
+            ) : (
+              <form
+                className="key-form"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  saveKey();
+                }}
+              >
+                <input
+                  type="password"
+                  value={keyDraft}
+                  onChange={(event) => setKeyDraft(event.target.value)}
+                  placeholder="sk-ant-..."
+                  autoComplete="off"
+                  spellCheck={false}
+                />
+                <button className="btn primary" type="submit" disabled={!keyDraft.trim()}>
+                  שמירה
+                </button>
+              </form>
+            )}
+
+            <div className="warn-box">
+              <strong>לפני שמדביקים מפתח:</strong>
+              <ul>
+                <li>
+                  המפתח נשמר ב־<code>localStorage</code> של הדפדפן הזה, ונשלח אך ורק אל{" "}
+                  <code>api.anthropic.com</code>.
+                </li>
+                <li>מי שיש לו גישה לדפדפן הזה יכול לחלץ אותו. אל תשתמשו במפתח הראשי.</li>
+                <li>
+                  מומלץ ליצור מפתח ייעודי ב־workspace נפרד, עם{" "}
+                  <strong>תקרת הוצאה חודשית</strong>.
+                </li>
+              </ul>
+            </div>
+          </section>
+
+          <section className="panel-section">
+            <h2>המודל של עגלי</h2>
+            <div className="model-list">
+              {MODELS.map((model) => (
+                <button
+                  key={model.id}
+                  className={`model-card ${model.id === settings.model ? "on" : ""}`}
+                  onClick={() => patch({ model: model.id })}
+                  aria-pressed={model.id === settings.model}
+                >
+                  <span className="model-top">
+                    <strong>{model.label}</strong>
+                    <span className="model-rel">{model.relativeCost}</span>
+                  </span>
+                  <span className="model-blurb">{model.blurb}</span>
+                </button>
+              ))}
+            </div>
+            {selected && (
+              <p className="muted small">
+                תור שיחה אחד עולה בערך {money(perTurn)} עם {selected.label}.
+              </p>
+            )}
+          </section>
+
+          <section className="panel-section">
+            <h2>מה נצרך בפועל</h2>
+            <div className="usage-grid">
+              <div>
+                <dt>היום</dt>
+                <dd>{usage.today.requests} הודעות</dd>
+                <dd className="cost">{money(usage.today.cost)}</dd>
+              </div>
+              <div>
+                <dt>החודש</dt>
+                <dd>{usage.month.requests} הודעות</dd>
+                <dd className="cost">{money(usage.month.cost)}</dd>
+              </div>
+              <div>
+                <dt>מאז ומתמיד</dt>
+                <dd>{usage.total.requests} הודעות</dd>
+                <dd className="cost">{money(usage.total.cost)}</dd>
+              </div>
+            </div>
+            <p className="muted small">
+              {thousands(usage.month.tokens.input)} טוקני קלט ו־
+              {thousands(usage.month.tokens.output)} פלט החודש. ההמרה לדולרים היא הערכה.
+            </p>
+          </section>
+        </>
+      )}
 
       <section className="panel-section">
         <h2>גיבוי והעברה</h2>
         <p className="muted">
           הנתונים נשמרים בדפדפן הזה בלבד, ולכן הם לא עוברים למכשיר אחר מעצמם. הקובץ כאן
-          מעביר אותם — והוא לא כולל את מפתח ה-API.
+          מעביר אותם.
         </p>
         <div className="row">
           <button className="btn" onClick={downloadBackup}>
@@ -326,6 +362,18 @@ export function ParentPanel({ onClose }: { onClose: () => void }) {
               event.target.value = "";
             }}
           />
+        </div>
+      </section>
+
+      <section className="panel-section">
+        <h2>מידע משפטי</h2>
+        <p className="muted">
+          המשחק לא אוסף מידע ולא שולח דבר לשום שרת. כל הפרטים בתנאי השימוש.
+        </p>
+        <div className="row">
+          <button className="btn" onClick={() => setTerms(true)}>
+            תנאי שימוש
+          </button>
         </div>
       </section>
     </div>

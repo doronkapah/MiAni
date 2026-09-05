@@ -1,18 +1,18 @@
 /**
- * מדף הסופר.
+ * מדף הסופר — הרקע שמאחורי החידה.
  *
  * השלט והמוצרים שעליו הם רמז אמיתי: הם מספרים באיזה מעבר הפריט
- * נמצא. ברמות הגבוהות הרמז נחלש — ראו shared/aisles.ts.
+ * נמצא, וברמות הגבוהות מגלים פחות (shared/aisles.ts).
  *
- * הפריט הסודי עצמו מוצג כארגז עטוף עם סימן שאלה, כי הצורה שלו
- * לבדה הייתה מגלה חצי מהחידה.
+ * הפריט הסודי מוצג כארגז עטוף עם סימן שאלה, כי הצורה שלו לבדה
+ * הייתה מגלה חצי מהחידה. כרטיס החידה יושב עליו מלמטה.
  */
 
 import { Product } from "./Product";
 import type { AisleView } from "../../../shared/aisles";
 import type { Art } from "../../../shared/types";
 
-function MysteryCrate({ size = 108 }: { size?: number }) {
+function MysteryCrate({ size = 92 }: { size?: number }) {
   return (
     <svg viewBox="0 0 100 100" width={size} height={size} role="img" aria-label="הפריט הסודי">
       <ellipse cx="50" cy="93" rx="30" ry="5" fill="#000000" opacity="0.12" />
@@ -44,37 +44,44 @@ export function Shelf({
   const star = (
     <div className={`mystery ${celebrating ? "mystery-pop" : ""}`} key="mystery">
       {solvedArt ? (
-        <Product shape={solvedArt.shape} color={solvedArt.color} size={108} title="הפריט שנפתר" />
+        <Product shape={solvedArt.shape} color={solvedArt.color} size={92} title="הפריט שנפתר" />
       ) : (
         <MysteryCrate />
       )}
     </div>
   );
 
-  // שלוש שורות מדף, והמוצרים של המעבר מתחלקים ביניהן
-  const rows = [0, 1, 2].map((row) =>
-    aisle.decor.filter((_, index) => index % 3 === row),
-  );
+  // שתי שורות מדף. הפריט הסודי באמצע העליונה, שאר המוצרים סביבו.
+  const top = aisle.decor.filter((_, index) => index % 2 === 0).slice(0, 4);
+  const bottom = aisle.decor.filter((_, index) => index % 2 === 1).slice(0, 5);
+
+  const draw = (items: typeof top, row: number) =>
+    items.map((item, index) => (
+      <div className="decor" key={`${item.shape}-${row}-${index}`}>
+        <Product shape={item.shape} color={item.color} size={54} />
+      </div>
+    ));
+
+  const topRow = draw(top, 0);
+  const middle = Math.ceil(topRow.length / 2);
 
   return (
-    <div className="shelf">
-      <div className={`shelf-sign ${aisle.precise ? "" : "vague"}`}>{aisle.sign}</div>
-      {rows.map((items, row) => {
-        const drawn = items.map((item, index) => (
-          <div className="decor" key={`${item.shape}-${row}-${index}`}>
-            <Product shape={item.shape} color={item.color} size={64} />
-          </div>
-        ));
-        // הפריט הסודי יושב באמצע המדף האמצעי, בין מוצרי הרקע
-        const content = row === 1 ? [...drawn.slice(0, 1), star, ...drawn.slice(1)] : drawn;
+    <div className="shelf" aria-hidden="true">
+      <div className={`shelf-sign ${aisle.precise ? "" : "vague"}`}>
+        <span>{aisle.sign}</span>
+      </div>
 
-        return (
-          <div className="shelf-row" key={row}>
-            <div className="shelf-items">{content}</div>
-            <div className="shelf-plank" />
-          </div>
-        );
-      })}
+      <div className="shelf-row">
+        <div className="shelf-items">
+          {[...topRow.slice(0, middle), star, ...topRow.slice(middle)]}
+        </div>
+        <div className="shelf-plank" />
+      </div>
+
+      <div className="shelf-row">
+        <div className="shelf-items">{draw(bottom, 1)}</div>
+        <div className="shelf-plank" />
+      </div>
     </div>
   );
 }

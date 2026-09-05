@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { AVATARS, AVATAR_GROUPS, AvatarArt } from "../art/avatars";
 import { Agali } from "../art/Agali";
+import { Terms } from "./Terms";
 import type { PublicProfile } from "../game/engine";
 
 const AGES = [4, 5, 6, 7, 8, 9, 10];
@@ -32,6 +33,7 @@ export function ProfilePicker({
   const [avatar, setAvatar] = useState(AVATARS[0]!.id);
   const [busy, setBusy] = useState(false);
   const [managing, setManaging] = useState(false);
+  const [terms, setTerms] = useState(false);
 
   function submit() {
     if (!name.trim() || busy) return;
@@ -44,6 +46,8 @@ export function ProfilePicker({
       setBusy(false);
     }
   }
+
+  if (terms) return <Terms onClose={() => setTerms(false)} />;
 
   return (
     <div className="picker">
@@ -101,6 +105,9 @@ export function ProfilePicker({
             )}
             <button className="link-btn" onClick={onParentPanel}>
               לוח הורים
+            </button>
+            <button className="link-btn" onClick={() => setTerms(true)}>
+              תנאי שימוש
             </button>
           </div>
         </>

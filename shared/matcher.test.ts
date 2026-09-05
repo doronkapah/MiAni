@@ -241,6 +241,14 @@ describe("בנק החידות", () => {
     }
   });
 
+  it("לכל חידה צבע וצורה תקינים", () => {
+    for (const riddle of riddles) {
+      expect(riddle.art.color, `${riddle.id}: ${riddle.art.color}`).toMatch(/^#[0-9A-Fa-f]{6}$/);
+      expect(riddle.art.shape.length, riddle.id).toBeGreaterThan(2);
+      expect(riddle.aisle.length, riddle.id).toBeGreaterThan(2);
+    }
+  });
+
   it("אין שתי חידות עם אותה תשובה", () => {
     const seen = new Map<string, string>();
     for (const riddle of riddles) {
