@@ -14,6 +14,7 @@ export interface ProfileStats {
   close: number;
   hints: number;
   reveals: number;
+  skips: number;
   firstPlay: number;
   lastPlay: number;
   /** תאריך (YYYY-MM-DD) → כמה חידות נפתרו באותו יום */
@@ -40,6 +41,7 @@ const EMPTY_PROFILE = (): ProfileStats => ({
   close: 0,
   hints: 0,
   reveals: 0,
+  skips: 0,
   firstPlay: Date.now(),
   lastPlay: Date.now(),
   days: {},
@@ -130,6 +132,12 @@ export function recordReveal(profileId: string, riddleId: string): void {
   write(stats);
 }
 
+export function recordSkip(profileId: string): void {
+  const stats = read();
+  touch(stats, profileId).skips += 1;
+  write(stats);
+}
+
 export function readStats(): Stats {
   return read();
 }
@@ -152,6 +160,7 @@ export interface ChildRow {
   accuracy: number;
   hintsPerRiddle: number;
   reveals: number;
+  skips: number;
   activeDays: number;
   lastPlay: number;
 }
@@ -167,6 +176,7 @@ export function childRow(profileId: string, stats = read()): ChildRow {
     accuracy: guesses ? entry.solved / guesses : 0,
     hintsPerRiddle: entry.solved ? entry.hints / entry.solved : 0,
     reveals: entry.reveals,
+    skips: entry.skips ?? 0,
     activeDays: Object.keys(entry.days).length,
     lastPlay: entry.lastPlay,
   };
@@ -231,6 +241,7 @@ export interface Totals {
   solved: number;
   guesses: number;
   reveals: number;
+  skips: number;
   activeDays: number;
   firstPlay: number | null;
 }
@@ -247,6 +258,7 @@ export function totals(stats = read()): Totals {
       0,
     ),
     reveals: all.reduce((sum, profile) => sum + profile.reveals, 0),
+    skips: all.reduce((sum, profile) => sum + (profile.skips ?? 0), 0),
     activeDays: days.size,
     firstPlay: all.length ? Math.min(...all.map((profile) => profile.firstPlay)) : null,
   };

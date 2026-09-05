@@ -70,6 +70,8 @@ export interface PublicProfile {
   levelName: string;
   progress: number;
   streak: number;
+  /** רצף התשובות הנכונות הנוכחי */
+  answerStreak: number;
   solvedCount: number;
   cart: CartItem[];
   chat: { used: number; left: number };
@@ -89,6 +91,7 @@ export function publicProfile(profile: Profile): PublicProfile {
     levelName: LEVEL_NAMES[level]!,
     progress: progressInLevel(profile.rating),
     streak: profile.streak,
+    answerStreak: profile.answerStreak,
     solvedCount: profile.solved.length,
     cart: profile.solved
       .map((id) => riddleById.get(id))
@@ -180,6 +183,39 @@ export function nextHint(profileId: string): PublicRiddle {
   return publicRound(riddle, round.cluesRevealed, levelOf(profile.rating));
 }
 
+/** מה חוגגים על הפתרון הזה */
+export interface Celebration {
+  title: string;
+  /** משפט קטן מתחת לכותרת, כשיש משהו מיוחד */
+  note?: string;
+  /** רצף התשובות הנכונות אחרי הפתרון הזה */
+  streak: number;
+  /** אבן דרך שהושגה עכשיו (3, 5, 10...) */
+  milestone?: number;
+  /** נפתר עם הרמז הראשון בלבד */
+  noHints: boolean;
+}
+
+/** אבני הדרך של הרצף — מספיק דלילות כדי שיישארו מיוחדות */
+export const STREAK_MILESTONES = [3, 5, 10, 15, 20, 30, 50];
+
+function celebrate(streak: number, noHints: boolean): Celebration {
+  const milestone = STREAK_MILESTONES.includes(streak) ? streak : undefined;
+  if (milestone) {
+    return {
+      title: `🔥 ${milestone} ברצף!`,
+      note: noHints ? "והפעם גם בלי רמזים" : "אתם בכיוון",
+      streak,
+      milestone,
+      noHints,
+    };
+  }
+  if (noHints) {
+    return { title: "מדהים!", note: "פתרתם בלי רמזים בכלל 🤯", streak, noHints };
+  }
+  return { title: "כל הכבוד!", streak, noHints };
+}
+
 export interface SolvedResult {
   status: "correct";
   answer: string;
@@ -191,6 +227,7 @@ export interface SolvedResult {
   /** מתכונים שנפתחו בזכות הפריט הזה — קופצים על המסך */
   unlockedRecipes: Recipe[];
   aisleView: AisleView;
+  celebration: Celebration;
 }
 
 export interface MissResult {
@@ -214,6 +251,8 @@ export function submitAnswer(profileId: string, guess: string): AnswerResult {
   if (result.status === "correct") {
     const change = applySolve(profile, { hintsUsed: round.cluesRevealed });
     const solved = [...profile.solved, riddle.id];
+    const noHints = round.cluesRevealed === 1;
+    const answerStreak = profile.answerStreak + 1;
 
     // הפריט החדש עשוי להשלים מתכון. בודקים לפני השמירה, כדי לדעת
     // מה נפתח *עכשיו* ולא מה כבר היה פתוח.
@@ -223,6 +262,7 @@ export function submitAnswer(profileId: string, guess: string): AnswerResult {
     const updated = store.updateProfile(profile.id, {
       rating: change.rating,
       streak: change.streak,
+      answerStreak,
       solved,
       recipes: [...profile.recipes, ...unlocked.map((recipe) => recipe.id)],
     })!;
@@ -238,6 +278,7 @@ export function submitAnswer(profileId: string, guess: string): AnswerResult {
       profile: publicProfile(updated),
       unlockedRecipes: unlocked,
       aisleView: solvedAisleView(riddle.aisle),
+      celebration: celebrate(answerStreak, noHints),
     };
   }
 
@@ -272,6 +313,7 @@ export function revealAnswer(profileId: string): RevealResult {
   const updated = store.updateProfile(profile.id, {
     rating: change.rating,
     streak: change.streak,
+    answerStreak: 0,
     revealed: [
       ...profile.revealed.filter((entry) => entry.id !== riddle.id),
       { id: riddle.id, at: Date.now() },
@@ -287,6 +329,36 @@ export function revealAnswer(profileId: string): RevealResult {
     profile: publicProfile(updated),
     aisleView: solvedAisleView(riddle.aisle),
   };
+}
+
+export interface SkipResult {
+  profile: PublicProfile;
+}
+
+/**
+ * דילוג על חידה.
+ *
+ * שונה מ"גלה לי": התשובה לא מוצגת, ולכן גם אין ירידה בדירוג —
+ * הילד פשוט לא רצה את החידה הזאת. היא חוזרת לתור בעוד כמה ימים.
+ * הרצף כן נשבר, כי החידה לא נפתרה.
+ */
+export function skipRiddle(profileId: string): SkipResult {
+  const profile = store.getProfile(profileId);
+  const round = rounds.get(profileId);
+  const riddle = round && riddleById.get(round.riddleId);
+  if (!profile || !round || !riddle) throw new Error("אין חידה פעילה");
+
+  stats.recordSkip(profile.id);
+  const updated = store.updateProfile(profile.id, {
+    answerStreak: 0,
+    revealed: [
+      ...profile.revealed.filter((entry) => entry.id !== riddle.id),
+      { id: riddle.id, at: Date.now() },
+    ],
+  })!;
+  rounds.delete(profile.id);
+
+  return { profile: publicProfile(updated) };
 }
 
 /** משוב לילד — עידוד, אף פעם לא נזיפה, ואף פעם לא רמז לתשובה */

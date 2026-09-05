@@ -32,6 +32,7 @@ const engine = await import("./engine");
 const store = await import("../store/local");
 const group = await import("./group");
 const stats = await import("../lib/stats");
+const shareLib = await import("../lib/share");
 
 function newPlayer(age = 7) {
   return store.createProfile({ name: "בדיקה", age, address: "female", avatar: "tomato" });
@@ -382,5 +383,107 @@ describe("סיכום שימוש", () => {
     expect(backup.stats!.profiles[profile.id]!.wrong).toBe(1);
     // מונים בלבד — לא נשמר מה הילד הקליד
     expect(JSON.stringify(backup.stats)).not.toContain("מכונית");
+  });
+});
+
+describe("עידוד ורצף", () => {
+  beforeEach(() => storage.clear());
+
+  function solveCurrent(profileId: string) {
+    const riddle = riddleById.get(engine.startRiddle(profileId).riddle!.id)!;
+    return engine.submitAnswer(profileId, riddle.answer);
+  }
+
+  it("פתרון בלי רמזים נוספים מקבל מדהים", () => {
+    const profile = newPlayer(7);
+    const result = solveCurrent(profile.id);
+    if (result.status !== "correct") throw new Error("expected correct");
+    expect(result.celebration.noHints).toBe(true);
+    expect(result.celebration.title).toBe("מדהים!");
+  });
+
+  it("פתרון אחרי רמז נוסף מקבל כל הכבוד", () => {
+    const profile = newPlayer(7);
+    engine.startRiddle(profile.id);
+    engine.nextHint(profile.id);
+    const riddle = riddleById.get(engine.startRiddle(profile.id).riddle!.id)!;
+    const result = engine.submitAnswer(profile.id, riddle.answer);
+    if (result.status !== "correct") throw new Error("expected correct");
+    expect(result.celebration.noHints).toBe(false);
+    expect(result.celebration.title).toBe("כל הכבוד!");
+  });
+
+  it("הרצף עולה, ואבן דרך מסומנת ב-5", () => {
+    const profile = newPlayer(7);
+    let last;
+    for (let i = 0; i < 5; i++) last = solveCurrent(profile.id);
+    if (!last || last.status !== "correct") throw new Error("expected correct");
+    expect(last.celebration.streak).toBe(5);
+    expect(last.celebration.milestone).toBe(5);
+    expect(last.celebration.title).toContain("5 ברצף");
+    expect(last.profile.answerStreak).toBe(5);
+  });
+
+  it("גלה לי שובר את הרצף", () => {
+    const profile = newPlayer(7);
+    solveCurrent(profile.id);
+    expect(store.getProfile(profile.id)!.answerStreak).toBe(1);
+    engine.startRiddle(profile.id);
+    engine.revealAnswer(profile.id);
+    expect(store.getProfile(profile.id)!.answerStreak).toBe(0);
+  });
+
+  it("דילוג שובר את הרצף אבל לא מוריד דירוג", () => {
+    const profile = newPlayer(7);
+    solveCurrent(profile.id);
+    const rating = store.getProfile(profile.id)!.rating;
+
+    const riddleId = engine.startRiddle(profile.id).riddle!.id;
+    engine.skipRiddle(profile.id);
+
+    const after = store.getProfile(profile.id)!;
+    expect(after.answerStreak).toBe(0);
+    expect(after.rating).toBe(rating);
+    expect(after.solved).not.toContain(riddleId);
+    expect(after.revealed.map((entry) => entry.id)).toContain(riddleId);
+    expect(stats.childRow(profile.id).skips).toBe(1);
+  });
+
+  it("חידה שדולגה לא חוזרת מיד", () => {
+    const profile = newPlayer(7);
+    const first = engine.startRiddle(profile.id).riddle!.id;
+    engine.skipRiddle(profile.id);
+    expect(engine.startRiddle(profile.id).riddle!.id).not.toBe(first);
+  });
+});
+
+describe("שיתוף", () => {
+  beforeEach(() => storage.clear());
+
+  it("הודעת החידה לא מכילה את התשובה", () => {
+    for (const riddle of [...riddleById.values()]) {
+      const message = shareLib.riddleMessage(riddle.clues, riddle.aisle);
+      expect(message, riddle.id).not.toContain(riddle.answer);
+    }
+  });
+
+  it("הודעת החידה כוללת את הרמזים שנחשפו", () => {
+    const profile = newPlayer(7);
+    const view = engine.startRiddle(profile.id).riddle!;
+    const message = shareLib.riddleMessage(view.clues, view.aisle.sign);
+    expect(message).toContain(view.clues[0]!);
+    expect(message).toContain("מי אני");
+  });
+
+  it("הדוח האנונימי לא מכיל שמות של שחקנים", () => {
+    const report = shareLib.statsReport({
+      solved: 5, guesses: 8, accuracy: 0.62, activeDays: 2, reveals: 1, skips: 1,
+      players: 2, bankSize: 101,
+      byLevel: [{ level: 1, name: "מדף הגן", solved: 5 }],
+      hardest: [{ answer: "שמרים", wrong: 3, reveals: 1 }],
+    });
+    expect(report).not.toContain("בדיקה");
+    expect(report).toContain("אין בדוח שמות");
+    expect(report).toContain("מדף הגן");
   });
 });

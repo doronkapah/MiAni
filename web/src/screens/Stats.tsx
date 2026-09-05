@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
 import { AvatarArt } from "../art/avatars";
-import { riddleById } from "../../../shared/bank";
+import { LEVEL_NAMES, riddleById, riddles } from "../../../shared/bank";
+import { share, statsReport } from "../lib/share";
+import { log } from "../lib/log";
 import * as store from "../store/local";
 import {
   activity,
@@ -82,6 +84,7 @@ function ActivityChart({ bars }: { bars: DayBar[] }) {
 
 export function Stats({ onClose }: { onClose: () => void }) {
   const [version, setVersion] = useState(0);
+  const [preview, setPreview] = useState<string | null>(null);
 
   const data = useMemo(() => {
     const stats = readStats();
@@ -99,6 +102,37 @@ export function Stats({ onClose }: { onClose: () => void }) {
   }, [version]);
 
   const { total } = data;
+
+  /** בונה את הדוח האנונימי, ומראה אותו לפני כל שליחה */
+  function buildReport(): string {
+    const stats = readStats();
+    const solvedByLevel = new Map<number, number>();
+    for (const [id, entry] of Object.entries(stats.riddles)) {
+      const level = riddleById.get(id)?.level;
+      if (level) solvedByLevel.set(level, (solvedByLevel.get(level) ?? 0) + entry.solved);
+    }
+
+    return statsReport({
+      solved: total.solved,
+      guesses: total.guesses,
+      accuracy: total.guesses ? total.solved / total.guesses : 0,
+      activeDays: total.activeDays,
+      reveals: total.reveals,
+      skips: total.skips,
+      players: data.children.length,
+      bankSize: riddles.length,
+      byLevel: [1, 2, 3, 4].map((level) => ({
+        level,
+        name: LEVEL_NAMES[level]!,
+        solved: solvedByLevel.get(level) ?? 0,
+      })),
+      hardest: data.hardest.map((entry) => ({
+        answer: riddleById.get(entry.id)?.answer ?? entry.id,
+        wrong: entry.wrong,
+        reveals: entry.reveals,
+      })),
+    });
+  }
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
@@ -134,8 +168,10 @@ export function Stats({ onClose }: { onClose: () => void }) {
                 <dd>{total.activeDays}</dd>
               </div>
               <div className="tile">
-                <dt>פעמים "גלה לי"</dt>
-                <dd>{total.reveals}</dd>
+                <dt>גלה לי · דילוגים</dt>
+                <dd>
+                  {total.reveals} · {total.skips}
+                </dd>
               </div>
             </div>
 
@@ -152,6 +188,7 @@ export function Stats({ onClose }: { onClose: () => void }) {
                       <th>דיוק</th>
                       <th>רמזים לחידה</th>
                       <th>גלה לי</th>
+                      <th>דילוגים</th>
                       <th>שיחק לאחרונה</th>
                     </tr>
                   </thead>
@@ -166,6 +203,7 @@ export function Stats({ onClose }: { onClose: () => void }) {
                         <td className="num">{percent(row.accuracy)}</td>
                         <td className="num">{row.hintsPerRiddle.toFixed(1)}</td>
                         <td className="num">{row.reveals}</td>
+                        <td className="num">{row.skips}</td>
                         <td className="num">{relativeDay(row.lastPlay)}</td>
                       </tr>
                     ))}
@@ -200,9 +238,53 @@ export function Stats({ onClose }: { onClose: () => void }) {
           </>
         )}
 
+        <section className="panel-section share-report">
+          <h2>עזרו לשפר את המשחק</h2>
+          <p className="muted">
+            אפשר לשלוח סיכום אנונימי — כמה נפתר, אילו חידות הקשו — וזה מה שמאפשר
+            לדעת אילו חידות מנוסחות רע ואיזו רמה קופצת מהר מדי.
+          </p>
+          <p className="consent">
+            🔒 <strong>שום נתון לא נשלח אוטומטית.</strong> המשחק לא שולח דבר לשום שרת,
+            אף פעם. השליחה קורית רק אם תלחצו, ורק אחרי שתראו בדיוק מה נכתב.
+          </p>
+
+          {preview === null ? (
+            <div className="row">
+              <button className="btn" onClick={() => setPreview(buildReport())}>
+                הצגת הדוח
+              </button>
+            </div>
+          ) : (
+            <>
+              <pre className="report-preview">{preview}</pre>
+              <div className="row">
+                <button
+                  className="btn primary"
+                  onClick={() => {
+                    void share(preview, "נתוני משחק אנונימיים — עגלי");
+                    log("share", "שיתוף דוח אנונימי");
+                  }}
+                >
+                  📤 שליחה בוואטסאפ
+                </button>
+                <button
+                  className="btn"
+                  onClick={() => void navigator.clipboard?.writeText(preview)}
+                >
+                  העתקה
+                </button>
+                <button className="btn ghost" onClick={() => setPreview(null)}>
+                  ביטול
+                </button>
+              </div>
+            </>
+          )}
+        </section>
+
         <p className="muted small">
-          כל המספרים כאן נשמרים על המכשיר הזה בלבד ולא נשלחים לשום מקום. הם נכללים
-          בקובץ הגיבוי, כדי שיעברו איתכם למכשיר אחר.
+          כל המספרים כאן נשמרים על המכשיר הזה בלבד. הם נכללים בקובץ הגיבוי, כדי
+          שיעברו איתכם למכשיר אחר.
         </p>
 
         <div className="row">

@@ -10,14 +10,17 @@ import { HowToPlay, hasSeenHowTo, markHowToSeen } from "./HowToPlay";
 import {
   nextHint,
   revealAnswer,
+  skipRiddle,
   startRiddle,
   submitAnswer,
+  type Celebration,
   type PublicProfile,
   type PublicRiddle,
 } from "../game/engine";
 import * as store from "../store/local";
 import { FEATURES } from "../config";
 import { log } from "../lib/log";
+import { riddleMessage, share } from "../lib/share";
 import type { Art } from "../../../shared/types";
 import type { Recipe } from "../../../shared/recipes";
 import type { AisleView } from "../../../shared/aisles";
@@ -31,6 +34,7 @@ interface Solved {
   levelUp: boolean;
   gaveUp: boolean;
   aisleView: AisleView;
+  celebration?: Celebration;
 }
 
 export function Game({
@@ -56,9 +60,11 @@ export function Game({
   const [nikud, setNikud] = useState(() => readNikudPreference(profile));
   const [unlockedQueue, setUnlockedQueue] = useState<Recipe[]>([]);
   const [overlay, setOverlay] = useState<"none" | "cart" | "book" | "howto">("none");
+  const [muted, setMuted] = useState(() => readFlag(MUTE_KEY, profile.id, false));
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const readsAloud = profile.level === 1;
+  const canHear = voiceReady && !muted;
+  const readsAloud = profile.level === 1 && canHear;
   const chatEnabled = FEATURES.agaliChat && store.getSettings().chatSource !== "off";
 
   useEffect(() => watchVoices(() => setVoiceReady(canSpeak())), []);
@@ -67,7 +73,23 @@ export function Game({
   useEffect(() => {
     if (!hasSeenHowTo(profile.id)) setOverlay("howto");
     setNikud(readNikudPreference(profile));
+    setMuted(readFlag(MUTE_KEY, profile.id, false));
   }, [profile.id, profile.level]);
+
+  function toggleMute() {
+    setMuted((on) => {
+      const next = !on;
+      if (next) stopSpeaking();
+      writeFlag(MUTE_KEY, profile.id, next);
+      return next;
+    });
+  }
+
+  async function shareRiddle() {
+    if (!riddle) return;
+    await share(riddleMessage(riddle.clues, riddle.aisle.sign));
+    log("share", "shared riddle", { who: profile.name, data: { riddle: riddle.id } });
+  }
 
   function closeHowTo() {
     markHowToSeen(profile.id);
@@ -77,11 +99,7 @@ export function Game({
   function toggleNikud() {
     setNikud((on) => {
       const next = !on;
-      try {
-        localStorage.setItem(`${NIKUD_KEY}:${profile.id}`, next ? "1" : "0");
-      } catch {
-        // מצב פרטי בדפדפן — פשוט לא זוכרים
-      }
+      writeFlag(NIKUD_KEY, profile.id, next);
       return next;
     });
   }
@@ -115,10 +133,10 @@ export function Game({
 
   // ברמה 1 הרמז נקרא בקול מיד כשהוא מופיע
   useEffect(() => {
-    if (!readsAloud || !voiceReady || !riddle || solved) return;
+    if (!readsAloud || !riddle || solved) return;
     const latest = riddle.clues[riddle.clues.length - 1];
     if (latest) speak(latest);
-  }, [riddle, readsAloud, voiceReady, solved]);
+  }, [riddle, readsAloud, solved]);
 
   function checkGuess() {
     const text = guess.trim();
@@ -136,7 +154,7 @@ export function Game({
         setFeedback(null);
         setUnlockedQueue(result.unlockedRecipes);
         stopSpeaking();
-        if (voiceReady) speak(`נכון! ${result.answer}`);
+        if (canHear) speak(`${result.celebration.title} ${result.answer}`);
         for (const recipe of result.unlockedRecipes) {
           log("recipe", `נפתח מתכון: ${recipe.name}`, { who: profile.name });
         }
@@ -156,6 +174,15 @@ export function Game({
     setRiddle(nextHint(profile.id));
     setFeedback(null);
     log("riddle", "רמז נוסף", { who: profile.name, data: { riddle: riddle.id } });
+  }
+
+  function skip() {
+    if (solved) return;
+    const skipped = riddle?.id;
+    const data = skipRiddle(profile.id);
+    setProfile(data.profile);
+    log("riddle", "דילוג", { who: profile.name, data: { riddle: skipped } });
+    loadRiddle();
   }
 
   function giveUp() {
@@ -191,10 +218,26 @@ export function Game({
           </span>
         </button>
 
+        {profile.answerStreak >= 2 && (
+          <span className="streak-chip" title={`${profile.answerStreak} תשובות נכונות ברצף`}>
+            🔥 {profile.answerStreak}
+          </span>
+        )}
+
         <div className="topbar-actions">
           <button className="icon-btn" onClick={() => setOverlay("howto")} aria-label="איך משחקים">
             ?
           </button>
+          {voiceReady && (
+            <button
+              className="icon-btn"
+              onClick={toggleMute}
+              aria-pressed={muted}
+              aria-label={muted ? "הפעלת הקראה" : "השתקת הקראה"}
+            >
+              {muted ? "🔇" : "🔊"}
+            </button>
+          )}
           <button
             className="icon-btn"
             onClick={() => setOverlay("book")}
@@ -239,7 +282,7 @@ export function Game({
                       <p className={nikud ? "nikud" : ""}>
                         {nikud ? (riddle.cluesNikud[index] ?? clue) : clue}
                       </p>
-                      {voiceReady && (
+                      {canHear && (
                         <button
                           className="speak-btn"
                           onClick={() => speak(clue)}
@@ -300,6 +343,12 @@ export function Game({
                   >
                     נִיקּוּד {nikud ? "פועל" : "כבוי"}
                   </button>
+                  <button className="btn" onClick={() => void shareRiddle()}>
+                    📤 שיתוף
+                  </button>
+                  <button className="btn ghost" onClick={skip}>
+                    דלג
+                  </button>
                   <button className="btn ghost" onClick={giveUp}>
                     גלה לי
                   </button>
@@ -313,10 +362,21 @@ export function Game({
                   <Product shape={solved.art.shape} color={solved.art.color} size={104} />
                 </div>
                 <h1 className={solved.gaveUp ? "muted-title" : ""}>
-                  {solved.gaveUp ? "התשובה היא" : "כל הכבוד!"}
+                  {solved.gaveUp ? "התשובה היא" : (solved.celebration?.title ?? "כל הכבוד!")}
                 </h1>
+                {solved.celebration?.note && (
+                  <p className="celebrate-note">{solved.celebration.note}</p>
+                )}
                 <p className="answer">{solved.answer}</p>
                 <p className="reveal">{solved.reveal}</p>
+                {solved.celebration?.milestone && (
+                  <div className="streak-banner">
+                    <span className="streak-flames" aria-hidden="true">
+                      {"🔥".repeat(Math.min(5, Math.ceil(solved.celebration.milestone / 3)))}
+                    </span>
+                    <span>{solved.celebration.milestone} חידות ברצף בלי לוותר</span>
+                  </div>
+                )}
                 {solved.levelUp && (
                   <p className="levelup">🎉 עלית רמה! עכשיו {profile.levelName}</p>
                 )}
@@ -365,15 +425,29 @@ export function Game({
 }
 
 const NIKUD_KEY = "agali:nikud";
+const MUTE_KEY = "agali:mute";
 
-/** ברירת המחדל: ניקוד דלוק לקוראים המתחילים, כבוי מרמה 3 */
-function readNikudPreference(profile: PublicProfile): boolean {
+/** העדפות שנשמרות לכל שחקן בנפרד */
+function readFlag(key: string, profileId: string, fallback: boolean): boolean {
   try {
-    const stored = localStorage.getItem(`${NIKUD_KEY}:${profile.id}`);
+    const stored = localStorage.getItem(`${key}:${profileId}`);
     if (stored === "1") return true;
     if (stored === "0") return false;
   } catch {
     // מצב פרטי בדפדפן
   }
-  return profile.level <= 2;
+  return fallback;
+}
+
+function writeFlag(key: string, profileId: string, value: boolean): void {
+  try {
+    localStorage.setItem(`${key}:${profileId}`, value ? "1" : "0");
+  } catch {
+    // מצב פרטי בדפדפן — פשוט לא זוכרים
+  }
+}
+
+/** ברירת המחדל: ניקוד דלוק לקוראים המתחילים, כבוי מרמה 3 */
+function readNikudPreference(profile: PublicProfile): boolean {
+  return readFlag(NIKUD_KEY, profile.id, profile.level <= 2);
 }

@@ -167,6 +167,7 @@ export function awardSolve(session: GroupSession, winnerIds: string[]): GroupOut
     const updated = store.updateProfile(id, {
       rating: change.rating,
       streak: change.streak,
+      answerStreak: profile.answerStreak + 1,
       solved,
       recipes: [...profile.recipes, ...unlocked.map((recipe) => recipe.id)],
     })!;
@@ -204,6 +205,7 @@ export function groupReveal(session: GroupSession): GroupOutcome | null {
     store.updateProfile(id, {
       rating: change.rating,
       streak: change.streak,
+      answerStreak: 0,
       revealed: [
         ...profile.revealed.filter((entry) => entry.id !== riddle.id),
         { id: riddle.id, at: Date.now() },

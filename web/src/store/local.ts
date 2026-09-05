@@ -54,6 +54,7 @@ export function listProfiles(): Profile[] {
   return read<Profile[]>(KEYS.profiles, []).map((profile) => ({
     ...profile,
     recipes: profile.recipes ?? [],
+    answerStreak: profile.answerStreak ?? 0,
     revealed: profile.revealed ?? [],
     solved: profile.solved ?? [],
   }));
@@ -83,6 +84,7 @@ export function createProfile(input: NewProfile): Profile {
     avatar: input.avatar,
     rating: startingRating(input.age),
     streak: 0,
+    answerStreak: 0,
     solved: [],
     revealed: [],
     recipes: [],
