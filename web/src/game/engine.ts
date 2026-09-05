@@ -26,6 +26,7 @@ import {
 } from "../../../shared/recipes";
 import type { ActiveRound, Profile, Riddle } from "../../../shared/types";
 import * as store from "../store/local";
+import * as stats from "../lib/stats";
 
 // ------------------------------------------------------- מצב החידה הפעילה
 
@@ -171,7 +172,10 @@ export function nextHint(profileId: string): PublicRiddle {
   if (!profile || !round || !riddle) throw new Error("אין חידה פעילה");
 
   const max = Math.min(riddle.clues.length, cluesAtLevel(levelOf(profile.rating)));
-  if (round.cluesRevealed < max) round.cluesRevealed += 1;
+  if (round.cluesRevealed < max) {
+    round.cluesRevealed += 1;
+    stats.recordHint(profileId);
+  }
 
   return publicRound(riddle, round.cluesRevealed, levelOf(profile.rating));
 }
@@ -214,6 +218,7 @@ export function submitAnswer(profileId: string, guess: string): AnswerResult {
     // הפריט החדש עשוי להשלים מתכון. בודקים לפני השמירה, כדי לדעת
     // מה נפתח *עכשיו* ולא מה כבר היה פתוח.
     const unlocked = newlyCompleted(solved, profile.recipes);
+    stats.recordSolve(profile.id, riddle.id, round.cluesRevealed);
 
     const updated = store.updateProfile(profile.id, {
       rating: change.rating,
@@ -237,6 +242,7 @@ export function submitAnswer(profileId: string, guess: string): AnswerResult {
   }
 
   round.wrongGuesses += 1;
+  stats.recordMiss(profile.id, riddle.id, result.status);
 
   return {
     status: result.status,
@@ -262,6 +268,7 @@ export function revealAnswer(profileId: string): RevealResult {
   if (!profile || !round || !riddle) throw new Error("אין חידה פעילה");
 
   const change = applyReveal(profile);
+  stats.recordReveal(profile.id, riddle.id);
   const updated = store.updateProfile(profile.id, {
     rating: change.rating,
     streak: change.streak,

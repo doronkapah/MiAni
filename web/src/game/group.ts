@@ -16,6 +16,7 @@ import { newlyCompleted, type Recipe } from "../../../shared/recipes";
 import { aisleView, solvedAisleView, type AisleView } from "../../../shared/aisles";
 import type { Profile, Riddle } from "../../../shared/types";
 import * as store from "../store/local";
+import * as stats from "../lib/stats";
 import { publicProfile, type PublicProfile } from "./engine";
 
 export type GroupMode = "competitive" | "coop";
@@ -108,6 +109,8 @@ export function startGroupRiddle(session: GroupSession): ParentRiddle | null {
     round = { riddleId: next.id, cluesRevealed: 1 };
     groupRounds.set(session.id, round);
     riddle = next;
+    // כל המשתתפים נחשבים כמי ששיחקו, גם מי שלא יזכה בסבב הזה
+    stats.recordSession(session.profileIds);
   }
   return view(session, riddle, round);
 }
@@ -118,7 +121,10 @@ export function groupHint(session: GroupSession): ParentRiddle | null {
   if (!round || !riddle) return null;
 
   const max = Math.min(riddle.clues.length, cluesAtLevel(session.level));
-  if (round.cluesRevealed < max) round.cluesRevealed += 1;
+  if (round.cluesRevealed < max) {
+    round.cluesRevealed += 1;
+    for (const id of session.profileIds) stats.recordHint(id);
+  }
   return view(session, riddle, round);
 }
 
@@ -157,6 +163,7 @@ export function awardSolve(session: GroupSession, winnerIds: string[]): GroupOut
     const change = applySolve(profile, { hintsUsed: round.cluesRevealed });
     const solved = [...profile.solved, riddle.id];
     const unlocked = newlyCompleted(solved, profile.recipes);
+    stats.recordSolve(id, riddle.id, round.cluesRevealed);
     const updated = store.updateProfile(id, {
       rating: change.rating,
       streak: change.streak,
@@ -193,6 +200,7 @@ export function groupReveal(session: GroupSession): GroupOutcome | null {
     const profile = store.getProfile(id);
     if (!profile) continue;
     const change = applyReveal(profile);
+    stats.recordReveal(id, riddle.id);
     store.updateProfile(id, {
       rating: change.rating,
       streak: change.streak,

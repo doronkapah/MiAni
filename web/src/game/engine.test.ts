@@ -31,6 +31,7 @@ const { newlyCompleted } = await import("../../../shared/recipes");
 const engine = await import("./engine");
 const store = await import("../store/local");
 const group = await import("./group");
+const stats = await import("../lib/stats");
 
 function newPlayer(age = 7) {
   return store.createProfile({ name: "בדיקה", age, address: "female", avatar: "tomato" });
@@ -301,5 +302,85 @@ describe("מצב הורה שואל", () => {
     const unlocked = newlyCompleted(["egg", "butter", "salt"], []);
     expect(unlocked.map((r) => r.id)).toEqual(["omelet"]);
     expect(session.profileIds).toHaveLength(2);
+  });
+});
+
+describe("סיכום שימוש", () => {
+  beforeEach(() => storage.clear());
+
+  it("סופר פתרונות, ניחושים שגויים ורמזים", () => {
+    const profile = newPlayer(7);
+    const riddle = riddleById.get(engine.startRiddle(profile.id).riddle!.id)!;
+
+    engine.submitAnswer(profile.id, "מכונית");
+    engine.nextHint(profile.id);
+    engine.submitAnswer(profile.id, riddle.answer);
+
+    const row = stats.childRow(profile.id);
+    expect(row.solved).toBe(1);
+    expect(row.guesses).toBe(2);
+    expect(row.accuracy).toBeCloseTo(0.5);
+    expect(row.activeDays).toBe(1);
+  });
+
+  it("סופר גם את מי שביקש לגלות", () => {
+    const profile = newPlayer(7);
+    engine.startRiddle(profile.id);
+    engine.revealAnswer(profile.id);
+    expect(stats.childRow(profile.id).reveals).toBe(1);
+    expect(stats.totals().reveals).toBe(1);
+  });
+
+  it("במצב שיתוף פעולה נספר פתרון לכל המשתתפים", () => {
+    const a = store.createProfile({ name: "א", age: 6, address: "female", avatar: "cat" });
+    const b = store.createProfile({ name: "ב", age: 6, address: "male", avatar: "dog" });
+    const session = group.createSession([a.id, b.id], "coop", 1);
+    group.startGroupRiddle(session);
+    group.awardSolve(session, [a.id]);
+
+    expect(stats.childRow(a.id).solved).toBe(1);
+    expect(stats.childRow(b.id).solved).toBe(1);
+  });
+
+  it("במצב תחרותי נספר רק לזוכה", () => {
+    const a = store.createProfile({ name: "א", age: 6, address: "female", avatar: "cat" });
+    const b = store.createProfile({ name: "ב", age: 6, address: "male", avatar: "dog" });
+    const session = group.createSession([a.id, b.id], "competitive", 1);
+    group.startGroupRiddle(session);
+    group.awardSolve(session, [a.id]);
+
+    expect(stats.childRow(a.id).solved).toBe(1);
+    expect(stats.childRow(b.id).solved).toBe(0);
+  });
+
+  it("החידות הקשות מדורגות לפי טעויות וגילויים", () => {
+    const profile = newPlayer(7);
+    const riddle = riddleById.get(engine.startRiddle(profile.id).riddle!.id)!;
+    engine.submitAnswer(profile.id, "מכונית");
+    engine.submitAnswer(profile.id, "מטוס");
+    engine.revealAnswer(profile.id);
+
+    const hardest = stats.hardestRiddles();
+    expect(hardest[0]!.id).toBe(riddle.id);
+    expect(hardest[0]!.wrong).toBeGreaterThanOrEqual(2);
+    expect(hardest[0]!.reveals).toBe(1);
+  });
+
+  it("תרשים הפעילות מחזיר 14 ימים כולל ריקים", () => {
+    const bars = stats.activity(14);
+    expect(bars).toHaveLength(14);
+    expect(bars.every((bar) => typeof bar.solved === "number")).toBe(true);
+  });
+
+  it("הסטטיסטיקה נכללת בגיבוי ולא מכילה טקסט חופשי", () => {
+    const profile = newPlayer(7);
+    engine.startRiddle(profile.id);
+    engine.submitAnswer(profile.id, "מכונית");
+
+    const backup = store.exportBackup();
+    expect(backup.stats).toBeDefined();
+    expect(backup.stats!.profiles[profile.id]!.wrong).toBe(1);
+    // מונים בלבד — לא נשמר מה הילד הקליד
+    expect(JSON.stringify(backup.stats)).not.toContain("מכונית");
   });
 });

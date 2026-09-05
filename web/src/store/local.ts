@@ -9,6 +9,7 @@
 import type { AddressForm, Profile } from "../../../shared/types";
 import { startingRating } from "../../../shared/difficulty";
 import { DEFAULT_MODEL, findModel, type TokenCounts } from "../../../shared/models";
+import { readStats, type Stats } from "../lib/stats";
 
 const KEYS = {
   profiles: "agali:profiles",
@@ -226,6 +227,8 @@ export interface Backup {
   exportedAt: string;
   profiles: Profile[];
   usage: UsageLog;
+  /** מוני השימוש המצטברים, כדי שהסטטיסטיקה תעבור בין מכשירים */
+  stats?: Stats;
   /** ההגדרות מיוצאות בלי המפתח — אותו לא מעבירים בקובץ */
   settings: Omit<Settings, "apiKey">;
 }
@@ -238,6 +241,7 @@ export function exportBackup(): Backup {
     exportedAt: new Date().toISOString(),
     profiles: listProfiles(),
     usage: usageLog(),
+    stats: readStats(),
     settings,
   };
 }

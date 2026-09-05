@@ -6,6 +6,7 @@ import { probeServer, type ServerInfo } from "../game/server";
 import { clearLog, formatTime, readLog, type LogEntry } from "../lib/log";
 import { FEATURES } from "../config";
 import { Terms } from "./Terms";
+import { Stats } from "./Stats";
 
 /**
  * לוח ההורים: יומן המשחק, גיבוי, ותנאי שימוש.
@@ -41,6 +42,7 @@ export function ParentPanel({ onClose }: { onClose: () => void }) {
   const [keyVisible, setKeyVisible] = useState(false);
   const [note, setNote] = useState<string | null>(null);
   const [terms, setTerms] = useState(false);
+  const [stats, setStats] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -99,6 +101,7 @@ export function ParentPanel({ onClose }: { onClose: () => void }) {
   }
 
   if (terms) return <Terms onClose={() => setTerms(false)} />;
+  if (stats) return <Stats onClose={() => setStats(false)} />;
 
   if (!open) {
     return (
@@ -150,6 +153,19 @@ export function ParentPanel({ onClose }: { onClose: () => void }) {
       </header>
 
       {note && <p className="notice">{note}</p>}
+
+      <section className="panel-section">
+        <h2>סיכום שימוש</h2>
+        <p className="muted">
+          כמה חידות נפתרו, מי משחק ומתי, ואילו חידות הכי הקשו. הכול נספר על המכשיר
+          הזה — אין שירות מדידה חיצוני ולא נשלח שום דבר החוצה.
+        </p>
+        <div className="row">
+          <button className="btn primary" onClick={() => setStats(true)}>
+            📊 פתיחת הסיכום
+          </button>
+        </div>
+      </section>
 
       <section className="panel-section">
         <h2>יומן המשחק</h2>
