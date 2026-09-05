@@ -292,14 +292,6 @@ input {
   color: var(--green);
 }
 
-.level-pill {
-  font-size: 14px;
-  background: var(--green-soft);
-  color: var(--green-deep);
-  padding: 3px 10px;
-  border-radius: 999px;
-}
-
 .cart-count {
   font-size: 15px;
   color: var(--ink-3);
@@ -2502,4 +2494,162 @@ body {
 .prerender-loading {
   font-size: 20px;
   color: var(--ink-3);
+}
+
+
+/* ================================================================ עולמות */
+
+/* --- בחירת עולם --- */
+
+.world-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(228px, 1fr));
+  margin: 6px 0 20px;
+}
+
+.world-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+  padding: 18px 14px 16px;
+  border: 3px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--card);
+  color: var(--ink);
+  font: inherit;
+  text-align: center;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.world-card:hover,
+.world-card:focus-visible {
+  transform: translateY(-3px);
+  border-color: var(--world-accent, var(--green));
+}
+
+.world-icon {
+  font-size: 42px;
+  line-height: 1;
+}
+
+.world-card strong {
+  font-family: "Secular One", sans-serif;
+  font-size: 20px;
+}
+
+.world-tagline {
+  color: var(--ink-2);
+  font-size: 14px;
+  line-height: 1.45;
+  max-width: 26ch;
+}
+
+.world-art {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 8px;
+  min-height: 52px;
+}
+
+.world-meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+}
+
+.world-pill {
+  background: var(--paper-2);
+  color: var(--ink-2);
+  border-radius: 999px;
+  padding: 3px 10px;
+  font-size: 12.5px;
+}
+
+.world-status {
+  font-size: 13.5px;
+  color: var(--ink-2);
+}
+
+.world-status b {
+  color: var(--ink);
+}
+
+.world-bar {
+  width: 100%;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--paper-2);
+  overflow: hidden;
+}
+
+.world-bar > span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--world-accent, var(--green));
+}
+
+/* --- הצבעים של כל עולם --- */
+
+.world-market {
+  --world-accent: var(--green);
+}
+
+.world-space {
+  --world-accent: #6d6fe0;
+}
+
+.world-olympics {
+  --world-accent: #2f7fc0;
+}
+
+/*
+ * המדף מקבל את צבעי העולם דרך אותם משתנים שהוא כבר משתמש בהם,
+ * כך שהשלט, הקרשים והרקע מתחלפים ביחד ובלי להכפיל כללים.
+ */
+
+.shelf.world-space {
+  --paper-2: #1a1d35;
+  --wood: #4f53b0;
+  --wood-dark: #2f3272;
+  --green: #6d6fe0;
+  background-image:
+    radial-gradient(1.6px 1.6px at 12% 22%, rgba(255, 255, 255, 0.85), transparent),
+    radial-gradient(1.4px 1.4px at 34% 64%, rgba(255, 255, 255, 0.6), transparent),
+    radial-gradient(1.8px 1.8px at 58% 18%, rgba(255, 255, 255, 0.75), transparent),
+    radial-gradient(1.2px 1.2px at 76% 52%, rgba(255, 255, 255, 0.55), transparent),
+    radial-gradient(1.6px 1.6px at 90% 30%, rgba(255, 255, 255, 0.7), transparent),
+    radial-gradient(1.3px 1.3px at 46% 86%, rgba(255, 255, 255, 0.5), transparent),
+    radial-gradient(120% 90% at 50% 0%, rgba(109, 111, 224, 0.28), transparent 70%);
+}
+
+.shelf.world-olympics {
+  --paper-2: #e7eff7;
+  --wood: #3d8bcc;
+  --wood-dark: #23608f;
+  --green: #2f7fc0;
+  background-image: repeating-linear-gradient(
+    90deg,
+    transparent 0 46px,
+    rgba(35, 96, 143, 0.14) 46px 48px
+  );
+}
+
+@media (prefers-color-scheme: dark) {
+  .shelf.world-olympics {
+    --paper-2: #1b2532;
+    --wood: #2f6f9f;
+    --wood-dark: #1c4a6c;
+    background-image: repeating-linear-gradient(
+      90deg,
+      transparent 0 46px,
+      rgba(160, 205, 240, 0.12) 46px 48px
+    );
+  }
 }

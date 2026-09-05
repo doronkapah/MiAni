@@ -7,7 +7,8 @@
  */
 
 import type { AddressForm, Profile } from "../../../shared/types";
-import { startingRating } from "../../../shared/difficulty";
+import { emptyProgress } from "../../../shared/difficulty";
+import { DEFAULT_WORLD, WORLDS } from "../../../shared/worlds";
 import { DEFAULT_MODEL, findModel, type TokenCounts } from "../../../shared/models";
 import { readStats, type Stats } from "../lib/stats";
 
@@ -16,6 +17,7 @@ const KEYS = {
   settings: "agali:settings",
   usage: "agali:usage",
   lastProfile: "agali:lastProfile",
+  lastWorld: "agali:lastWorld",
 } as const;
 
 /** localStorage לא זמין בגלישה פרטית ובחלק מהדפדפנים המוגבלים */
@@ -49,15 +51,32 @@ export function storageAvailable(): boolean {
 
 // ------------------------------------------------------------ פרופילים
 
+/**
+ * השלמת שדות שנוספו אחרי שפרופילים כבר נשמרו במכשיר.
+ *
+ * הדירוג היה פעם שדה יחיד בפרופיל. מאז הוא נפרד לכל עולם, וכאן
+ * הערך הישן מהגר אל עולם הסופר — שם הוא הושג.
+ */
+function migrate(raw: Profile & { rating?: number; streak?: number; answerStreak?: number }): Profile {
+  const worlds = { ...(raw.worlds ?? {}) };
+  if (!worlds[DEFAULT_WORLD] && typeof raw.rating === "number") {
+    worlds[DEFAULT_WORLD] = {
+      rating: raw.rating,
+      streak: raw.streak ?? 0,
+      answerStreak: raw.answerStreak ?? 0,
+    };
+  }
+  return {
+    ...raw,
+    worlds,
+    recipes: raw.recipes ?? [],
+    revealed: raw.revealed ?? [],
+    solved: raw.solved ?? [],
+  };
+}
+
 export function listProfiles(): Profile[] {
-  // השלמת שדות שנוספו אחרי שפרופילים כבר נשמרו במכשיר
-  return read<Profile[]>(KEYS.profiles, []).map((profile) => ({
-    ...profile,
-    recipes: profile.recipes ?? [],
-    answerStreak: profile.answerStreak ?? 0,
-    revealed: profile.revealed ?? [],
-    solved: profile.solved ?? [],
-  }));
+  return read<Profile[]>(KEYS.profiles, []).map(migrate);
 }
 
 function saveProfiles(profiles: Profile[]): void {
@@ -79,12 +98,12 @@ export function createProfile(input: NewProfile): Profile {
   const profile: Profile = {
     id: `p_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`,
     name: input.name.trim().slice(0, 20),
-    age: Math.min(14, Math.max(3, Math.round(input.age))),
+    age: Math.min(120, Math.max(3, Math.round(input.age))),
     address: input.address,
     avatar: input.avatar,
-    rating: startingRating(input.age),
-    streak: 0,
-    answerStreak: 0,
+    worlds: Object.fromEntries(
+      WORLDS.map((world) => [world.id, emptyProgress(input.age, world.id)]),
+    ),
     solved: [],
     revealed: [],
     recipes: [],
@@ -119,6 +138,24 @@ export function rememberLastProfile(id: string | null): void {
     else localStorage.removeItem(KEYS.lastProfile);
   } catch {
     // גלישה פרטית — לא זוכרים, וזה בסדר
+  }
+}
+
+/** העולם האחרון ששיחקו בו, כדי לחזור אליו ישר בפתיחה */
+export function rememberLastWorld(world: string | null): void {
+  try {
+    if (world) localStorage.setItem(KEYS.lastWorld, world);
+    else localStorage.removeItem(KEYS.lastWorld);
+  } catch {
+    /* אין אחסון — לא נורא */
+  }
+}
+
+export function lastWorld(): string | null {
+  try {
+    return localStorage.getItem(KEYS.lastWorld);
+  } catch {
+    return null;
   }
 }
 

@@ -1,6 +1,13 @@
 import { useMemo, useState } from "react";
 import { AvatarArt } from "../art/avatars";
 import { LEVEL_NAMES, riddleById, riddles } from "../../../shared/bank";
+import { MAX_LEVEL, MIN_LEVEL } from "../../../shared/worlds";
+
+/* כל הרמות שקיימות באיזשהו עולם — לא רק של הסופר */
+const LEVELS = Array.from(
+  { length: MAX_LEVEL - MIN_LEVEL + 1 },
+  (_, index) => MIN_LEVEL + index,
+);
 import { share, statsReport } from "../lib/share";
 import { log } from "../lib/log";
 import * as store from "../store/local";
@@ -121,7 +128,7 @@ export function Stats({ onClose }: { onClose: () => void }) {
       skips: total.skips,
       players: data.children.length,
       bankSize: riddles.length,
-      byLevel: [1, 2, 3, 4].map((level) => ({
+      byLevel: LEVELS.map((level) => ({
         level,
         name: LEVEL_NAMES[level]!,
         solved: solvedByLevel.get(level) ?? 0,

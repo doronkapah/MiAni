@@ -1,12 +1,12 @@
 /**
  * מנוע המשחק, בדפדפן.
  *
- * זה מה שהיה קודם ה-API של השרת. אותה לוגיקה בדיוק — היא ממילא
- * הייתה טהורה ולא תלויה ב-Fastify — רק שעכשיו היא רצה על המכשיר
- * של המשתמש, וכל הנתונים נשארים ב-localStorage.
+ * כל הלוגיקה רצה על המכשיר, וכל הנתונים נשארים ב-localStorage.
+ * לכל עולם התקדמות נפרדת: מיומנות בזיהוי מצרכים היא לא מיומנות
+ * בזיהוי כוכבי לכת.
  */
 
-import { LEVEL_NAMES, allTargets, riddleById, riddles, targetById } from "../../../shared/bank";
+import { allTargets, riddleById, riddles, targetById } from "../../../shared/bank";
 import { checkAnswer } from "../../../shared/matcher";
 import {
   applyReveal,
@@ -14,17 +14,19 @@ import {
   cluesAtLevel,
   levelOf,
   pickRiddle,
+  progressIn,
   progressInLevel,
 } from "../../../shared/difficulty";
 import { greeting } from "../../../shared/prompt";
-import { aisleView, solvedAisleView, type AisleView } from "../../../shared/aisles";
 import {
   newlyCompleted,
   recipeProgress,
   type Recipe,
   type RecipeProgress,
 } from "../../../shared/recipes";
-import type { ActiveRound, Profile, Riddle } from "../../../shared/types";
+import { aisleView, solvedAisleView, type AisleView } from "../../../shared/aisles";
+import { DEFAULT_WORLD, LEVEL_NAMES, getWorld } from "../../../shared/worlds";
+import type { ActiveRound, Profile, Riddle, WorldProgress } from "../../../shared/types";
 import * as store from "../store/local";
 import * as stats from "../lib/stats";
 
@@ -32,14 +34,16 @@ import * as stats from "../lib/stats";
 
 /**
  * החידה הפעילה חיה בזיכרון בלבד, ומתאפסת ברענון הדף.
- * זה מכוון: מי שרענן באמצע חידה מקבל חידה חדשה, ולא מצב תקוע.
+ * המפתח כולל את העולם, כדי שמעבר בין עולמות לא יגרור חידה איתו.
  */
 const rounds = new Map<string, ActiveRound>();
 
+const key = (profileId: string, world: string) => `${profileId}:${world}`;
+
 const MAX_HISTORY_TURNS = 12;
 
-export function getRound(profileId: string): ActiveRound | undefined {
-  return rounds.get(profileId);
+export function getRound(profileId: string, world: string = DEFAULT_WORLD): ActiveRound | undefined {
+  return rounds.get(key(profileId, world));
 }
 
 export function pushHistory(
@@ -66,50 +70,62 @@ export interface PublicProfile {
   age: number;
   address: "male" | "female";
   avatar: string;
+  /** העולם שהתצוגה הזאת מתייחסת אליו */
+  world: string;
   level: number;
   levelName: string;
   progress: number;
   streak: number;
-  /** רצף התשובות הנכונות הנוכחי */
   answerStreak: number;
+  /** כמה נפתר בעולם הזה */
   solvedCount: number;
+  /** כמה נפתר בסך הכול, בכל העולמות */
+  totalSolved: number;
   cart: CartItem[];
   chat: { used: number; left: number };
-  /** מצב כל המתכונים — כמה מצרכים יש, בלי לחשוף שמות של מצרכים חסרים */
   recipes: RecipeProgress[];
 }
 
-export function publicProfile(profile: Profile): PublicProfile {
-  const level = levelOf(profile.rating);
+export function publicProfile(profile: Profile, world: string = DEFAULT_WORLD): PublicProfile {
+  const progress = progressIn(profile, world);
+  const level = levelOf(progress.rating);
+  const solvedRiddles = profile.solved
+    .map((id) => riddleById.get(id))
+    .filter((riddle) => riddle !== undefined);
+  const inWorld = solvedRiddles.filter((riddle) => riddle.world === world);
+
   return {
     id: profile.id,
     name: profile.name,
     age: profile.age,
     address: profile.address,
     avatar: profile.avatar,
+    world,
     level,
     levelName: LEVEL_NAMES[level]!,
-    progress: progressInLevel(profile.rating),
-    streak: profile.streak,
-    answerStreak: profile.answerStreak,
-    solvedCount: profile.solved.length,
-    cart: profile.solved
-      .map((id) => riddleById.get(id))
-      .filter((riddle) => riddle !== undefined)
-      .map((riddle) => ({ id: riddle.id, name: riddle.answer, art: riddle.art })),
+    progress: progressInLevel(progress.rating),
+    streak: progress.streak,
+    answerStreak: progress.answerStreak,
+    solvedCount: inWorld.length,
+    totalSolved: profile.solved.length,
+    cart: inWorld.map((riddle) => ({
+      id: riddle.id,
+      name: riddle.answer,
+      art: riddle.art,
+    })),
     chat: store.chatUsage(profile, store.getSettings().dailyLimit),
-    recipes: recipeProgress(profile.solved, profile.recipes),
+    recipes: recipeProgress(profile.solved, profile.recipes, world),
   };
 }
 
 export interface PublicRiddle {
   id: string;
+  world: string;
   clues: string[];
   cluesNikud: string[];
   cluesRevealed: number;
   cluesTotal: number;
   hasMoreClues: boolean;
-  /** המדף שעליו יושב הפריט — רמז חזותי שנחלש ככל שהרמה עולה */
   aisle: AisleView;
 }
 
@@ -117,13 +133,22 @@ function publicRound(riddle: Riddle, cluesRevealed: number, level: number): Publ
   const max = Math.min(riddle.clues.length, cluesAtLevel(level));
   return {
     id: riddle.id,
+    world: riddle.world,
     clues: riddle.clues.slice(0, cluesRevealed),
     cluesNikud: (riddle.cluesNikud ?? riddle.clues).slice(0, cluesRevealed),
     cluesRevealed,
     cluesTotal: max,
     hasMoreClues: cluesRevealed < max,
-    aisle: aisleView(riddle.aisle, level),
+    aisle: aisleView(riddle.world, riddle.aisle, level),
   };
+}
+
+/** שומר התקדמות של עולם אחד, בלי לגעת בשאר */
+function saveProgress(profile: Profile, world: string, next: Partial<WorldProgress>): Profile {
+  const current = progressIn(profile, world);
+  return store.updateProfile(profile.id, {
+    worlds: { ...profile.worlds, [world]: { ...current, ...next } },
+  })!;
 }
 
 // -------------------------------------------------------------- פעולות
@@ -136,18 +161,21 @@ export interface RiddleResult {
   message?: string;
 }
 
-/** מתחיל חידה חדשה, או מחזיר את זו שכבר פתוחה */
-export function startRiddle(profileId: string): RiddleResult {
+/** מתחיל חידה חדשה בעולם, או מחזיר את זו שכבר פתוחה */
+export function startRiddle(profileId: string, world: string = DEFAULT_WORLD): RiddleResult {
   const profile = store.getProfile(profileId);
   if (!profile) throw new Error("פרופיל לא נמצא");
 
-  let round = rounds.get(profile.id);
+  let round = rounds.get(key(profileId, world));
   let riddle = round ? riddleById.get(round.riddleId) : undefined;
 
   if (!round || !riddle) {
-    const next = pickRiddle(profile, riddles);
+    const next = pickRiddle(profile, world, riddles);
     if (!next) {
-      return { done: true, message: "פתרת את כל החידות בבנק! כל הכבוד 🎉" };
+      return {
+        done: true,
+        message: `פתרתם את כל החידות ב${getWorld(world).name}! כל הכבוד 🎉`,
+      };
     }
     round = {
       riddleId: next.id,
@@ -156,43 +184,40 @@ export function startRiddle(profileId: string): RiddleResult {
       startedAt: Date.now(),
       history: [],
     };
-    rounds.set(profile.id, round);
+    rounds.set(key(profileId, world), round);
     riddle = next;
   }
 
+  const level = levelOf(progressIn(profile, world).rating);
   return {
-    riddle: publicRound(riddle, round.cluesRevealed, levelOf(profile.rating)),
+    riddle: publicRound(riddle, round.cluesRevealed, level),
     greeting: greeting(profile),
-    profile: publicProfile(profile),
+    profile: publicProfile(profile, world),
   };
 }
 
 /** חושף את הרמז הבא */
-export function nextHint(profileId: string): PublicRiddle {
+export function nextHint(profileId: string, world: string = DEFAULT_WORLD): PublicRiddle {
   const profile = store.getProfile(profileId);
-  const round = rounds.get(profileId);
+  const round = rounds.get(key(profileId, world));
   const riddle = round && riddleById.get(round.riddleId);
   if (!profile || !round || !riddle) throw new Error("אין חידה פעילה");
 
-  const max = Math.min(riddle.clues.length, cluesAtLevel(levelOf(profile.rating)));
+  const level = levelOf(progressIn(profile, world).rating);
+  const max = Math.min(riddle.clues.length, cluesAtLevel(level));
   if (round.cluesRevealed < max) {
     round.cluesRevealed += 1;
     stats.recordHint(profileId);
   }
-
-  return publicRound(riddle, round.cluesRevealed, levelOf(profile.rating));
+  return publicRound(riddle, round.cluesRevealed, level);
 }
 
 /** מה חוגגים על הפתרון הזה */
 export interface Celebration {
   title: string;
-  /** משפט קטן מתחת לכותרת, כשיש משהו מיוחד */
   note?: string;
-  /** רצף התשובות הנכונות אחרי הפתרון הזה */
   streak: number;
-  /** אבן דרך שהושגה עכשיו (3, 5, 10...) */
   milestone?: number;
-  /** נפתר עם הרמז הראשון בלבד */
   noHints: boolean;
 }
 
@@ -224,7 +249,6 @@ export interface SolvedResult {
   art: Riddle["art"];
   levelUp: boolean;
   profile: PublicProfile;
-  /** מתכונים שנפתחו בזכות הפריט הזה — קופצים על המסך */
   unlockedRecipes: Recipe[];
   aisleView: AisleView;
   celebration: Celebration;
@@ -239,9 +263,13 @@ export interface MissResult {
 export type AnswerResult = SolvedResult | MissResult;
 
 /** בודק ניחוש */
-export function submitAnswer(profileId: string, guess: string): AnswerResult {
+export function submitAnswer(
+  profileId: string,
+  guess: string,
+  world: string = DEFAULT_WORLD,
+): AnswerResult {
   const profile = store.getProfile(profileId);
-  const round = rounds.get(profileId);
+  const round = rounds.get(key(profileId, world));
   const riddle = round && riddleById.get(round.riddleId);
   if (!profile || !round || !riddle) throw new Error("אין חידה פעילה");
 
@@ -249,24 +277,27 @@ export function submitAnswer(profileId: string, guess: string): AnswerResult {
   const result = checkAnswer({ guess, target, others: allTargets });
 
   if (result.status === "correct") {
-    const change = applySolve(profile, { hintsUsed: round.cluesRevealed });
+    const progress = progressIn(profile, world);
+    const change = applySolve(progress, { hintsUsed: round.cluesRevealed }, world);
     const solved = [...profile.solved, riddle.id];
     const noHints = round.cluesRevealed === 1;
-    const answerStreak = profile.answerStreak + 1;
+    const answerStreak = progress.answerStreak + 1;
 
-    // הפריט החדש עשוי להשלים מתכון. בודקים לפני השמירה, כדי לדעת
+    // הפריט החדש עשוי להשלים סט. בודקים לפני השמירה, כדי לדעת
     // מה נפתח *עכשיו* ולא מה כבר היה פתוח.
     const unlocked = newlyCompleted(solved, profile.recipes);
     stats.recordSolve(profile.id, riddle.id, round.cluesRevealed);
 
-    const updated = store.updateProfile(profile.id, {
+    saveProgress(profile, world, {
       rating: change.rating,
       streak: change.streak,
       answerStreak,
+    });
+    const updated = store.updateProfile(profile.id, {
       solved,
       recipes: [...profile.recipes, ...unlocked.map((recipe) => recipe.id)],
     })!;
-    rounds.delete(profile.id);
+    rounds.delete(key(profileId, world));
 
     return {
       status: "correct",
@@ -275,9 +306,9 @@ export function submitAnswer(profileId: string, guess: string): AnswerResult {
       aisle: riddle.aisle,
       art: riddle.art,
       levelUp: change.levelAfter > change.levelBefore,
-      profile: publicProfile(updated),
+      profile: publicProfile(updated, world),
       unlockedRecipes: unlocked,
-      aisleView: solvedAisleView(riddle.aisle),
+      aisleView: solvedAisleView(riddle.world, riddle.aisle),
       celebration: celebrate(answerStreak, noHints),
     };
   }
@@ -302,32 +333,31 @@ export interface RevealResult {
 }
 
 /** "גלה לי" — מסיים את החידה ומראה את התשובה */
-export function revealAnswer(profileId: string): RevealResult {
+export function revealAnswer(profileId: string, world: string = DEFAULT_WORLD): RevealResult {
   const profile = store.getProfile(profileId);
-  const round = rounds.get(profileId);
+  const round = rounds.get(key(profileId, world));
   const riddle = round && riddleById.get(round.riddleId);
   if (!profile || !round || !riddle) throw new Error("אין חידה פעילה");
 
-  const change = applyReveal(profile);
+  const change = applyReveal(progressIn(profile, world), world);
   stats.recordReveal(profile.id, riddle.id);
+
+  saveProgress(profile, world, { rating: change.rating, streak: 0, answerStreak: 0 });
   const updated = store.updateProfile(profile.id, {
-    rating: change.rating,
-    streak: change.streak,
-    answerStreak: 0,
     revealed: [
       ...profile.revealed.filter((entry) => entry.id !== riddle.id),
       { id: riddle.id, at: Date.now() },
     ],
   })!;
-  rounds.delete(profile.id);
+  rounds.delete(key(profileId, world));
 
   return {
     answer: riddle.answerNikud,
     reveal: riddle.reveal,
     aisle: riddle.aisle,
     art: riddle.art,
-    profile: publicProfile(updated),
-    aisleView: solvedAisleView(riddle.aisle),
+    profile: publicProfile(updated, world),
+    aisleView: solvedAisleView(riddle.world, riddle.aisle),
   };
 }
 
@@ -339,29 +369,29 @@ export interface SkipResult {
  * דילוג על חידה.
  *
  * שונה מ"גלה לי": התשובה לא מוצגת, ולכן גם אין ירידה בדירוג —
- * הילד פשוט לא רצה את החידה הזאת. היא חוזרת לתור בעוד כמה ימים.
+ * השחקן פשוט לא רצה את החידה הזאת. היא חוזרת לתור בעוד כמה ימים.
  * הרצף כן נשבר, כי החידה לא נפתרה.
  */
-export function skipRiddle(profileId: string): SkipResult {
+export function skipRiddle(profileId: string, world: string = DEFAULT_WORLD): SkipResult {
   const profile = store.getProfile(profileId);
-  const round = rounds.get(profileId);
+  const round = rounds.get(key(profileId, world));
   const riddle = round && riddleById.get(round.riddleId);
   if (!profile || !round || !riddle) throw new Error("אין חידה פעילה");
 
   stats.recordSkip(profile.id);
+  saveProgress(profile, world, { answerStreak: 0 });
   const updated = store.updateProfile(profile.id, {
-    answerStreak: 0,
     revealed: [
       ...profile.revealed.filter((entry) => entry.id !== riddle.id),
       { id: riddle.id, at: Date.now() },
     ],
   })!;
-  rounds.delete(profile.id);
+  rounds.delete(key(profileId, world));
 
-  return { profile: publicProfile(updated) };
+  return { profile: publicProfile(updated, world) };
 }
 
-/** משוב לילד — עידוד, אף פעם לא נזיפה, ואף פעם לא רמז לתשובה */
+/** משוב לשחקן — עידוד, אף פעם לא נזיפה, ואף פעם לא רמז לתשובה */
 function feedback(
   status: "close" | "wrong",
   reason: string,
@@ -372,7 +402,7 @@ function feedback(
     return "ממש ממש קרוב! נסו שוב.";
   }
   if (reason === "too-short") return "כתבו לי מילה שלמה ואבדוק אותה.";
-  if (reason === "ambiguous") return "זה פריט אחר בסופר. תחשבו שוב על הרמזים.";
-  if (wrongGuesses >= 3) return "לא זה. אולי כדאי לבקש עוד רמז, או לשאול את עגלי?";
+  if (reason === "ambiguous") return "זו תשובה לחידה אחרת. תחשבו שוב על הרמזים.";
+  if (wrongGuesses >= 3) return "לא זה. אולי כדאי לבקש עוד רמז?";
   return "לא הפעם. נסו עוד ניחוש!";
 }

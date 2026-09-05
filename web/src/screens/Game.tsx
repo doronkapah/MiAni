@@ -24,6 +24,7 @@ import { riddleMessage, share } from "../lib/share";
 import type { Art } from "../../../shared/types";
 import type { Recipe } from "../../../shared/recipes";
 import type { AisleView } from "../../../shared/aisles";
+import { getWorld } from "../../../shared/worlds";
 import { canSpeak, speak, stopSpeaking, watchVoices } from "../lib/speech";
 
 interface Solved {
@@ -39,15 +40,18 @@ interface Solved {
 
 export function Game({
   profile,
+  world,
   setProfile,
-  onSwitchProfile,
+  onSwitchWorld,
   onParentPanel,
 }: {
   profile: PublicProfile;
+  world: string;
   setProfile: (profile: PublicProfile) => void;
-  onSwitchProfile: () => void;
+  onSwitchWorld: () => void;
   onParentPanel: () => void;
 }) {
+  const info = getWorld(world);
   const [riddle, setRiddle] = useState<PublicRiddle | null>(null);
   const [greeting, setGreeting] = useState("");
   const [guess, setGuess] = useState("");
@@ -106,7 +110,7 @@ export function Game({
 
   const loadRiddle = useCallback(() => {
     stopSpeaking();
-    const data = startRiddle(profile.id);
+    const data = startRiddle(profile.id, world);
     if (data.done) {
       setFinished(data.message ?? "פתרת הכול!");
       log("riddle", "נגמרו החידות", { who: profile.name });
@@ -122,14 +126,14 @@ export function Game({
     setUnlockedQueue([]);
     log("riddle", "חידה חדשה", {
       who: profile.name,
-      data: { id: data.riddle?.id, level: profile.level, aisle: data.riddle?.aisle.sign },
+      data: { world, id: data.riddle?.id, level: profile.level, aisle: data.riddle?.aisle.sign },
     });
-  }, [profile.id, profile.name, profile.level, setProfile]);
+  }, [profile.id, profile.name, profile.level, world, setProfile]);
 
   useEffect(() => {
     loadRiddle();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profile.id]);
+  }, [profile.id, world]);
 
   // ברמה 1 הרמז נקרא בקול מיד כשהוא מופיע
   useEffect(() => {
@@ -142,7 +146,7 @@ export function Game({
     const text = guess.trim();
     if (!text || solved) return;
     try {
-      const result = submitAnswer(profile.id, text);
+      const result = submitAnswer(profile.id, text, world);
       log("answer", `ניחוש: ${text}`, {
         who: profile.name,
         data: { riddle: riddle?.id, status: result.status },
@@ -171,7 +175,7 @@ export function Game({
 
   function askHint() {
     if (!riddle?.hasMoreClues) return;
-    setRiddle(nextHint(profile.id));
+    setRiddle(nextHint(profile.id, world));
     setFeedback(null);
     log("riddle", "רמז נוסף", { who: profile.name, data: { riddle: riddle.id } });
   }
@@ -179,7 +183,7 @@ export function Game({
   function skip() {
     if (solved) return;
     const skipped = riddle?.id;
-    const data = skipRiddle(profile.id);
+    const data = skipRiddle(profile.id, world);
     setProfile(data.profile);
     log("riddle", "דילוג", { who: profile.name, data: { riddle: skipped } });
     loadRiddle();
@@ -187,7 +191,7 @@ export function Game({
 
   function giveUp() {
     if (solved) return;
-    const data = revealAnswer(profile.id);
+    const data = revealAnswer(profile.id, world);
     setProfile(data.profile);
     setSolved({ ...data, levelUp: false, gaveUp: true });
     stopSpeaking();
@@ -198,8 +202,8 @@ export function Game({
     return (
       <div className="finished">
         <h1>🎉 {finished}</h1>
-        <button className="btn primary big" onClick={onSwitchProfile}>
-          חזרה לבחירת שחקן
+        <button className="btn primary big" onClick={onSwitchWorld}>
+          לעולם אחר
         </button>
       </div>
     );
@@ -210,11 +214,13 @@ export function Game({
   return (
     <div className="game">
       <header className="topbar">
-        <button className="who" onClick={onSwitchProfile}>
+        <button className="who" onClick={onSwitchWorld}>
           <AvatarArt id={profile.avatar} size={38} />
           <span className="who-text">
             <strong>{profile.name}</strong>
-            <small>{profile.levelName}</small>
+            <small>
+              {info.icon} {info.name} · {profile.levelName}
+            </small>
           </span>
         </button>
 
@@ -241,16 +247,18 @@ export function Game({
           <button
             className="icon-btn"
             onClick={() => setOverlay("book")}
-            aria-label={`ספר המתכונים, ${recipesOpen} פתוחים`}
+            aria-label={`${info.sets.name}, ${recipesOpen} פתוחים`}
           >
-            📖<b>{recipesOpen}</b>
+            {info.sets.icon}
+            <b>{recipesOpen}</b>
           </button>
           <button
             className="icon-btn"
             onClick={() => setOverlay("cart")}
-            aria-label={`העגלה שלי, ${profile.solvedCount} פריטים`}
+            aria-label={`${info.collection.name}, ${profile.solvedCount} פריטים`}
           >
-            🛒<b>{profile.solvedCount}</b>
+            {info.collection.icon}
+            <b>{profile.solvedCount}</b>
           </button>
         </div>
       </header>
@@ -389,11 +397,14 @@ export function Game({
         </div>
       </main>
 
-      {overlay === "howto" && <HowToPlay onClose={closeHowTo} />}
-      {overlay === "cart" && <Cart items={profile.cart} onClose={() => setOverlay("none")} />}
+      {overlay === "howto" && <HowToPlay world={world} onClose={closeHowTo} />}
+      {overlay === "cart" && (
+        <Cart items={profile.cart} world={world} onClose={() => setOverlay("none")} />
+      )}
       {overlay === "book" && (
         <RecipeBook
           recipes={profile.recipes}
+          world={world}
           nikud={nikud}
           onClose={() => setOverlay("none")}
         />
@@ -403,6 +414,7 @@ export function Game({
         <RecipeModal
           recipe={unlockedQueue[0]!}
           nikud={nikud}
+          world={world}
           remaining={unlockedQueue.length - 1}
           onClose={() => setUnlockedQueue((queue) => queue.slice(1))}
         />

@@ -4,25 +4,34 @@ import { Game } from "./screens/Game";
 import { ParentPanel } from "./screens/ParentPanel";
 import { ParentSetup } from "./screens/ParentSetup";
 import { ParentGame } from "./screens/ParentGame";
+import { WorldPicker } from "./screens/WorldPicker";
 import { publicProfile, type PublicProfile } from "./game/engine";
 import { createSession, type GroupMode, type GroupSession } from "./game/group";
 import { probeServer } from "./game/server";
 import * as store from "./store/local";
 import { FEATURES } from "./config";
+import { DEFAULT_WORLD, getWorld } from "../../shared/worlds";
 import { log } from "./lib/log";
 
-type Screen = "picker" | "solo" | "parent-setup" | "parent-game" | "settings";
+type Screen =
+  | "picker"
+  | "worlds"
+  | "solo"
+  | "parent-setup"
+  | "parent-game"
+  | "settings";
 
 export default function App() {
   const [profiles, setProfiles] = useState<PublicProfile[]>([]);
   const [active, setActive] = useState<PublicProfile | null>(null);
   const [session, setSession] = useState<GroupSession | null>(null);
   const [screen, setScreen] = useState<Screen>("picker");
+  const [world, setWorld] = useState<string>(DEFAULT_WORLD);
   const [ready, setReady] = useState(false);
   const [noStorage, setNoStorage] = useState(false);
 
   const refresh = useCallback(() => {
-    const list = store.listProfiles().map(publicProfile);
+    const list = store.listProfiles().map((profile) => publicProfile(profile));
     setProfiles(list);
     return list;
   }, []);
@@ -34,7 +43,11 @@ export default function App() {
     const remembered = store.lastProfileId();
     const match = list.find((profile) => profile.id === remembered);
     if (match) {
-      setActive(match);
+      // חוזרים בדיוק לאן שהיו — אותו שחקן, אותו עולם
+      const world = getWorld(store.lastWorld() ?? DEFAULT_WORLD).id;
+      const full = store.getProfile(match.id);
+      setWorld(world);
+      setActive(full ? publicProfile(full, world) : match);
       setScreen("solo");
     }
 
@@ -59,7 +72,17 @@ export default function App() {
   function pick(profile: PublicProfile) {
     setActive(profile);
     store.rememberLastProfile(profile.id);
+    setScreen("worlds");
+  }
+
+  function enterWorld(next: string) {
+    const profile = active && store.getProfile(active.id);
+    if (!profile) return;
+    setWorld(next);
+    store.rememberLastWorld(next);
+    setActive(publicProfile(profile, next));
     setScreen("solo");
+    log("app", "נכנסו לעולם", { data: { world: next } });
   }
 
   function create(input: {
@@ -91,18 +114,25 @@ export default function App() {
     setScreen("picker");
   }
 
-  function startGroup(input: { profileIds: string[]; mode: GroupMode; level: number }) {
-    setSession(createSession(input.profileIds, input.mode, input.level));
+  function startGroup(input: {
+    profileIds: string[];
+    mode: GroupMode;
+    level: number;
+    world: string;
+  }) {
+    setSession(createSession(input.profileIds, input.mode, input.level, input.world));
     setScreen("parent-game");
   }
 
-  if (!ready) return <div className="boot">רגע, פותחים את הסופר… 🛒</div>;
+  if (!ready) return <div className="boot">רגע, פותחים את המשחק… 🧩</div>;
 
   if (screen === "settings") {
     return (
       <ParentPanel
         onClose={() => {
           refresh();
+          const profile = active && store.getProfile(active.id);
+          if (profile) setActive(publicProfile(profile, world));
           setScreen(active ? "solo" : "picker");
         }}
       />
@@ -123,12 +153,22 @@ export default function App() {
     return <ParentGame session={session} onExit={backToPicker} />;
   }
 
+  if (screen === "worlds" && active) {
+    const profile = store.getProfile(active.id);
+    if (profile) {
+      return (
+        <WorldPicker profile={profile} onPick={enterWorld} onBack={backToPicker} />
+      );
+    }
+  }
+
   if (screen === "solo" && active) {
     return (
       <Game
         profile={active}
+        world={world}
         setProfile={setActive}
-        onSwitchProfile={backToPicker}
+        onSwitchWorld={() => setScreen("worlds")}
         onParentPanel={() => setScreen("settings")}
       />
     );

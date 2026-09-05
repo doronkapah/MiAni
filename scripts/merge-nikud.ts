@@ -27,6 +27,9 @@ const changes: string[] = [];
 let vocalized = 0;
 
 for (const riddle of riddles) {
+  // ברמות 5–6 הקהל כבר קורא בלי ניקוד, והשדה פשוט חסר
+  if (riddle.level > 4) continue;
+
   const pointed = nikud[riddle.id];
   if (!pointed) {
     problems.push(`חסר ניקוד: ${riddle.id}`);

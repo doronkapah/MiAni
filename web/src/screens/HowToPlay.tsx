@@ -7,17 +7,21 @@
  */
 
 import { FEATURES } from "../config";
+import { getWorld, type World } from "../../../shared/worlds";
 
-const ALL_STEPS: { icon: string; title: string; text: string; needsChat?: boolean }[] = [
+type Step = { icon: string; title: string; text: string; needsChat?: boolean };
+
+/* ההסבר מדבר בשפה של העולם שנמצאים בו — "מעבר בסופר" בסופר, "אזור ביקום" בחלל */
+const allSteps = (world: World): Step[] => [
   {
     icon: "🕵️",
     title: "מי אני?",
-    text: "יש פריט סודי בסופר. הרמזים מספרים עליו, אחד־אחד.",
+    text: world.intro,
   },
   {
     icon: "🏷️",
-    title: "השלט על המדף",
-    text: "הוא מגלה באיזה מעבר הפריט נמצא. ככל שהרמה עולה — הוא מגלה פחות.",
+    title: `השלט על ה${world.placeLabel}`,
+    text: `${world.placeHint} ככל שהרמה עולה — הוא מגלה פחות.`,
   },
   {
     icon: "✏️",
@@ -46,16 +50,25 @@ const ALL_STEPS: { icon: string; title: string; text: string; needsChat?: boolea
     needsChat: true,
   },
   {
-    icon: "📖",
-    title: "העגלה והמתכונים",
-    text: "כל פריט שפותרים נכנס לעגלה. כשמצטברים המצרכים של מנה — נפתח מתכון חדש!",
+    icon: world.sets.icon,
+    title: `${world.collection.name} ו${world.sets.name}`,
+    text: `כל מה שפותרים נכנס ${world.collection.into}. כשמצטברים מספיק — נפתח ${world.sets.singular} חדש!`,
   },
 ];
 
 /** מסתירים את עגלי כשהצ'אט כבוי, כדי לא להבטיח כפתור שלא קיים */
-const STEPS = ALL_STEPS.filter((step) => !step.needsChat || FEATURES.agaliChat);
+function stepsFor(world: World): Step[] {
+  return allSteps(world).filter((step) => !step.needsChat || FEATURES.agaliChat);
+}
 
-export function HowToPlay({ onClose }: { onClose: () => void }) {
+export function HowToPlay({
+  world,
+  onClose,
+}: {
+  world?: string;
+  onClose: () => void;
+}) {
+  const STEPS = stepsFor(getWorld(world ?? ""));
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div

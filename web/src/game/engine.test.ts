@@ -33,6 +33,12 @@ const store = await import("../store/local");
 const group = await import("./group");
 const stats = await import("../lib/stats");
 const shareLib = await import("../lib/share");
+const { progressIn } = await import("../../../shared/difficulty");
+
+/** התקדמות בעולם ברירת המחדל, שבו רצות רוב הבדיקות */
+function marketProgress(profileId: string) {
+  return progressIn(store.getProfile(profileId)!, "market");
+}
 
 function newPlayer(age = 7) {
   return store.createProfile({ name: "בדיקה", age, address: "female", avatar: "tomato" });
@@ -44,7 +50,7 @@ describe("מנוע המשחק בדפדפן", () => {
   it("יוצר פרופיל ושומר אותו מקומית", () => {
     const profile = newPlayer(5);
     expect(store.listProfiles()).toHaveLength(1);
-    expect(engine.publicProfile(profile).levelName).toBe("מדף הגן");
+    expect(engine.publicProfile(profile).levelName).toBe("מתחילים");
   });
 
   it("גיל קובע את רמת הפתיחה", () => {
@@ -91,20 +97,20 @@ describe("מנוע המשחק בדפדפן", () => {
   it("ניחוש שגוי לא מקדם ולא שובר", () => {
     const profile = newPlayer(7);
     engine.startRiddle(profile.id);
-    const before = store.getProfile(profile.id)!.rating;
+    const before = marketProgress(profile.id).rating;
     const result = engine.submitAnswer(profile.id, "מכונית");
     expect(result.status).not.toBe("correct");
-    expect(store.getProfile(profile.id)!.rating).toBe(before);
+    expect(marketProgress(profile.id).rating).toBe(before);
   });
 
   it("גלה לי מוריד דירוג ומחזיר את החידה לתור", () => {
     const profile = newPlayer(7);
     const riddleId = engine.startRiddle(profile.id).riddle!.id;
-    const before = store.getProfile(profile.id)!.rating;
+    const before = marketProgress(profile.id).rating;
 
     const result = engine.revealAnswer(profile.id);
     expect(result.answer).toBeTruthy();
-    expect(store.getProfile(profile.id)!.rating).toBeLessThan(before);
+    expect(marketProgress(profile.id).rating).toBeLessThan(before);
     expect(store.getProfile(profile.id)!.revealed.map((r) => r.id)).toContain(riddleId);
     expect(store.getProfile(profile.id)!.solved).not.toContain(riddleId);
   });
@@ -253,7 +259,7 @@ describe("מצב הורה שואל", () => {
 
   it("כשאף אחד לא פתר, אף אחד לא מקבל — וכולם סופגים את ההורדה", () => {
     const [a, b] = twoKids();
-    const before = store.getProfile(a.id)!.rating;
+    const before = marketProgress(a.id).rating;
     const session = group.createSession([a.id, b.id], "competitive", 1);
     const riddle = group.startGroupRiddle(session)!;
 
@@ -261,7 +267,7 @@ describe("מצב הורה שואל", () => {
     expect(outcome.awarded).toEqual([]);
     expect(outcome.gaveUp).toBe(true);
     expect(store.getProfile(a.id)!.solved).not.toContain(riddle.id);
-    expect(store.getProfile(a.id)!.rating).toBeLessThan(before);
+    expect(marketProgress(a.id).rating).toBeLessThan(before);
     expect(store.getProfile(b.id)!.revealed.map((r) => r.id)).toContain(riddle.id);
   });
 
@@ -427,23 +433,23 @@ describe("עידוד ורצף", () => {
   it("גלה לי שובר את הרצף", () => {
     const profile = newPlayer(7);
     solveCurrent(profile.id);
-    expect(store.getProfile(profile.id)!.answerStreak).toBe(1);
+    expect(marketProgress(profile.id).answerStreak).toBe(1);
     engine.startRiddle(profile.id);
     engine.revealAnswer(profile.id);
-    expect(store.getProfile(profile.id)!.answerStreak).toBe(0);
+    expect(marketProgress(profile.id).answerStreak).toBe(0);
   });
 
   it("דילוג שובר את הרצף אבל לא מוריד דירוג", () => {
     const profile = newPlayer(7);
     solveCurrent(profile.id);
-    const rating = store.getProfile(profile.id)!.rating;
+    const rating = marketProgress(profile.id).rating;
 
     const riddleId = engine.startRiddle(profile.id).riddle!.id;
     engine.skipRiddle(profile.id);
 
     const after = store.getProfile(profile.id)!;
-    expect(after.answerStreak).toBe(0);
-    expect(after.rating).toBe(rating);
+    expect(marketProgress(profile.id).answerStreak).toBe(0);
+    expect(marketProgress(profile.id).rating).toBe(rating);
     expect(after.solved).not.toContain(riddleId);
     expect(after.revealed.map((entry) => entry.id)).toContain(riddleId);
     expect(stats.childRow(profile.id).skips).toBe(1);

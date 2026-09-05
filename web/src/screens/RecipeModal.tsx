@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { RecipeArt } from "../art/RecipeArt";
 import type { Recipe } from "../../../shared/recipes";
 import { canSpeak, speak, stopSpeaking } from "../lib/speech";
+import { getWorld } from "../../../shared/worlds";
 
 /**
  * המתכון שנפתח, קופץ על המסך.
@@ -15,16 +16,19 @@ export function RecipeModal({
   nikud,
   remaining,
   owner,
+  world,
   onClose,
 }: {
   recipe: Recipe;
   nikud: boolean;
+  world?: string;
   /** כמה מתכונים נוספים נפתחו באותו רגע */
   remaining: number;
   /** במצב "הורה שואל" — של מי המתכון */
   owner?: string;
   onClose: () => void;
 }) {
+  const info = getWorld(world ?? recipe.world);
   const closeRef = useRef<HTMLButtonElement>(null);
   const voice = canSpeak();
 
@@ -56,11 +60,13 @@ export function RecipeModal({
         className="recipe-modal"
         role="dialog"
         aria-modal="true"
-        aria-label={`מתכון חדש: ${recipe.name}`}
+        aria-label={`${info.sets.singular} חדש: ${recipe.name}`}
         onClick={(event) => event.stopPropagation()}
       >
         <p className="recipe-banner">
-          {owner ? `🎉 ${owner} פתח/ה מתכון חדש!` : "🎉 פתחת מתכון חדש!"}
+          {owner
+            ? `🎉 ${owner} פתח/ה ${info.sets.singular} חדש!`
+            : `🎉 פתחתם ${info.sets.singular} חדש!`}
         </p>
 
         <div className="recipe-head">
@@ -82,13 +88,15 @@ export function RecipeModal({
 
         <p className={`recipe-fact ${nikud ? "nikud" : ""}`}>💡 {fact}</p>
 
-        <p className="recipe-warning">
-          חלק מהשלבים דורשים אש או סכין — את אלה עושה מבוגר.
-        </p>
+        {recipe.world === "market" && (
+          <p className="recipe-warning">
+            חלק מהשלבים דורשים אש או סכין — את אלה עושה מבוגר.
+          </p>
+        )}
 
         <div className="recipe-actions">
           <button className="btn primary big" onClick={onClose} ref={closeRef}>
-            {remaining > 0 ? `יופי! ועוד ${remaining} מתכונים` : "יופי!"}
+            {remaining > 0 ? `יופי! ועוד ${remaining} ב${info.sets.name}` : "יופי!"}
           </button>
           {voice && (
             <button className="btn" onClick={readAloud}>

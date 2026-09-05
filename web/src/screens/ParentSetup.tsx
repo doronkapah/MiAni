@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { AvatarArt } from "../art/avatars";
 import { Agali } from "../art/Agali";
-import { LEVEL_NAMES } from "../../../shared/bank";
+import { LEVEL_NAMES, levelsInWorld } from "../../../shared/bank";
+import { DEFAULT_WORLD, WORLDS } from "../../../shared/worlds";
 import { suggestedLevel, type GroupMode } from "../game/group";
 import type { PublicProfile } from "../game/engine";
 import * as store from "../store/local";
@@ -13,18 +14,30 @@ export function ParentSetup({
   onCancel,
 }: {
   profiles: PublicProfile[];
-  onStart: (input: { profileIds: string[]; mode: GroupMode; level: number }) => void;
+  onStart: (input: {
+    profileIds: string[];
+    mode: GroupMode;
+    level: number;
+    world: string;
+  }) => void;
   onCancel: () => void;
 }) {
   const [selected, setSelected] = useState<string[]>([]);
   const [mode, setMode] = useState<GroupMode>("competitive");
   const [level, setLevel] = useState<number | null>(null);
+  const [world, setWorld] = useState<string>(DEFAULT_WORLD);
 
   const chosen = profiles.filter((profile) => selected.includes(profile.id));
+  const levels = levelsInWorld(world);
   const suggested = suggestedLevel(
     chosen.map((profile) => store.getProfile(profile.id)!).filter(Boolean),
+    world,
   );
-  const activeLevel = level ?? suggested;
+  // עולם עשוי להתחיל מרמה 2 — לא מציעים רמה שאין בה חידות
+  const activeLevel = Math.min(
+    Math.max(level ?? suggested, levels[0]!),
+    levels[levels.length - 1]!,
+  );
 
   function toggle(id: string) {
     setSelected((current) =>
@@ -66,6 +79,24 @@ export function ParentSetup({
           )}
         </div>
 
+        <div className="field">
+          <span>באיזה עולם?</span>
+          <div className="chips">
+            {WORLDS.map((option) => (
+              <button
+                key={option.id}
+                className={`chip wide ${world === option.id ? "on" : ""}`}
+                onClick={() => {
+                  setWorld(option.id);
+                  setLevel(null);
+                }}
+              >
+                {option.icon} {option.name}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {selected.length > 1 && (
           <div className="field">
             <span>איך מנקדים?</span>
@@ -91,7 +122,7 @@ export function ParentSetup({
         <div className="field">
           <span>רמת קושי</span>
           <div className="chips">
-            {[1, 2, 3, 4].map((option) => (
+            {levels.map((option) => (
               <button
                 key={option}
                 className={`chip wide ${activeLevel === option ? "on" : ""}`}
@@ -111,7 +142,7 @@ export function ParentSetup({
         <div className="row">
           <button
             className="btn primary big"
-            onClick={() => onStart({ profileIds: selected, mode, level: activeLevel })}
+            onClick={() => onStart({ profileIds: selected, mode, level: activeLevel, world })}
             disabled={selected.length === 0}
           >
             מתחילים!

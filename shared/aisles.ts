@@ -1,21 +1,23 @@
 /**
- * המדפים של הסופר.
+ * המקומות שבכל עולם.
  *
- * לאיור של המדף יש עכשיו תפקיד: הוא מראה באיזה מעבר הפריט נמצא,
- * והמוצרים שעליו מתאימים למעבר הזה. זה רמז חזותי אמיתי — ילד בן
- * חמש שרואה מדף פירות וירקות כבר יודע לאן לכוון.
- *
- * ככל שהרמה עולה הרמז נחלש: ברמה 3 מוצג רק האזור הכללי, וברמה 4
- * לא מוצג כלום. אלוף הסופר צריך להסתדר עם המילים בלבד.
+ * לאיור יש תפקיד: השלט והפריטים סביבו מראים איפה הפריט הסודי נמצא —
+ * מדף בסופר, אזור ביקום, ענף ספורט. הרמז נחלש ככל שהרמה עולה:
+ * ברמות 1–2 המקום המדויק, ברמה 3 האזור הכללי, ומרמה 4 שום דבר.
  */
+
+import type { WorldId } from "./worlds";
+import { getWorld } from "./worlds";
 
 export interface DecorItem {
   shape: string;
   color: string;
 }
 
-/** מוצרי הרקע של כל מעבר — קישוט, אבל קישוט שמספר משהו */
-export const AISLE_DECOR: Record<string, DecorItem[]> = {
+type PlaceMap = Record<string, DecorItem[]>;
+
+/** מוצרי הרקע של כל מעבר בסופר */
+const MARKET: PlaceMap = {
   "פירות וירקות": [
     { shape: "roundFruit", color: "#D6402C" },
     { shape: "longFruit", color: "#F2C53D" },
@@ -112,65 +114,246 @@ export const AISLE_DECOR: Record<string, DecorItem[]> = {
   ],
 };
 
-/** מוצרים חסרי זהות, למדף שלא אמור לרמוז */
-const NEUTRAL_DECOR: DecorItem[] = [
-  { shape: "box", color: "#CBC6BC" },
-  { shape: "can", color: "#B9BFC4" },
-  { shape: "bottle", color: "#C6CDD2" },
-  { shape: "packet", color: "#D2CCC1" },
-  { shape: "jar", color: "#C2BDB2" },
-  { shape: "sack", color: "#D8D2C6" },
-];
+/** אזורי היקום */
+const SPACE: PlaceMap = {
+  "המערכת הפנימית": [
+    { shape: "planet", color: "#B08A5E" },
+    { shape: "planet", color: "#E0A860" },
+    { shape: "planet", color: "#3D7FC4" },
+    { shape: "planet", color: "#C4543A" },
+    { shape: "star", color: "#F5C518" },
+  ],
+  "ענקי הגז": [
+    { shape: "planet", color: "#C89A6A" },
+    { shape: "ringedPlanet", color: "#E0C88A" },
+    { shape: "planet", color: "#7FCBD4" },
+    { shape: "planet", color: "#3A5FC4" },
+    { shape: "moon", color: "#B8BEC4" },
+  ],
+  "ירחים": [
+    { shape: "moon", color: "#CFD4D9" },
+    { shape: "moon", color: "#E8DCC0" },
+    { shape: "moon", color: "#C4906A" },
+    { shape: "moon", color: "#9AA6B0" },
+    { shape: "planet", color: "#7A8894" },
+  ],
+  "קצה המערכת": [
+    { shape: "comet", color: "#9ED6E8" },
+    { shape: "moon", color: "#B0A898" },
+    { shape: "comet", color: "#CFE6F5" },
+    { shape: "moon", color: "#8A8578" },
+    { shape: "star", color: "#DCE4EC" },
+  ],
+  "כוכבים ושמשות": [
+    { shape: "star", color: "#F5C518" },
+    { shape: "star", color: "#E85A3A" },
+    { shape: "star", color: "#7FA8F5" },
+    { shape: "star", color: "#F5F0E0" },
+    { shape: "star", color: "#D66AC4" },
+  ],
+  "גלקסיות ומעבר": [
+    { shape: "galaxy", color: "#8A6FC4" },
+    { shape: "galaxy", color: "#4A7FC4" },
+    { shape: "star", color: "#F5E6C0" },
+    { shape: "galaxy", color: "#C46A9A" },
+    { shape: "star", color: "#9ED6E8" },
+  ],
+  "חלליות": [
+    { shape: "rocket", color: "#DCE4EC" },
+    { shape: "satellite", color: "#C0C8D0" },
+    { shape: "rocket", color: "#E8703A" },
+    { shape: "satellite", color: "#F5C518" },
+    { shape: "rocket", color: "#B0BCC8" },
+  ],
+  "מצפים ותחנות": [
+    { shape: "satellite", color: "#E0C060" },
+    { shape: "satellite", color: "#B8C4D0" },
+    { shape: "star", color: "#F5F0E0" },
+    { shape: "satellite", color: "#8AA0B4" },
+    { shape: "rocket", color: "#D0D8E0" },
+  ],
+};
 
-/** האזור הרחב שאליו שייך המעבר — הרמז החלש של רמה 3 */
-const ZONES: Record<string, string> = {
-  "פירות וירקות": "מזון טרי",
-  "מקרר": "מזון טרי",
-  "מקפיא": "מזון טרי",
-  "מאפייה": "מזון טרי",
-  "יבשים": "מדפי היבשים",
-  "שימורים": "מדפי היבשים",
-  "פיצוחים": "מדפי היבשים",
-  "רטבים": "מדפי היבשים",
-  // משקאות נכנס לאותו אזור עם המתוקים בכוונה: כשהוא לבד, שם האזור
-  // זהה לשם המעבר, והרמז של רמה 3 לא נחלש בכלל.
-  "ממתקים": "מתוקים, חטיפים ומשקאות",
-  "חטיפים": "מתוקים, חטיפים ומשקאות",
-  "משקאות": "מתוקים, חטיפים ומשקאות",
-  "ניקיון": "לא לאכילה",
-  "כלי בית": "לא לאכילה",
+/** ענפי הספורט */
+const OLYMPICS: PlaceMap = {
+  "אתלטיקה": [
+    { shape: "shoe", color: "#E8563A" },
+    { shape: "stopwatch", color: "#3A4A5A" },
+    { shape: "medal", color: "#F5C518" },
+    { shape: "shoe", color: "#3A7FC4" },
+    { shape: "trophy", color: "#E0A860" },
+  ],
+  "משחקי כדור": [
+    { shape: "ball", color: "#E8843A" },
+    { shape: "ball", color: "#F5F0E8" },
+    { shape: "ball", color: "#F5C518" },
+    { shape: "trophy", color: "#D9A511" },
+    { shape: "ball", color: "#4A9A4A" },
+  ],
+  "שחייה ומים": [
+    { shape: "wave", color: "#3FA9C8" },
+    { shape: "medal", color: "#F5C518" },
+    { shape: "wave", color: "#6FC8E0" },
+    { shape: "stopwatch", color: "#2A5A7A" },
+    { shape: "wave", color: "#4A88C4" },
+  ],
+  "אולימפיאדת החורף": [
+    { shape: "snowflake", color: "#BFE3F2" },
+    { shape: "shoe", color: "#8AA6C0" },
+    { shape: "snowflake", color: "#E8F4FA" },
+    { shape: "medal", color: "#C0C8D0" },
+    { shape: "snowflake", color: "#9ECBE8" },
+  ],
+  "התעמלות": [
+    { shape: "ribbon", color: "#E85A9A" },
+    { shape: "medal", color: "#F5C518" },
+    { shape: "ribbon", color: "#7A5AC4" },
+    { shape: "trophy", color: "#E0A860" },
+    { shape: "ribbon", color: "#3FA9A0" },
+  ],
+  "לחימה": [
+    { shape: "belt", color: "#2A2E33" },
+    { shape: "medal", color: "#F5C518" },
+    { shape: "belt", color: "#F5F0E8" },
+    { shape: "belt", color: "#8A5A2B" },
+    { shape: "trophy", color: "#C0C8D0" },
+  ],
+  "סמלים וטקסים": [
+    { shape: "torch", color: "#E8703A" },
+    { shape: "rings", color: "#3A7FC4" },
+    { shape: "medal", color: "#F5C518" },
+    { shape: "torch", color: "#F5C518" },
+    { shape: "rings", color: "#2A2E33" },
+  ],
+  "היסטוריה אולימפית": [
+    { shape: "trophy", color: "#D9A511" },
+    { shape: "rings", color: "#4A9A4A" },
+    { shape: "medal", color: "#C0C8D0" },
+    { shape: "torch", color: "#E0A860" },
+    { shape: "medal", color: "#C48A4A" },
+  ],
+};
+
+const PLACES: Record<WorldId, PlaceMap> = {
+  market: MARKET,
+  space: SPACE,
+  olympics: OLYMPICS,
+};
+
+/** פריטים חסרי זהות, למדף שלא אמור לרמוז */
+const NEUTRAL: Record<WorldId, DecorItem[]> = {
+  market: [
+    { shape: "box", color: "#CBC6BC" },
+    { shape: "can", color: "#B9BFC4" },
+    { shape: "bottle", color: "#C6CDD2" },
+    { shape: "packet", color: "#D2CCC1" },
+    { shape: "jar", color: "#C2BDB2" },
+    { shape: "sack", color: "#D8D2C6" },
+  ],
+  space: [
+    { shape: "star", color: "#9AA4AE" },
+    { shape: "planet", color: "#8A929A" },
+    { shape: "star", color: "#AEB6BE" },
+    { shape: "moon", color: "#96A0A8" },
+    { shape: "star", color: "#A6AEB6" },
+    { shape: "planet", color: "#7E868E" },
+  ],
+  olympics: [
+    { shape: "medal", color: "#A8B0B8" },
+    { shape: "ball", color: "#9AA2AA" },
+    { shape: "medal", color: "#B2BAC2" },
+    { shape: "trophy", color: "#969EA6" },
+    { shape: "ball", color: "#A0A8B0" },
+    { shape: "medal", color: "#8E969E" },
+  ],
+};
+
+/** האזור הרחב שאליו שייך המקום — הרמז החלש של רמה 3 */
+const ZONES: Record<WorldId, Record<string, string>> = {
+  market: {
+    "פירות וירקות": "מזון טרי",
+    "מקרר": "מזון טרי",
+    "מקפיא": "מזון טרי",
+    "מאפייה": "מזון טרי",
+    "יבשים": "מדפי היבשים",
+    "שימורים": "מדפי היבשים",
+    "פיצוחים": "מדפי היבשים",
+    "רטבים": "מדפי היבשים",
+    // משקאות נכנס לאותו אזור עם המתוקים בכוונה: כשהוא לבד, שם האזור
+    // זהה לשם המעבר, והרמז של רמה 3 לא נחלש בכלל.
+    "ממתקים": "מתוקים, חטיפים ומשקאות",
+    "חטיפים": "מתוקים, חטיפים ומשקאות",
+    "משקאות": "מתוקים, חטיפים ומשקאות",
+    "ניקיון": "לא לאכילה",
+    "כלי בית": "לא לאכילה",
+  },
+  space: {
+    "המערכת הפנימית": "מערכת השמש",
+    "ענקי הגז": "מערכת השמש",
+    "ירחים": "מערכת השמש",
+    "קצה המערכת": "מערכת השמש",
+    "כוכבים ושמשות": "היקום הרחוק",
+    "גלקסיות ומעבר": "היקום הרחוק",
+    "חלליות": "מעשה ידי אדם",
+    "מצפים ותחנות": "מעשה ידי אדם",
+  },
+  olympics: {
+    "אתלטיקה": "מסלול ומגרש",
+    "משחקי כדור": "מסלול ומגרש",
+    "שחייה ומים": "מים וקרח",
+    "אולימפיאדת החורף": "מים וקרח",
+    "התעמלות": "אולם",
+    "לחימה": "אולם",
+    "סמלים וטקסים": "מסביב למשחקים",
+    "היסטוריה אולימפית": "מסביב למשחקים",
+  },
 };
 
 export interface AisleView {
-  /** מה כתוב על שלט המדף */
+  /** מה כתוב על השלט */
   sign: string;
   decor: DecorItem[];
-  /** האם השלט מסגיר את המעבר המדויק */
+  /** האם השלט מסגיר את המקום המדויק */
   precise: boolean;
+  world: string;
+}
+
+function decorFor(world: WorldId, place: string): DecorItem[] {
+  return PLACES[world][place] ?? NEUTRAL[world];
 }
 
 /**
- * מה מציגים על המדף, לפי הרמה.
+ * מה מציגים על השלט, לפי הרמה.
  *
- * רמות 1–2: המעבר המדויק, עם מוצרים שמתאימים לו.
- * רמה 3: רק האזור הכללי, עם מוצרים ניטרליים.
- * רמה 4: שום דבר. אלוף הסופר עובד עם המילים בלבד.
+ * רמות 1–2: המקום המדויק, עם פריטים שמתאימים לו.
+ * רמה 3: רק האזור הכללי, עם פריטים ניטרליים.
+ * רמות 4 ומעלה: שום דבר.
  */
-export function aisleView(aisle: string, level: number): AisleView {
+export function aisleView(world: string, aisle: string, level: number): AisleView {
+  const id = getWorld(world).id;
   if (level <= 2) {
-    return {
-      sign: aisle,
-      decor: AISLE_DECOR[aisle] ?? NEUTRAL_DECOR,
-      precise: true,
-    };
+    return { sign: aisle, decor: decorFor(id, aisle), precise: true, world: id };
   }
   if (level === 3) {
-    return { sign: ZONES[aisle] ?? "אי־שם בסופר", decor: NEUTRAL_DECOR, precise: false };
+    return {
+      sign: ZONES[id][aisle] ?? "אי־שם",
+      decor: NEUTRAL[id],
+      precise: false,
+      world: id,
+    };
   }
-  return { sign: "מדף מסתורי", decor: NEUTRAL_DECOR, precise: false };
+  return { sign: getWorld(world).mysteryPlace, decor: NEUTRAL[id], precise: false, world: id };
 }
 
-/** אחרי הפתרון תמיד מראים את המעבר האמיתי */
-export function solvedAisleView(aisle: string): AisleView {
-  return { sign: aisle, decor: AISLE_DECOR[aisle] ?? NEUTRAL_DECOR, precise: true };
+/** אחרי הפתרון תמיד מראים את המקום האמיתי */
+export function solvedAisleView(world: string, aisle: string): AisleView {
+  const id = getWorld(world).id;
+  return { sign: aisle, decor: decorFor(id, aisle), precise: true, world: id };
 }
+
+/** כל המקומות של עולם, לבדיקות ולסקריפטים */
+export function placesOf(world: WorldId): string[] {
+  return Object.keys(PLACES[world]);
+}
+
+export { PLACES as PLACE_DECOR };

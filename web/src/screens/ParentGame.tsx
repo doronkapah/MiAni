@@ -17,6 +17,7 @@ import type { Recipe } from "../../../shared/recipes";
 import * as store from "../store/local";
 import { canSpeak, speak, stopSpeaking, watchVoices } from "../lib/speech";
 import { log } from "../lib/log";
+import { getWorld } from "../../../shared/worlds";
 
 /**
  * המסך של ההורה.
@@ -39,6 +40,7 @@ export function ParentGame({
   const [showAnswer, setShowAnswer] = useState(true);
   const [voiceReady, setVoiceReady] = useState(canSpeak());
   const [recipeQueue, setRecipeQueue] = useState<{ who: string; recipe: Recipe }[]>([]);
+  const info = getWorld(session.world);
 
   useEffect(() => watchVoices(() => setVoiceReady(canSpeak())), []);
 
@@ -47,7 +49,7 @@ export function ParentGame({
       session.profileIds
         .map((id) => store.getProfile(id))
         .filter((profile) => profile !== undefined)
-        .map(publicProfile),
+        .map((profile) => publicProfile(profile, session.world)),
     );
   }, [session.profileIds]);
 
@@ -231,7 +233,8 @@ export function ParentGame({
 
               {outcome.awarded.length > 0 && (
                 <p className="awarded">
-                  נכנס לעגלה של {outcome.awarded.map((entry) => entry.profile.name).join(" ו")}
+                  נכנס {info.collection.into} של{" "}
+                  {outcome.awarded.map((entry) => entry.profile.name).join(" ו")}
                   {outcome.awarded.some((entry) => entry.levelUp) && " · 🎉 עליית רמה!"}
                 </p>
               )}

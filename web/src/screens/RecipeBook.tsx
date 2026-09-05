@@ -3,6 +3,7 @@ import { RecipeArt } from "../art/RecipeArt";
 import { recipeById } from "../../../shared/recipes";
 import type { RecipeProgress } from "../../../shared/recipes";
 import { RecipeModal } from "./RecipeModal";
+import { getWorld } from "../../../shared/worlds";
 
 /**
  * ספר המתכונים.
@@ -12,13 +13,16 @@ import { RecipeModal } from "./RecipeModal";
  */
 export function RecipeBook({
   recipes,
+  world,
   nikud,
   onClose,
 }: {
   recipes: RecipeProgress[];
+  world: string;
   nikud: boolean;
   onClose: () => void;
 }) {
+  const info = getWorld(world);
   const [open, setOpen] = useState<string | null>(null);
   const openRecipe = open ? recipeById.get(open) : undefined;
 
@@ -27,6 +31,7 @@ export function RecipeBook({
       <RecipeModal
         recipe={openRecipe}
         nikud={nikud}
+        world={world}
         remaining={0}
         onClose={() => setOpen(null)}
       />
@@ -41,18 +46,20 @@ export function RecipeBook({
         className="recipe-book"
         role="dialog"
         aria-modal="true"
-        aria-label="ספר המתכונים"
+        aria-label={info.sets.name}
         onClick={(event) => event.stopPropagation()}
       >
         <header className="book-head">
-          <h1>📖 ספר המתכונים</h1>
+          <h1>
+            {info.sets.icon} {info.sets.name}
+          </h1>
           <span className="book-count">
             {unlocked} מתוך {recipes.length}
           </span>
         </header>
 
         <p className="muted">
-          כל מתכון נפתח לבד, ברגע שכל המצרכים שלו נמצאים בעגלה.
+          כל {info.sets.singular} נפתח לבד, ברגע שכל הפריטים שלו נאספו.
         </p>
 
         <ul className="book-list">
@@ -75,7 +82,7 @@ export function RecipeBook({
                   <span className="book-text">
                     <strong>???</strong>
                     <small>
-                      חסרים עוד {recipe.needed - recipe.held} מצרכים מתוך {recipe.needed}
+                      חסרים עוד {recipe.needed - recipe.held} פריטים מתוך {recipe.needed}
                     </small>
                   </span>
                   <span className="book-progress" aria-hidden="true">

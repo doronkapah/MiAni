@@ -12,9 +12,11 @@ export interface Art {
 
 export interface Riddle {
   id: string;
+  /** לאיזה עולם החידה שייכת — market, space, olympics */
+  world: string;
   /** 1–4 */
   level: number;
-  /** המדף שבו הפריט נמצא, מוצג לילד אחרי הפתרון */
+  /** המקום שבו הפריט נמצא — מדף, אזור בחלל, ענף ספורט */
   aisle: string;
   /** התשובה הקנונית, בלי ניקוד */
   answer: string;
@@ -24,7 +26,10 @@ export interface Riddle {
   aliases: string[];
   /** רמזים לפי סדר החשיפה, בלי ניקוד */
   clues: string[];
-  /** אותם רמזים בדיוק, מנוקדים — לקוראים המתחילים */
+  /**
+   * אותם רמזים בדיוק, מנוקדים — לקוראים המתחילים.
+   * חובה ברמות 1–4; ברמות 5–6 מיותר, והשדה פשוט חסר.
+   */
   cluesNikud?: string[];
   /** משפט הסבר קצר שמוצג אחרי הפתרון */
   reveal: string;
@@ -32,6 +37,15 @@ export interface Riddle {
 }
 
 export type AddressForm = "male" | "female";
+
+export interface WorldProgress {
+  /** דירוג עשרוני; הרמה בפועל היא Math.floor */
+  rating: number;
+  /** פתרונות חזקים רצופים — לעליית רמה */
+  streak: number;
+  /** רצף חידות שנפתרו. נשבר בגילוי או בדילוג. */
+  answerStreak: number;
+}
 
 export interface Profile {
   id: string;
@@ -41,12 +55,14 @@ export interface Profile {
   address: AddressForm;
   /** מזהה האווטאר מתוך web/src/art/avatars */
   avatar: string;
-  /** דירוג עשרוני; הרמה בפועל היא Math.floor, מוגבל ל-1..4 */
-  rating: number;
-  /** מספר פתרונות רצופים בקצה העליון של הרמה — לעליית רמה */
-  streak: number;
-  /** רצף חידות שנפתרו ברצף. נשבר בגילוי או בדילוג. */
-  answerStreak: number;
+  /**
+   * התקדמות נפרדת לכל עולם.
+   *
+   * מיומנות בזיהוי מצרכים היא לא מיומנות בזיהוי כוכבי לכת. ילד
+   * שהגיע לרמה 4 בסופר מתחיל את החלל מהתחלה, ולא נזרק לרמה שלא
+   * ראה בה שום דבר.
+   */
+  worlds: Record<string, WorldProgress>;
   /** מזהי חידות שנפתרו, לפי סדר */
   solved: string[];
   /** חידות שנחשפו ב"גלה לי" — יחזרו לתור בעוד כמה ימים */

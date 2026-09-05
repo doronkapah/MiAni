@@ -1,69 +1,110 @@
 import { describe, expect, it } from "vitest";
 import { riddles } from "./bank";
-import { AISLE_DECOR, aisleView, solvedAisleView } from "./aisles";
+import { PLACE_DECOR, aisleView, placesOf, solvedAisleView } from "./aisles";
+import { WORLDS, type WorldId } from "./worlds";
 
-const AISLES = [...new Set(riddles.map((riddle) => riddle.aisle))];
+/** המקומות שבאמת מופיעים בבנק, לכל עולם */
+function placesInBank(world: string): string[] {
+  return [...new Set(riddles.filter((r) => r.world === world).map((r) => r.aisle))];
+}
 
-describe("מדפי הסופר", () => {
-  it("לכל מעבר בבנק יש מוצרי רקע משלו", () => {
-    for (const aisle of AISLES) {
-      expect(AISLE_DECOR[aisle], aisle).toBeDefined();
-      expect(AISLE_DECOR[aisle]!.length, aisle).toBeGreaterThanOrEqual(5);
+describe("המקומות של כל עולם", () => {
+  for (const world of WORLDS) {
+    describe(world.name, () => {
+      it("לכל מקום שמופיע בבנק יש פריטי רקע משלו", () => {
+        for (const place of placesInBank(world.id)) {
+          expect(PLACE_DECOR[world.id][place], `${world.id}: ${place}`).toBeDefined();
+          expect(PLACE_DECOR[world.id][place]!.length, place).toBeGreaterThanOrEqual(5);
+        }
+      });
+
+      it("ברמות 1–2 השלט מדויק והפריטים מתאימים", () => {
+        for (const place of placesOf(world.id)) {
+          for (const level of [1, 2]) {
+            const view = aisleView(world.id, place, level);
+            expect(view.sign, `${place} ברמה ${level}`).toBe(place);
+            expect(view.precise).toBe(true);
+            expect(view.decor).toEqual(PLACE_DECOR[world.id][place]);
+          }
+        }
+      });
+
+      it("ברמה 3 מוצג רק האזור הכללי", () => {
+        for (const place of placesOf(world.id)) {
+          const view = aisleView(world.id, place, 3);
+          expect(view.precise).toBe(false);
+          expect(view.sign, place).not.toBe(place);
+          expect(view.sign.length).toBeGreaterThan(2);
+        }
+      });
+
+      it("כל אזור מכסה יותר ממקום אחד — אחרת הוא לא מחליש כלום", () => {
+        const zones = new Map<string, string[]>();
+        for (const place of placesOf(world.id)) {
+          const zone = aisleView(world.id, place, 3).sign;
+          zones.set(zone, [...(zones.get(zone) ?? []), place]);
+        }
+        for (const [zone, covered] of zones) {
+          expect(covered.length, `${world.id}: "${zone}" מכסה רק את ${covered[0]}`).toBeGreaterThan(1);
+        }
+      });
+
+      it("מרמה 4 ומעלה השלט לא מגלה כלום", () => {
+        for (const place of placesOf(world.id)) {
+          for (const level of [4, 5, 6]) {
+            const view = aisleView(world.id, place, level);
+            expect(view.sign).toBe(world.mysteryPlace);
+            expect(view.precise).toBe(false);
+          }
+        }
+      });
+
+      it("הפריטים ברמות הגבוהות זהים לכל המקומות", () => {
+        const shapes = placesOf(world.id).map((place) =>
+          JSON.stringify(aisleView(world.id, place, 4).decor),
+        );
+        expect(new Set(shapes).size).toBe(1);
+      });
+
+      it("אחרי הפתרון תמיד מציגים את המקום האמיתי", () => {
+        for (const place of placesOf(world.id)) {
+          const view = solvedAisleView(world.id, place);
+          expect(view.sign).toBe(place);
+          expect(view.precise).toBe(true);
+        }
+      });
+    });
+  }
+
+  it("שלט מסתורי שונה בכל עולם", () => {
+    const signs = WORLDS.map((world) => world.mysteryPlace);
+    expect(new Set(signs).size).toBe(WORLDS.length);
+  });
+
+  it("אין מקום בבנק שאין לו עולם מוכר", () => {
+    const known = new Set<string>(WORLDS.map((world) => world.id));
+    for (const riddle of riddles) {
+      expect(known.has(riddle.world), `${riddle.id}: ${riddle.world}`).toBe(true);
     }
   });
 
-  it("ברמות 1–2 השלט מדויק והמוצרים מתאימים למעבר", () => {
-    for (const aisle of AISLES) {
-      for (const level of [1, 2]) {
-        const view = aisleView(aisle, level);
-        expect(view.sign, `${aisle} ברמה ${level}`).toBe(aisle);
-        expect(view.precise).toBe(true);
-        expect(view.decor).toEqual(AISLE_DECOR[aisle]);
+  it("הרמות שהעולם מצהיר עליהן קיימות בבנק", () => {
+    for (const world of WORLDS) {
+      const inBank = new Set(
+        riddles.filter((r) => r.world === world.id).map((r) => r.level),
+      );
+      for (const level of inBank) {
+        expect(world.levels, `${world.id} רמה ${level}`).toContain(level);
       }
+      expect(inBank.size, `${world.id} ריק`).toBeGreaterThan(0);
     }
   });
+});
 
-  it("ברמה 3 מוצג רק האזור הכללי, לא המעבר", () => {
-    for (const aisle of AISLES) {
-      const view = aisleView(aisle, 3);
-      expect(view.precise).toBe(false);
-      expect(view.sign, aisle).not.toBe(aisle);
-      expect(view.sign.length).toBeGreaterThan(2);
-    }
-  });
-
-  it("כל אזור מכסה יותר ממעבר אחד — אחרת הוא לא מחליש כלום", () => {
-    const zones = new Map<string, string[]>();
-    for (const aisle of AISLES) {
-      const zone = aisleView(aisle, 3).sign;
-      zones.set(zone, [...(zones.get(zone) ?? []), aisle]);
-    }
-    for (const [zone, covered] of zones) {
-      expect(covered.length, `האזור "${zone}" מכיל רק את ${covered[0]}`).toBeGreaterThan(1);
-    }
-  });
-
-  it("ברמה 4 השלט לא מגלה כלום", () => {
-    for (const aisle of AISLES) {
-      const view = aisleView(aisle, 4);
-      expect(view.sign).toBe("מדף מסתורי");
-      expect(view.precise).toBe(false);
-    }
-  });
-
-  it("מוצרי הרקע ברמות הגבוהות זהים לכל המעברים — אחרת הם מסגירים", () => {
-    const shapes = (level: number) =>
-      AISLES.map((aisle) => JSON.stringify(aisleView(aisle, level).decor));
-    for (const level of [3, 4]) {
-      expect(new Set(shapes(level)).size, `רמה ${level}`).toBe(1);
-    }
-  });
-
-  it("אחרי הפתרון תמיד מציגים את המעבר האמיתי", () => {
-    for (const aisle of AISLES) {
-      const view = solvedAisleView(aisle);
-      expect(view.sign).toBe(aisle);
-      expect(view.precise).toBe(true);
+describe("שלמות טיפוסי העולם", () => {
+  it("כל עולם מוגדר במפת המקומות", () => {
+    for (const world of WORLDS) {
+      expect(PLACE_DECOR[world.id as WorldId]).toBeDefined();
     }
   });
 });

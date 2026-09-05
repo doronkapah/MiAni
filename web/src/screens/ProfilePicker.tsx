@@ -4,7 +4,9 @@ import { Agali } from "../art/Agali";
 import { Terms } from "./Terms";
 import type { PublicProfile } from "../game/engine";
 
-const AGES = [4, 5, 6, 7, 8, 9, 10];
+// 18 = "מבוגר". החידות של הכוכבים והאולימפיאדה מגיעות לרמות שגם הורים מזיעים בהן.
+const AGES = [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 18];
+const ADULT = 18;
 
 export function ProfilePicker({
   profiles,
@@ -55,7 +57,7 @@ export function ProfilePicker({
         <Agali size={130} mood="cheer" />
         <div>
           <h1>מי משחק היום?</h1>
-          <p>אני עגלי, ואני מחכה לכם ליד המדפים.</p>
+          <p>אני עגלי. יש לי חידות מהסופר, מהחלל ומהאולימפיאדה.</p>
         </div>
       </header>
 
@@ -63,8 +65,8 @@ export function ProfilePicker({
         <>
           <div className="play-modes">
             <div className="play-mode on">
-              <strong>🧒 ילד משחק</strong>
-              <small>בוחרים שחקן ומתחילים. הילד מקליד את התשובות.</small>
+              <strong>🧒 משחק רגיל</strong>
+              <small>בוחרים שחקן, בוחרים עולם, ומקלידים את התשובות.</small>
             </div>
             <button className="play-mode" onClick={onParentMode}>
               <strong>🚗 הורה שואל</strong>
@@ -78,8 +80,7 @@ export function ProfilePicker({
                 <button className="profile-card" onClick={() => onPick(profile)}>
                   <AvatarArt id={profile.avatar} size={92} />
                   <strong>{profile.name}</strong>
-                  <span className="level-pill">{profile.levelName}</span>
-                  <span className="cart-count">🛒 {profile.solvedCount}</span>
+                  <span className="cart-count">🧩 {profile.totalSolved} חידות</span>
                 </button>
                 {managing && (
                   <button
@@ -135,7 +136,7 @@ export function ProfilePicker({
                   className={`chip ${age === option ? "on" : ""}`}
                   onClick={() => setAge(option)}
                 >
-                  {option}
+                  {option === ADULT ? "מבוגר" : option}
                 </button>
               ))}
             </div>

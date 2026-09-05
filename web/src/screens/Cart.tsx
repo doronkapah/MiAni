@@ -1,5 +1,6 @@
 import { Product } from "../art/Product";
 import type { CartItem } from "../game/engine";
+import { getWorld } from "../../../shared/worlds";
 
 /**
  * העגלה, כמסך שנפתח בלחיצה.
@@ -9,30 +10,32 @@ import type { CartItem } from "../game/engine";
  */
 export function Cart({
   items,
+  world,
   onClose,
 }: {
   items: CartItem[];
+  world: string;
   onClose: () => void;
 }) {
+  const info = getWorld(world);
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div
         className="cart-modal"
         role="dialog"
         aria-modal="true"
-        aria-label="העגלה שלי"
+        aria-label={info.collection.name}
         onClick={(event) => event.stopPropagation()}
       >
         <header className="book-head">
-          <h1>🛒 העגלה שלי</h1>
+          <h1>
+            {info.collection.icon} {info.collection.name}
+          </h1>
           <span className="book-count">{items.length} פריטים</span>
         </header>
 
         {items.length === 0 ? (
-          <p className="muted">
-            העגלה עוד ריקה. כל פריט שפותרים נכנס לכאן — וכשמצטברים המצרכים של מנה,
-            נפתח מתכון.
-          </p>
+          <p className="muted">{info.collection.empty}</p>
         ) : (
           <div className="cart-grid">
             {items

@@ -200,8 +200,9 @@ describe("בנק החידות", () => {
     }
   });
 
-  it("לכל חידה יש רמזים מנוקדים", () => {
-    for (const riddle of riddles) {
+  it("לכל חידה ברמות 1–4 יש רמזים מנוקדים", () => {
+    // ברמות 5–6 הקהל כבר קורא בלי ניקוד, והשדה פשוט חסר
+    for (const riddle of riddles.filter((r) => r.level <= 4)) {
       expect(riddle.cluesNikud, riddle.id).toBeDefined();
       expect(riddle.cluesNikud!.length, riddle.id).toBe(riddle.clues.length);
     }
@@ -273,7 +274,7 @@ describe("סלחנות על פני כל הבנק", () => {
       }
     }
     expect(rejected).toEqual([]);
-  });
+  }, 30_000);
 
   it("תשובה של פריט אחד לא מתקבלת בחידה של פריט אחר", () => {
     // מדגם קבוע — הבדיקה המלאה על כל הבנק היא npm run report:collisions

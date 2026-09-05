@@ -7,9 +7,16 @@
  */
 
 export type Shape =
+  // הסופר
   | "bottle" | "carton" | "box" | "bag" | "can" | "jar" | "tub" | "packet"
   | "sack" | "egg" | "bread" | "roundFruit" | "longFruit" | "root" | "leafy"
-  | "berry" | "roll" | "cake" | "spiceJar";
+  | "berry" | "roll" | "cake" | "spiceJar"
+  // החלל
+  | "planet" | "ringedPlanet" | "moon" | "star" | "comet" | "galaxy"
+  | "rocket" | "satellite"
+  // האולימפיאדה
+  | "medal" | "trophy" | "ball" | "torch" | "rings" | "stopwatch"
+  | "shoe" | "wave" | "snowflake" | "ribbon" | "belt";
 
 /** מכהה צבע, לצללית ולפרטים */
 export function darken(hex: string, amount = 0.22): string {
@@ -207,6 +214,218 @@ function Body({ shape, color }: { shape: Shape; color: string }) {
           <rect x="38" y="52" width="24" height="18" rx="3" fill={light} opacity="0.8" />
         </>
       );
+    // ------------------------------------------------------ החלל
+
+    case "planet":
+      return (
+        <>
+          <circle cx="50" cy="52" r="30" fill={color} />
+          <path d="M26 38q14 8 30 2t22-8" stroke={dark} strokeWidth="5" fill="none" opacity="0.5" />
+          <path d="M22 58q18 10 34 2t24-6" stroke={dark} strokeWidth="4" fill="none" opacity="0.4" />
+          <circle cx="38" cy="40" r="7" fill={light} opacity="0.4" />
+        </>
+      );
+    case "ringedPlanet":
+      return (
+        <>
+          <ellipse cx="50" cy="54" rx="46" ry="11" fill="none" stroke={dark} strokeWidth="5" opacity="0.75" />
+          <circle cx="50" cy="52" r="26" fill={color} />
+          <path d="M28 44q16 7 26 1t18-6" stroke={dark} strokeWidth="4" fill="none" opacity="0.45" />
+          <ellipse cx="50" cy="56" rx="46" ry="11" fill="none" stroke={light} strokeWidth="2" opacity="0.9" />
+        </>
+      );
+    case "moon":
+      return (
+        <>
+          <circle cx="50" cy="52" r="26" fill={color} />
+          <circle cx="40" cy="42" r="6" fill={dark} opacity="0.45" />
+          <circle cx="60" cy="58" r="8" fill={dark} opacity="0.35" />
+          <circle cx="46" cy="64" r="4" fill={dark} opacity="0.4" />
+        </>
+      );
+    case "star":
+      return (
+        <>
+          <circle cx="50" cy="50" r="28" fill={color} opacity="0.25" />
+          <circle cx="50" cy="50" r="19" fill={color} />
+          <path
+            d="M50 12v12M50 76v12M12 50h12M76 50h12M25 25l8 8M67 67l8 8M75 25l-8 8M33 67l-8 8"
+            stroke={color}
+            strokeWidth="4"
+            strokeLinecap="round"
+            opacity="0.8"
+          />
+        </>
+      );
+    case "comet":
+      return (
+        <>
+          <path d="M18 82 46 46l10 10z" fill={color} opacity="0.35" />
+          <path d="M26 82 50 52l6 6z" fill={color} opacity="0.6" />
+          <circle cx="60" cy="38" r="14" fill={color} />
+          <circle cx="55" cy="33" r="5" fill={light} opacity="0.7" />
+        </>
+      );
+    case "galaxy":
+      return (
+        <>
+          <ellipse cx="50" cy="50" rx="38" ry="16" fill={color} opacity="0.3" transform="rotate(-20 50 50)" />
+          <ellipse cx="50" cy="50" rx="26" ry="10" fill={color} opacity="0.55" transform="rotate(-20 50 50)" />
+          <ellipse cx="50" cy="50" rx="11" ry="6" fill={light} transform="rotate(-20 50 50)" />
+          <circle cx="24" cy="38" r="2" fill="#FFFFFF" opacity="0.9" />
+          <circle cx="76" cy="62" r="2" fill="#FFFFFF" opacity="0.9" />
+          <circle cx="70" cy="32" r="1.6" fill="#FFFFFF" opacity="0.7" />
+        </>
+      );
+    case "rocket":
+      return (
+        <>
+          <path d="M50 8c12 14 16 30 16 44H34c0-14 4-30 16-44z" fill={color} />
+          <path d="M34 52 22 70h12zM66 52l12 18H66z" fill={dark} />
+          <rect x="42" y="52" width="16" height="22" rx="4" fill={dark} />
+          <circle cx="50" cy="36" r="7" fill={lighten(color, 0.6)} />
+          <path d="M44 76q6 14 12 0z" fill="#E8703A" />
+        </>
+      );
+    case "satellite":
+      return (
+        <>
+          <rect x="40" y="36" width="20" height="30" rx="4" fill={color} />
+          <rect x="8" y="42" width="28" height="18" rx="3" fill={dark} />
+          <rect x="64" y="42" width="28" height="18" rx="3" fill={dark} />
+          <path d="M8 51h28M64 51h28M22 42v18M78 42v18" stroke={light} strokeWidth="2" opacity="0.6" />
+          <circle cx="50" cy="26" r="8" fill="none" stroke={color} strokeWidth="4" />
+          <path d="M50 34v4" stroke={color} strokeWidth="4" />
+        </>
+      );
+
+    // ------------------------------------------------ האולימפיאדה
+
+    case "medal":
+      return (
+        <>
+          <path d="M36 12 46 44h8L44 12zM64 12 54 44h-8l10-32z" fill={dark} />
+          <circle cx="50" cy="62" r="26" fill={color} />
+          <circle cx="50" cy="62" r="18" fill={light} opacity="0.55" />
+          <path
+            d="M50 50l4 8 9 1-6.5 6 1.5 9-8-4.5-8 4.5 1.5-9-6.5-6 9-1z"
+            fill={dark}
+            opacity="0.7"
+          />
+        </>
+      );
+    case "trophy":
+      return (
+        <>
+          <path d="M30 16h40v22a20 20 0 0 1-40 0z" fill={color} />
+          <path d="M30 20H18a12 12 0 0 0 12 12zM70 20h12a12 12 0 0 1-12 12z" fill={dark} />
+          <rect x="44" y="56" width="12" height="16" fill={dark} />
+          <rect x="30" y="72" width="40" height="12" rx="4" fill={dark} />
+          <path d="M42 26h16" stroke={light} strokeWidth="4" strokeLinecap="round" />
+        </>
+      );
+    case "ball":
+      return (
+        <>
+          <circle cx="50" cy="52" r="30" fill={color} />
+          <path
+            d="M50 22v60M20 52h60M28 30q22 22 44 44M72 30q-22 22-44 44"
+            stroke={dark}
+            strokeWidth="3"
+            fill="none"
+            opacity="0.6"
+          />
+          <circle cx="40" cy="40" r="6" fill={light} opacity="0.35" />
+        </>
+      );
+    case "torch":
+      return (
+        <>
+          <path d="M44 44h12l-3 44h-6z" fill={dark} />
+          <rect x="38" y="36" width="24" height="10" rx="3" fill={darken(color, 0.4)} />
+          <path d="M50 4c10 12 12 20 8 26-2-4-5-6-5-6s2 8-3 12c-6-4-8-12-6-18 1-5 4-10 6-14z" fill={color} />
+          <path d="M50 14c4 6 5 11 3 15-3-3-5-4-5-4s0 5-2 7c-3-3-4-8-3-12z" fill={lighten(color, 0.55)} />
+        </>
+      );
+    case "rings":
+      return (
+        <>
+          <circle cx="30" cy="42" r="16" fill="none" stroke={color} strokeWidth="5" />
+          <circle cx="50" cy="42" r="16" fill="none" stroke={dark} strokeWidth="5" />
+          <circle cx="70" cy="42" r="16" fill="none" stroke={color} strokeWidth="5" opacity="0.75" />
+          <circle cx="40" cy="60" r="16" fill="none" stroke={dark} strokeWidth="5" opacity="0.75" />
+          <circle cx="60" cy="60" r="16" fill="none" stroke={color} strokeWidth="5" opacity="0.6" />
+        </>
+      );
+    case "stopwatch":
+      return (
+        <>
+          <rect x="42" y="8" width="16" height="10" rx="3" fill={dark} />
+          <circle cx="50" cy="56" r="30" fill={color} />
+          <circle cx="50" cy="56" r="23" fill={lighten(color, 0.75)} />
+          <path d="M50 56V38M50 56l14 9" stroke={dark} strokeWidth="4" strokeLinecap="round" />
+          <circle cx="50" cy="56" r="4" fill={dark} />
+        </>
+      );
+    case "shoe":
+      return (
+        <>
+          <path d="M14 70q0-10 10-12l18-4 14-14q6-6 12 0l16 16q8 8 8 14v6H18a4 4 0 0 1-4-4z" fill={color} />
+          <path d="M14 74h76v8a4 4 0 0 1-4 4H18a4 4 0 0 1-4-4z" fill={dark} />
+          <path d="M44 54l14 12M54 44l14 12" stroke={light} strokeWidth="4" strokeLinecap="round" />
+        </>
+      );
+    case "wave":
+      return (
+        <>
+          <path d="M6 56q12-16 24 0t24 0 24 0 16-6v34H6z" fill={color} opacity="0.65" />
+          <path d="M6 68q12-16 24 0t24 0 24 0 16-6v22H6z" fill={dark} opacity="0.75" />
+          <circle cx="34" cy="34" r="9" fill={lighten(color, 0.6)} />
+          <path d="M22 42q10-8 22-2" stroke={lighten(color, 0.4)} strokeWidth="4" fill="none" strokeLinecap="round" />
+        </>
+      );
+    case "snowflake":
+      return (
+        <>
+          <path
+            d="M50 12v76M18 31l64 38M82 31L18 69"
+            stroke={color}
+            strokeWidth="6"
+            strokeLinecap="round"
+          />
+          <path
+            d="M50 26l-9-9M50 26l9-9M50 74l-9 9M50 74l9 9M30 40l-12-2M30 40l-2-12M70 60l12 2M70 60l2 12M70 40l12-2M70 40l2-12M30 60l-12 2M30 60l-2 12"
+            stroke={color}
+            strokeWidth="4"
+            strokeLinecap="round"
+            opacity="0.85"
+          />
+        </>
+      );
+    case "ribbon":
+      return (
+        <>
+          <path
+            d="M14 74q10-30 26-30t14 16-14 12-6-18 16-22 24 8"
+            fill="none"
+            stroke={color}
+            strokeWidth="7"
+            strokeLinecap="round"
+          />
+          <rect x="72" y="22" width="8" height="46" rx="4" fill={dark} />
+          <circle cx="76" cy="20" r="6" fill={light} />
+        </>
+      );
+    case "belt":
+      return (
+        <>
+          <path d="M8 44h84v18H8z" fill={color} />
+          <rect x="40" y="38" width="22" height="30" rx="4" fill={dark} />
+          <rect x="46" y="44" width="10" height="18" rx="2" fill={light} opacity="0.6" />
+          <path d="M8 62q10 18 22 22M92 62q-10 18-22 22" stroke={color} strokeWidth="9" fill="none" strokeLinecap="round" />
+        </>
+      );
+
     default:
       return <rect x="26" y="24" width="48" height="64" rx="6" fill={color} />;
   }

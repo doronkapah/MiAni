@@ -66,7 +66,7 @@ export function Shelf({
   const middle = Math.ceil(topRow.length / 2);
 
   return (
-    <div className="shelf" aria-hidden="true">
+    <div className={`shelf world-${aisle.world}`} aria-hidden="true">
       <div className={`shelf-sign ${aisle.precise ? "" : "vague"}`}>
         <span>{aisle.sign}</span>
       </div>

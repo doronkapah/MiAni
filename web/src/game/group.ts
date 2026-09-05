@@ -11,7 +11,14 @@
  */
 
 import { riddleById, riddles } from "../../../shared/bank";
-import { applyReveal, applySolve, cluesAtLevel, levelOf } from "../../../shared/difficulty";
+import { DEFAULT_WORLD } from "../../../shared/worlds";
+import {
+  applyReveal,
+  applySolve,
+  cluesAtLevel,
+  levelOf,
+  progressIn,
+} from "../../../shared/difficulty";
 import { newlyCompleted, type Recipe } from "../../../shared/recipes";
 import { aisleView, solvedAisleView, type AisleView } from "../../../shared/aisles";
 import type { Profile, Riddle } from "../../../shared/types";
@@ -26,6 +33,7 @@ export interface GroupSession {
   mode: GroupMode;
   profileIds: string[];
   level: number;
+  world: string;
 }
 
 interface GroupRound {
@@ -39,15 +47,16 @@ export function createSession(
   profileIds: string[],
   mode: GroupMode,
   level: number,
+  world: string = DEFAULT_WORLD,
 ): GroupSession {
   const id = `g_${Date.now().toString(36)}`;
-  return { id, mode, profileIds, level };
+  return { id, mode, profileIds, level, world };
 }
 
 /** רמת ברירת המחדל לקבוצה: של הצעיר ביותר, כדי שכולם יוכלו להשתתף */
-export function suggestedLevel(profiles: Profile[]): number {
+export function suggestedLevel(profiles: Profile[], world: string = DEFAULT_WORLD): number {
   if (!profiles.length) return 1;
-  return Math.min(...profiles.map((profile) => levelOf(profile.rating)));
+  return Math.min(...profiles.map((profile) => levelOf(progressIn(profile, world).rating)));
 }
 
 /** חידה שאף אחד מהמשתתפים עוד לא פתר */
@@ -58,12 +67,16 @@ function pickForGroup(session: GroupSession): Riddle | null {
     for (const solvedId of profile?.solved ?? []) seen.add(solvedId);
   }
 
-  const pool = riddles.filter((riddle) => riddle.level === session.level && !seen.has(riddle.id));
+  const inWorld = riddles.filter((riddle) => riddle.world === session.world);
+  const pool = inWorld.filter((riddle) => riddle.level === session.level && !seen.has(riddle.id));
   if (pool.length) return pool[Math.floor(Math.random() * pool.length)]!;
 
-  // נגמרה הרמה — מנסים את השכנות
-  for (const level of [session.level + 1, session.level - 1, session.level + 2]) {
-    const fallback = riddles.filter((riddle) => riddle.level === level && !seen.has(riddle.id));
+  // נגמרה הרמה — מנסים את הרמות הקרובות, מהקרובה לרחוקה
+  const others = [...new Set(inWorld.map((riddle) => riddle.level))]
+    .filter((level) => level !== session.level)
+    .sort((a, b) => Math.abs(a - session.level) - Math.abs(b - session.level));
+  for (const level of others) {
+    const fallback = inWorld.filter((riddle) => riddle.level === level && !seen.has(riddle.id));
     if (fallback.length) return fallback[Math.floor(Math.random() * fallback.length)]!;
   }
   return null;
@@ -91,7 +104,7 @@ function view(session: GroupSession, riddle: Riddle, round: GroupRound): ParentR
     cluesNikud: (riddle.cluesNikud ?? riddle.clues).slice(0, round.cluesRevealed),
     cluesRevealed: round.cluesRevealed,
     hasMoreClues: round.cluesRevealed < max,
-    aisle: aisleView(riddle.aisle, session.level),
+    aisle: aisleView(riddle.world, riddle.aisle, session.level),
     answer: riddle.answer,
     answerNikud: riddle.answerNikud,
     reveal: riddle.reveal,
@@ -160,20 +173,26 @@ export function awardSolve(session: GroupSession, winnerIds: string[]): GroupOut
     const profile = store.getProfile(id);
     if (!profile || profile.solved.includes(riddle.id)) continue;
 
-    const change = applySolve(profile, { hintsUsed: round.cluesRevealed });
+    const progress = progressIn(profile, session.world);
+    const change = applySolve(progress, { hintsUsed: round.cluesRevealed }, session.world);
     const solved = [...profile.solved, riddle.id];
     const unlocked = newlyCompleted(solved, profile.recipes);
     stats.recordSolve(id, riddle.id, round.cluesRevealed);
     const updated = store.updateProfile(id, {
-      rating: change.rating,
-      streak: change.streak,
-      answerStreak: profile.answerStreak + 1,
+      worlds: {
+        ...profile.worlds,
+        [session.world]: {
+          rating: change.rating,
+          streak: change.streak,
+          answerStreak: progress.answerStreak + 1,
+        },
+      },
       solved,
       recipes: [...profile.recipes, ...unlocked.map((recipe) => recipe.id)],
     })!;
 
     awarded.push({
-      profile: publicProfile(updated),
+      profile: publicProfile(updated, session.world),
       levelUp: change.levelAfter > change.levelBefore,
       unlockedRecipes: unlocked,
     });
@@ -185,7 +204,7 @@ export function awardSolve(session: GroupSession, winnerIds: string[]): GroupOut
     answer: riddle.answerNikud,
     reveal: riddle.reveal,
     art: riddle.art,
-    aisleView: solvedAisleView(riddle.aisle),
+    aisleView: solvedAisleView(riddle.world, riddle.aisle),
     awarded,
     gaveUp: false,
   };
@@ -200,12 +219,13 @@ export function groupReveal(session: GroupSession): GroupOutcome | null {
   for (const id of session.profileIds) {
     const profile = store.getProfile(id);
     if (!profile) continue;
-    const change = applyReveal(profile);
+    const change = applyReveal(progressIn(profile, session.world), session.world);
     stats.recordReveal(id, riddle.id);
     store.updateProfile(id, {
-      rating: change.rating,
-      streak: change.streak,
-      answerStreak: 0,
+      worlds: {
+        ...profile.worlds,
+        [session.world]: { rating: change.rating, streak: change.streak, answerStreak: 0 },
+      },
       revealed: [
         ...profile.revealed.filter((entry) => entry.id !== riddle.id),
         { id: riddle.id, at: Date.now() },
@@ -219,7 +239,7 @@ export function groupReveal(session: GroupSession): GroupOutcome | null {
     answer: riddle.answerNikud,
     reveal: riddle.reveal,
     art: riddle.art,
-    aisleView: solvedAisleView(riddle.aisle),
+    aisleView: solvedAisleView(riddle.world, riddle.aisle),
     awarded: [],
     gaveUp: true,
   };

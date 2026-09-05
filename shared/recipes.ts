@@ -13,6 +13,8 @@ import { stripNikud } from "./matcher";
 
 export interface RecipeSource {
   id: string;
+  /** באיזה עולם הסט הזה נפתח */
+  world: string;
   nameNikud: string;
   teaserNikud: string;
   /** מזהי חידות שחייבים להיות בעגלה */
@@ -29,7 +31,7 @@ export interface Recipe extends RecipeSource {
   teaser: string;
   steps: string[];
   fact: string;
-  /** כמה מצרכים בסך הכול צריך כדי לפתוח את המתכון */
+  /** כמה פריטים בסך הכול צריך כדי לפתוח את הסט */
   totalNeeded: number;
 }
 
@@ -48,6 +50,11 @@ export const recipes: Recipe[] = (recipesData as RecipeSource[]).map(hydrate);
 
 export const recipeById = new Map(recipes.map((recipe) => [recipe.id, recipe]));
 
+/** הסטים של עולם מסוים */
+export function recipesOfWorld(world: string): Recipe[] {
+  return recipes.filter((recipe) => recipe.world === world);
+}
+
 /** כמה מהמצרכים של המתכון כבר נמצאים בעגלה */
 export function ingredientsHeld(recipe: Recipe, solved: Set<string>): number {
   const required = recipe.requires.filter((id) => solved.has(id)).length;
@@ -62,9 +69,10 @@ export function isComplete(recipe: Recipe, solved: Set<string>): boolean {
 }
 
 /** כל המתכונים שאפשר להכין עם מה שיש בעגלה */
-export function completedRecipes(solvedIds: string[]): Recipe[] {
+export function completedRecipes(solvedIds: string[], world?: string): Recipe[] {
   const solved = new Set(solvedIds);
-  return recipes.filter((recipe) => isComplete(recipe, solved));
+  const pool = world ? recipesOfWorld(world) : recipes;
+  return pool.filter((recipe) => isComplete(recipe, solved));
 }
 
 /**
@@ -92,10 +100,14 @@ export interface RecipeProgress {
  * חשוב: לא מחזיר שמות של מצרכים חסרים, רק כמה חסרים. שם של מצרך
  * שעוד לא נפתר הוא תשובה לחידה שהילד עוד לא פתר.
  */
-export function recipeProgress(solvedIds: string[], unlocked: string[]): RecipeProgress[] {
+export function recipeProgress(
+  solvedIds: string[],
+  unlocked: string[],
+  world?: string,
+): RecipeProgress[] {
   const solved = new Set(solvedIds);
   const known = new Set(unlocked);
-  return recipes.map((recipe) => ({
+  return (world ? recipesOfWorld(world) : recipes).map((recipe) => ({
     id: recipe.id,
     name: recipe.name,
     teaser: recipe.teaser,
