@@ -43,12 +43,15 @@ export function WorldPicker({
   daily,
   onPick,
   onDaily,
+  onShift,
   onBack,
 }: {
   profile: Profile;
   daily: DailyView;
   onPick: (world: string) => void;
   onDaily: () => void;
+  /** שינוי קושי מפורש, לעולם מסוים */
+  onShift: (world: string, direction: 1 | -1) => void;
   onBack: () => void;
 }) {
   return (
@@ -101,9 +104,9 @@ export function WorldPicker({
           const levels = levelsInWorld(world.id);
 
           return (
+            <div className="world-slot" key={world.id}>
             <button
               className={`world-card world-${world.id}`}
-              key={world.id}
               onClick={() => onPick(world.id)}
             >
               <span className="world-icon" aria-hidden="true">
@@ -144,6 +147,29 @@ export function WorldPicker({
                 </span>
               )}
             </button>
+
+            {/*
+              שינוי הקושי יושב מחוץ לכרטיס בכוונה: כרטיס שלוחצים עליו
+              כדי להיכנס לא יכול להכיל כפתורים שעושים משהו אחר.
+            */}
+            <div className="level-shift">
+              <button
+                onClick={() => onShift(world.id, -1)}
+                disabled={level <= levels[0]!}
+                aria-label={`${world.name}: קל יותר`}
+              >
+                קל יותר
+              </button>
+              <b>{LEVEL_NAMES[level]}</b>
+              <button
+                onClick={() => onShift(world.id, 1)}
+                disabled={level >= levels[levels.length - 1]!}
+                aria-label={`${world.name}: קשה יותר`}
+              >
+                קשה יותר
+              </button>
+            </div>
+            </div>
           );
         })}
       </div>

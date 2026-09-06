@@ -44,13 +44,36 @@ function hash(text: string): number {
   return value >>> 0;
 }
 
-/** הרמה שממנה נלקחת חידת היום: הגבוהה מבין העולמות שהשחקן פתח */
-export function dailyLevel(profile: Profile): number {
-  const levels = Object.values(profile.worlds ?? {}).map((progress) =>
-    levelOf(progress.rating),
-  );
-  if (!levels.length) return MIN_LEVEL;
-  return Math.min(MAX_LEVEL, Math.max(...levels));
+/**
+ * הרמה שממנה נלקחת חידת היום.
+ *
+ * הגבוהה מבין העולמות היא הבחירה השגויה: ילד שהגיע לרמה 4 בסופר
+ * ומעולם לא נכנס לחלל היה מקבל חידת חלל ברמה 4, שאין לו שום דרך
+ * לפתור. הרמה נלקחת מהעולם שהוא באמת משחק בו — זה שפתר בו הכי
+ * הרבה — ובלעדיו מהעולם ההתחלתי.
+ */
+export function dailyLevel(profile: Profile, bank: Riddle[] = riddles): number {
+  const worlds = Object.keys(profile.worlds ?? {});
+  if (!worlds.length) return MIN_LEVEL;
+
+  const byWorld = new Map<string, number>();
+  for (const id of profile.solved ?? []) {
+    const world = bank.find((riddle) => riddle.id === id)?.world;
+    if (world) byWorld.set(world, (byWorld.get(world) ?? 0) + 1);
+  }
+
+  let home = worlds[0]!;
+  let most = -1;
+  for (const world of worlds) {
+    const solved = byWorld.get(world) ?? 0;
+    if (solved > most) {
+      most = solved;
+      home = world;
+    }
+  }
+
+  const rating = profile.worlds[home]?.rating ?? MIN_LEVEL;
+  return Math.min(MAX_LEVEL, Math.max(MIN_LEVEL, levelOf(rating)));
 }
 
 /**

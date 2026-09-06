@@ -65,6 +65,17 @@ export interface WorldProgress {
   answerStreak: number;
 }
 
+/**
+ * כמה טוב קוראים — קובע ניקוד והקראה, ולא את קושי החידות.
+ *   notYet   — עדיין לא קורא: הקראה אוטומטית
+ *   learning — מפענח: ניקוד דלוק, הקראה בלחיצה
+ *   fluent   — קורא שוטף
+ */
+export type Reading = "notYet" | "learning" | "fluent";
+
+/** איך עונים: בהקלדה, או בבחירה מתוך תמונות */
+export type Answering = "typing" | "pictures";
+
 export interface Profile {
   id: string;
   name: string;
@@ -81,6 +92,12 @@ export interface Profile {
    * ראה בה שום דבר.
    */
   worlds: Record<string, WorldProgress>;
+  /**
+   * יכולת קריאה. אופציונלי — פרופילים ישנים נגזרים מהגיל.
+   */
+  reading?: Reading;
+  /** איך עונים על החידה */
+  answering?: Answering;
   /** מזהי חידות שנפתרו, לפי סדר */
   solved: string[];
   /** חידות שנחשפו ב"גלה לי" — יחזרו לתור בעוד כמה ימים */

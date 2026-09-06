@@ -743,3 +743,71 @@ describe("יציבות: רענון, שחקנים ולחיצות כפולות", (
     expect(again.id).toBe(first.id);
   });
 });
+
+describe("התאמה ליכולת", () => {
+  beforeEach(() => storage.clear());
+
+  it("קריאה והקלדה נשמרות בנפרד מהגיל", () => {
+    const player = store.createProfile({
+      name: "בדיקה", age: 10, address: "male", avatar: "cat",
+      reading: "notYet", answering: "pictures",
+    });
+    const view = engine.publicProfile(store.getProfile(player.id)!);
+    expect(view.reading).toBe("notYet");
+    expect(view.answering).toBe("pictures");
+    // הגיל עדיין קובע את הידע
+    expect(view.level).toBe(4);
+  });
+
+  it("פרופיל ישן בלי שדות יכולת נגזר מהגיל", () => {
+    const player = newPlayer(5);
+    const raw = store.getProfile(player.id)!;
+    store.updateProfile(player.id, {
+      reading: undefined,
+      answering: undefined,
+    });
+    const view = engine.publicProfile(store.getProfile(raw.id)!);
+    expect(view.reading).toBe("notYet");
+    expect(view.answering).toBe("pictures");
+  });
+
+  it("מי שעונה בתמונות מקבל ארבע אפשרויות, ובהן התשובה", () => {
+    const player = store.createProfile({
+      name: "בדיקה", age: 6, address: "female", avatar: "cat",
+      reading: "notYet", answering: "pictures",
+    });
+    const riddle = engine.startRiddle(player.id, "market").riddle!;
+    expect(riddle.choices).toHaveLength(4);
+    expect(riddle.choices.some((choice) => choice.id === riddle.id)).toBe(true);
+  });
+
+  it("מי שמקליד לא מקבל את התשובה ברשימת אפשרויות", () => {
+    const player = newPlayer(8);
+    const riddle = engine.startRiddle(player.id, "market").riddle!;
+    expect(riddle.choices).toEqual([]);
+    expect(JSON.stringify(riddle)).not.toContain(riddleById.get(riddle.id)!.answer);
+  });
+
+  it("קל יותר וקשה יותר מזיזים רמה שלמה, בעולם אחד בלבד", () => {
+    const player = newPlayer(9);
+    expect(engine.publicProfile(store.getProfile(player.id)!, "market").level).toBe(3);
+
+    expect(engine.shiftLevel(player.id, "market", -1)).toBe(2);
+    expect(engine.shiftLevel(player.id, "market", 1)).toBe(3);
+
+    // החלל לא זז
+    expect(progressIn(store.getProfile(player.id)!, "space").rating).toBe(3);
+  });
+
+  it("אי אפשר לרדת מתחת לרמה הנמוכה בעולם", () => {
+    const player = newPlayer(4);
+    expect(engine.shiftLevel(player.id, "market", -1)).toBe(1);
+    expect(engine.shiftLevel(player.id, "market", -1)).toBe(1);
+  });
+
+  it("באולימפיאדה הרמה הנמוכה היא 2, ולא יורדים מתחתיה", () => {
+    const player = newPlayer(8);
+    expect(engine.shiftLevel(player.id, "olympics", -1)).toBe(2);
+    expect(engine.shiftLevel(player.id, "olympics", -1)).toBe(2);
+  });
+});

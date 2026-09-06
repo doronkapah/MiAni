@@ -26,6 +26,7 @@ import {
 } from "../../../shared/recipes";
 import { aisleView, solvedAisleView, type AisleView } from "../../../shared/aisles";
 import { plausibleGuess, type Plausible } from "../../../shared/plausible";
+import { choicesFor, type Choice } from "../../../shared/choices";
 import {
   DAILY,
   dailyRiddle,
@@ -35,8 +36,12 @@ import {
   starsFor,
 } from "../../../shared/daily";
 import { DEFAULT_WORLD, LEVEL_NAMES, getWorld } from "../../../shared/worlds";
+import { levelsInWorld } from "../../../shared/bank";
+import { answeringOf, readingOf } from "../../../shared/ability";
 import type {
   ActiveRound,
+  Answering,
+  Reading,
   DailyState,
   Profile,
   Riddle,
@@ -96,6 +101,9 @@ export interface PublicProfile {
   solvedCount: number;
   /** כמה נפתר בסך הכול, בכל העולמות */
   totalSolved: number;
+  /** איך קוראים ואיך עונים — נפרד מהגיל */
+  reading: Reading;
+  answering: Answering;
   cart: CartItem[];
   chat: { used: number; left: number };
   recipes: RecipeProgress[];
@@ -123,6 +131,8 @@ export function publicProfile(profile: Profile, world: string = DEFAULT_WORLD): 
     answerStreak: progress.answerStreak,
     solvedCount: inWorld.length,
     totalSolved: profile.solved.length,
+    reading: readingOf(profile),
+    answering: answeringOf(profile),
     cart: inWorld.map((riddle) => ({
       id: riddle.id,
       name: riddle.answer,
@@ -142,9 +152,26 @@ export interface PublicRiddle {
   cluesTotal: number;
   hasMoreClues: boolean;
   aisle: AisleView;
+  /**
+   * ארבע אפשרויות, למי שעונה בבחירה ולא בהקלדה.
+   *
+   * ריק לכל השאר — הרשימה מכילה את התשובה מעצם הגדרתה, ואין סיבה
+   * לשלוח אותה למי שלא צריך אותה.
+   */
+  choices: Choice[];
 }
 
-function publicRound(riddle: Riddle, cluesRevealed: number, level: number): PublicRiddle {
+/** האם השחקן עונה בבחירה מתוך תמונות */
+function byPictures(profile: Profile): boolean {
+  return answeringOf(profile) === "pictures";
+}
+
+function publicRound(
+  riddle: Riddle,
+  cluesRevealed: number,
+  level: number,
+  withChoices = false,
+): PublicRiddle {
   const max = Math.min(riddle.clues.length, cluesAtLevel(level));
   return {
     id: riddle.id,
@@ -155,7 +182,28 @@ function publicRound(riddle: Riddle, cluesRevealed: number, level: number): Publ
     cluesTotal: max,
     hasMoreClues: cluesRevealed < max,
     aisle: aisleView(riddle.world, riddle.aisle, level),
+    choices: withChoices ? choicesFor(riddle) : [],
   };
+}
+
+/**
+ * שינוי קושי מפורש, ביוזמת השחקן.
+ *
+ * הדירוג האוטומטי מטפס לאט ומדויק, אבל הוא לא יודע שהילד משועמם
+ * או מתוסכל *עכשיו*. הכפתור מזיז רמה שלמה, ומיישר את הדירוג לתחתית
+ * הרמה החדשה כדי שההתקדמות תימשך משם בצורה טבעית.
+ */
+export function shiftLevel(profileId: string, world: string, direction: 1 | -1): number {
+  const profile = store.getProfile(profileId);
+  if (!profile) throw new Error("פרופיל לא נמצא");
+
+  const levels = levelsInWorld(world);
+  const current = levelOf(progressIn(profile, world).rating);
+  const index = levels.indexOf(current);
+  const next = levels[Math.min(levels.length - 1, Math.max(0, index + direction))] ?? current;
+
+  saveProgress(profile, world, { rating: next, streak: 0 });
+  return next;
 }
 
 /** שומר התקדמות של עולם אחד, בלי לגעת בשאר */
@@ -246,7 +294,12 @@ export function startRiddle(profileId: string, world: string = DEFAULT_WORLD): R
     const today = todaysRiddle(profile);
     if (!today) return { done: true, message: "אין היום חידה. נסו שוב מחר 🌙" };
     return {
-      riddle: publicRound(today.riddle, today.state.cluesRevealed, today.riddle.level),
+      riddle: publicRound(
+        today.riddle,
+        today.state.cluesRevealed,
+        today.riddle.level,
+        byPictures(profile),
+      ),
       greeting: greeting(profile),
       profile: publicProfile(profile, today.riddle.world),
     };
@@ -276,7 +329,7 @@ export function startRiddle(profileId: string, world: string = DEFAULT_WORLD): R
 
   const level = levelOf(progressIn(profile, world).rating);
   return {
-    riddle: publicRound(riddle, round.cluesRevealed, level),
+    riddle: publicRound(riddle, round.cluesRevealed, level, byPictures(profile)),
     greeting: greeting(profile),
     profile: publicProfile(profile, world),
   };
@@ -295,7 +348,12 @@ export function nextHint(profileId: string, world: string = DEFAULT_WORLD): Publ
       saveDaily(profileId, today.state);
       stats.recordHint(profileId);
     }
-    return publicRound(today.riddle, today.state.cluesRevealed, today.riddle.level);
+    return publicRound(
+      today.riddle,
+      today.state.cluesRevealed,
+      today.riddle.level,
+      byPictures(profile),
+    );
   }
 
   const round = rounds.get(key(profileId, world));
@@ -308,7 +366,7 @@ export function nextHint(profileId: string, world: string = DEFAULT_WORLD): Publ
     round.cluesRevealed += 1;
     stats.recordHint(profileId);
   }
-  return publicRound(riddle, round.cluesRevealed, level);
+  return publicRound(riddle, round.cluesRevealed, level, byPictures(profile));
 }
 
 /** מה חוגגים על הפתרון הזה */

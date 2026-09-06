@@ -8,13 +8,19 @@ import { ParentPanel } from "./screens/ParentPanel";
 import { ParentSetup } from "./screens/ParentSetup";
 import { ParentGame } from "./screens/ParentGame";
 import { WorldPicker } from "./screens/WorldPicker";
-import { dailyView, publicProfile, type PublicProfile } from "./game/engine";
+import {
+  dailyView,
+  publicProfile,
+  shiftLevel,
+  type PublicProfile,
+} from "./game/engine";
 import { createSession, type GroupMode, type GroupSession } from "./game/group";
 import { probeServer } from "./game/server";
 import * as store from "./store/local";
 import { FEATURES } from "./config";
 import { DEFAULT_WORLD, getWorld } from "../../shared/worlds";
 import { DAILY } from "../../shared/daily";
+import type { Answering, Reading } from "../../shared/types";
 import { log } from "./lib/log";
 
 type Screen =
@@ -111,6 +117,8 @@ export default function App() {
     age: number;
     address: "male" | "female";
     avatar: string;
+    reading: Reading;
+    answering: Answering;
   }) {
     const profile = store.createProfile(input);
     refresh();
@@ -218,6 +226,10 @@ export default function App() {
           daily={dailyView(profile.id)}
           onPick={enterWorld}
           onDaily={enterDaily}
+          onShift={(id, direction) => {
+            shiftLevel(profile.id, id, direction);
+            refresh();
+          }}
           onBack={backToPicker}
         />
       );

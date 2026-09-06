@@ -77,7 +77,12 @@ export function Game({
   const inputRef = useRef<HTMLInputElement>(null);
 
   const canHear = voiceReady && !muted;
-  const readsAloud = profile.level === 1 && canHear;
+  /*
+   * ההקראה נקבעת לפי יכולת הקריאה ולא לפי הרמה. ילד שעדיין לא
+   * קורא צריך אותה גם ברמה 4, וילד שקורא שוטף לא צריך אותה ברמה 1.
+   */
+  const readsAloud = profile.reading === "notYet" && canHear;
+  const byPictures = profile.answering === "pictures";
   const chatEnabled = FEATURES.agaliChat && store.getSettings().chatSource !== "off";
 
   useEffect(() => watchVoices(() => setVoiceReady(canSpeak())), []);
@@ -152,7 +157,12 @@ export function Game({
   }, [riddle, readsAloud, solved]);
 
   function checkGuess() {
-    const text = guess.trim();
+    answer(guess);
+  }
+
+  /** אותו מסלול לשתי הדרכים לענות — הקלדה ובחירה */
+  function answer(raw: string) {
+    const text = raw.trim();
     if (!text || solved) return;
     try {
       const result = submitAnswer(profile.id, text, world);
@@ -336,6 +346,28 @@ export function Game({
                   )}
                 </ol>
 
+                {byPictures ? (
+                  <>
+                    <Tip id="pick" profileId={profile.id}>
+                      נגעו בתמונה של מה שאני. אפשר לנסות שוב.
+                    </Tip>
+
+                    <div className="choice-grid">
+                      {riddle.choices.map((choice) => (
+                        <button
+                          key={choice.id}
+                          className="choice"
+                          onClick={() => answer(choice.label)}
+                          onMouseEnter={() => canHear && speak(choice.label)}
+                        >
+                          <Product shape={choice.art.shape} color={choice.art.color} size={72} />
+                          <span>{choice.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <>
                 <Tip id="typo" profileId={profile.id}>
                   כתבו איך שנשמע לכם. גם עם שגיאת כתיב אני אבין.
                 </Tip>
@@ -377,6 +409,8 @@ export function Game({
                     בדקו!
                   </button>
                 </form>
+                  </>
+                )}
 
                 {feedback && (
                   <div className={`feedback ${feedback.tone}`} role="status">
@@ -536,6 +570,10 @@ function writeFlag(key: string, profileId: string, value: boolean): void {
 }
 
 /** ברירת המחדל: ניקוד דלוק לקוראים המתחילים, כבוי מרמה 3 */
+/*
+ * הניקוד נגזר מיכולת הקריאה ולא מהרמה: ילד שמפענח אותיות
+ * צריך אותו גם כשהוא יודע הרבה, וקורא שוטף לא צריך אותו גם ברמה 1.
+ */
 function readNikudPreference(profile: PublicProfile): boolean {
-  return readFlag(NIKUD_KEY, profile.id, profile.level <= 2);
+  return readFlag(NIKUD_KEY, profile.id, profile.reading !== "fluent");
 }

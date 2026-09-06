@@ -3,6 +3,12 @@ import { AVATARS, AVATAR_GROUPS, AvatarArt } from "../art/avatars";
 import { Agali } from "../art/Agali";
 import { Terms } from "./Terms";
 import type { PublicProfile } from "../game/engine";
+import {
+  ANSWERING_LABELS,
+  READING_LABELS,
+  defaultReading,
+} from "../../../shared/ability";
+import type { Answering, Reading } from "../../../shared/types";
 
 // 18 = "מבוגר". החידות של הכוכבים והאולימפיאדה מגיעות לרמות שגם הורים מזיעים בהן.
 const AGES = [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 18];
@@ -33,6 +39,8 @@ export function ProfilePicker({
     age: number;
     address: "male" | "female";
     avatar: string;
+    reading: Reading;
+    answering: Answering;
   }) => void;
   onDelete: (id: string) => void;
   onParentPanel: () => void;
@@ -40,6 +48,9 @@ export function ProfilePicker({
 }) {
   const [creating, setCreating] = useState(startCreating);
   const [allAvatars, setAllAvatars] = useState(false);
+  // הגיל רק מציע — אפשר לשנות, וזה נשמר בנפרד ממנו
+  const [reading, setReading] = useState<Reading>(defaultReading(7));
+  const [answering, setAnswering] = useState<Answering>("typing");
   const [name, setName] = useState("");
   const [age, setAge] = useState(7);
   const [address, setAddress] = useState<"male" | "female">("female");
@@ -52,7 +63,7 @@ export function ProfilePicker({
     if (!name.trim() || busy) return;
     setBusy(true);
     try {
-      onCreate({ name: name.trim(), age, address, avatar });
+      onCreate({ name: name.trim(), age, address, avatar, reading, answering });
       setName("");
       setCreating(false);
       onDoneCreating?.();
@@ -151,12 +162,49 @@ export function ProfilePicker({
                 <button
                   key={option}
                   className={`chip ${age === option ? "on" : ""}`}
-                  onClick={() => setAge(option)}
+                  onClick={() => {
+                    setAge(option);
+                    // הגיל מציע ברירת מחדל, והבחירה למטה גוברת עליה
+                    setReading(defaultReading(option));
+                    setAnswering(option <= 5 ? "pictures" : "typing");
+                  }}
                 >
                   {option === ADULT ? "מבוגר" : option}
                 </button>
               ))}
             </div>
+          </div>
+
+          <div className="field">
+            <span>קורא/ת כבר?</span>
+            <div className="chips">
+              {(Object.keys(READING_LABELS) as Reading[]).map((option) => (
+                <button
+                  key={option}
+                  className={`chip wide ${reading === option ? "on" : ""}`}
+                  onClick={() => setReading(option)}
+                >
+                  {READING_LABELS[option].title}
+                </button>
+              ))}
+            </div>
+            <p className="muted small">{READING_LABELS[reading].note}</p>
+          </div>
+
+          <div className="field">
+            <span>איך עונים?</span>
+            <div className="chips">
+              {(Object.keys(ANSWERING_LABELS) as Answering[]).map((option) => (
+                <button
+                  key={option}
+                  className={`chip wide ${answering === option ? "on" : ""}`}
+                  onClick={() => setAnswering(option)}
+                >
+                  {ANSWERING_LABELS[option].title}
+                </button>
+              ))}
+            </div>
+            <p className="muted small">{ANSWERING_LABELS[answering].note}</p>
           </div>
 
           <div className="field">

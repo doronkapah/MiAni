@@ -6,7 +6,8 @@
  * בענן, מה שמתארח שם הוא רק הקוד הסטטי.
  */
 
-import type { AddressForm, Profile } from "../../../shared/types";
+import type { AddressForm, Answering, Profile, Reading } from "../../../shared/types";
+import { defaultReading } from "../../../shared/ability";
 import { emptyProgress } from "../../../shared/difficulty";
 import { DEFAULT_WORLD, WORLDS } from "../../../shared/worlds";
 import { DEFAULT_MODEL, findModel, type TokenCounts } from "../../../shared/models";
@@ -92,6 +93,8 @@ export interface NewProfile {
   age: number;
   address: AddressForm;
   avatar: string;
+  reading?: Reading;
+  answering?: Answering;
 }
 
 export function createProfile(input: NewProfile): Profile {
@@ -101,6 +104,8 @@ export function createProfile(input: NewProfile): Profile {
     age: Math.min(120, Math.max(3, Math.round(input.age))),
     address: input.address,
     avatar: input.avatar,
+    reading: input.reading ?? defaultReading(input.age),
+    answering: input.answering ?? (input.age <= 5 ? "pictures" : "typing"),
     worlds: Object.fromEntries(
       WORLDS.map((world) => [world.id, emptyProgress(input.age, world.id)]),
     ),
