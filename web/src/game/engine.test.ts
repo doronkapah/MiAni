@@ -1025,3 +1025,43 @@ describe("משוב שמשתנה עם הרמזים", () => {
     expect(late.plausible?.status).toBe("fits");
   });
 });
+
+describe("ספירת רמזים ולשון פנייה", () => {
+  beforeEach(() => storage.clear());
+
+  function solveAfterHints(hints: number, address: "male" | "female" = "female") {
+    const player = store.createProfile({ name: "בדיקה", age: 8, address, avatar: "cat" });
+    const riddle = engine.startRiddle(player.id, "market").riddle!;
+    for (let index = 0; index < hints; index += 1) engine.nextHint(player.id, "market");
+    const answer = riddleById.get(riddle.id)!.answer;
+    return engine.submitAnswer(player.id, answer, "market") as SolvedResult;
+  }
+
+  it("רמז אחד על המסך — מהרמז הראשון", () => {
+    expect(solveAfterHints(0).celebration.note).toContain("מהרמז הראשון");
+  });
+
+  it("שני רמזים על המסך — שני רמזים, ולא 'רמז אחד'", () => {
+    const note = solveAfterHints(1).celebration.note!;
+    expect(note).toContain("שני רמזים");
+    expect(note).not.toContain("רמז אחד");
+  });
+
+  it("שלושה רמזים על המסך — שלושה", () => {
+    const note = solveAfterHints(2).celebration.note!;
+    expect(note).toContain("3 רמזים");
+  });
+
+  it("הפנייה מתאימה לפרופיל", () => {
+    expect(solveAfterHints(1, "female").celebration.note).toContain("פתרת");
+    expect(solveAfterHints(1, "male").celebration.note).toContain("פתרת");
+  });
+
+  it("משוב על טעות פונה בלשון של השחקן", () => {
+    const girl = store.createProfile({ name: "דנה", age: 8, address: "female", avatar: "cat" });
+    engine.startRiddle(girl.id, "market");
+    const miss = engine.submitAnswer(girl.id, "זגזוגתמנון", "market") as MissResult;
+    expect(miss.message).toContain("נסי");
+    expect(miss.message).not.toContain("נסו");
+  });
+});

@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { WORDS, count, fresh, isFeminine, noun, opened } from "./hebrew";
+import { WORDS, count, fresh, isFeminine, noun, opened,
+  VERBS,
+  say,
+} from "./hebrew";
 import { recipes } from "./recipes";
 import { WORLDS } from "./worlds";
 
@@ -51,6 +54,26 @@ describe("מין הדבר שנפתח", () => {
   it("כל שמות הקבוצות בבנק מזוהים", () => {
     for (const recipe of recipes) {
       expect(typeof isFeminine(recipe.name)).toBe("boolean");
+    }
+  });
+});
+
+describe("לשון פנייה", () => {
+  it("בן, בת, ורבים — שלוש צורות", () => {
+    expect(say({ address: "male", plural: false }, VERBS.solved)).toBe("פתרת");
+    expect(say({ address: "female", plural: false }, VERBS.tryAgain)).toBe("נסי שוב");
+    expect(say({ address: "male", plural: true }, VERBS.tryAgain)).toBe("נסו שוב");
+  });
+
+  it("רבים גובר על המין — בסבב משפחתי מדברים אל כולם", () => {
+    expect(say({ address: "female", plural: true }, VERBS.solved)).toBe("פתרתם");
+  });
+
+  it("לכל פועל יש שלוש הצורות, ואף אחת לא ריקה", () => {
+    for (const [name, forms] of Object.entries(VERBS)) {
+      for (const form of [forms.male, forms.female, forms.plural]) {
+        expect(form.length, name).toBeGreaterThan(2);
+      }
     }
   });
 });

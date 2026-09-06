@@ -89,7 +89,7 @@ export function ProfilePicker({
           <div className="play-modes">
             <div className="play-mode on">
               <strong>🧒 משחק רגיל</strong>
-              <small>בוחרים שחקן, בוחרים עולם, ומקלידים את התשובות.</small>
+              <small>בוחרים שחקן, בוחרים עולם, ועונים — בהקלדה או בבחירה מתמונות.</small>
             </div>
             <button className="play-mode" onClick={onParentMode}>
               <strong>🚗 הורה שואל</strong>

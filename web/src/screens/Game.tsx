@@ -26,7 +26,7 @@ import type { Art } from "../../../shared/types";
 import type { Recipe } from "../../../shared/recipes";
 import type { AisleView } from "../../../shared/aisles";
 import { getWorld } from "../../../shared/worlds";
-import { WORDS, count, fresh, opened } from "../../../shared/hebrew";
+import { WORDS, count, fresh, isFeminine, opened } from "../../../shared/hebrew";
 import { canSpeak, speak, stopSpeaking, voiceStatus, watchVoices } from "../lib/speech";
 
 interface Solved {
@@ -343,10 +343,15 @@ export function Game({
               <button
                 className="icon-btn"
                 onClick={() => setOverlay("book")}
-                aria-label={`${info.sets.name}: ${count(recipesOpen, {
-                  one: info.sets.singular,
-                  many: info.sets.name,
-                })} ${opened(info.sets.singular)}`}
+                aria-label={
+                  recipesOpen === 0
+                    ? `${info.sets.name}: עוד לא נפתח כלום`
+                    : `${info.sets.name}: ${count(recipesOpen, {
+                        one: info.sets.singular,
+                        many: info.sets.name,
+                        feminine: isFeminine(info.sets.singular),
+                      })}`
+                }
                 title={info.sets.name}
               >
                 {info.sets.icon}
@@ -355,7 +360,11 @@ export function Game({
               <button
                 className="icon-btn"
                 onClick={() => setOverlay("cart")}
-                aria-label={`${info.collection.name}: ${count(profile.solvedCount, WORDS.item)}`}
+                aria-label={
+                  profile.solvedCount === 0
+                    ? `${info.collection.name}: עדיין ריק`
+                    : `${info.collection.name}: ${count(profile.solvedCount, WORDS.item)}`
+                }
                 title={info.collection.name}
               >
                 {info.collection.icon}

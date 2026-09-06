@@ -28,6 +28,7 @@ import {
 } from "../../../shared/recipes";
 import { aisleView, solvedAisleView, type AisleView } from "../../../shared/aisles";
 import { plausibleGuess, type Plausible } from "../../../shared/plausible";
+import { VERBS, WORDS, count, say, type Voice } from "../../../shared/hebrew";
 import { choicesFor, type Choice } from "../../../shared/choices";
 import {
   DAILY,
@@ -393,28 +394,39 @@ export const STREAK_MILESTONES = [3, 5, 10, 15, 20, 30, 50];
  * ולכן "בלי רמזים בכלל" היה פשוט לא נכון. פתרון בעזרת רמזים הוא
  * גם הצלחה, ומגיע לו משפט משלו ולא שתיקה.
  */
-function celebrate(streak: number, cluesUsed: number): Celebration {
+/**
+ * כמה רמזים הספיקו — בספירה אחת.
+ *
+ * `cluesUsed` הוא כמה רמזים היו על המסך, וזה תמיד לפחות אחד.
+ * הניסוח הקודם ערבב שתי ספירות: "מהרמז הראשון" ספר רמזים שהוצגו,
+ * ו"רמז אחד הספיק" ספר רמזים *נוספים* — אז אחרי שני רמזים נכתב
+ * "רמז אחד הספיק לכם", וזה נשמע כמו טעות כי זו טעות.
+ */
+function solvedWith(cluesUsed: number, voice: Voice): string {
+  const solved = say(voice, VERBS.solved);
+  if (cluesUsed <= 1) return `${solved} מהרמז הראשון 🤯`;
+  return `${solved} בעזרת ${count(cluesUsed, WORDS.clue)}`;
+}
+
+function celebrate(streak: number, cluesUsed: number, voice: Voice): Celebration {
   const firstClue = cluesUsed <= 1;
   const milestone = STREAK_MILESTONES.includes(streak) ? streak : undefined;
 
   if (milestone) {
     return {
       title: `🔥 ${milestone} ברצף!`,
-      note: firstClue ? "והפעם כבר מהרמז הראשון" : "אתם בכיוון",
+      note: firstClue ? "והפעם כבר מהרמז הראשון" : solvedWith(cluesUsed, voice),
       streak,
       milestone,
       noHints: firstClue,
     };
   }
   if (firstClue) {
-    return { title: "מדהים!", note: "פתרתם מהרמז הראשון 🤯", streak, noHints: true };
-  }
-  if (cluesUsed === 2) {
-    return { title: "כל הכבוד!", note: "רמז אחד הספיק לכם", streak, noHints: false };
+    return { title: "מדהים!", note: solvedWith(cluesUsed, voice), streak, noHints: true };
   }
   return {
     title: "כל הכבוד!",
-    note: "אספתם את הרמזים והגעתם לתשובה — בדיוק ככה זה עובד",
+    note: `${solvedWith(cluesUsed, voice)} — בדיוק ככה זה עובד`,
     streak,
     noHints: false,
   };
@@ -517,7 +529,10 @@ export function submitAnswer(
       profile: publicProfile(updated, world),
       unlockedRecipes: unlocked,
       aisleView: solvedAisleView(riddle.world, riddle.aisle),
-      celebration: celebrate(answerStreak, round.cluesRevealed),
+      celebration: celebrate(answerStreak, round.cluesRevealed, {
+      address: profile.address,
+      plural: false,
+    }),
     };
   }
 
@@ -526,12 +541,14 @@ export function submitAnswer(
 
   const plausible = plausibleGuess(guess, riddle, round.cluesRevealed) ?? undefined;
   const level = levelOf(progressIn(profile, world).rating);
+  // משחק לבד מדבר אל הילד; סבב משפחתי מדבר אל כולם
+  const voice: Voice = { address: profile.address, plural: false };
   const hasMoreClues =
     round.cluesRevealed < Math.min(riddle.clues.length, cluesAtLevel(level));
 
   return {
     status: result.status,
-    message: feedback(result.status, result.reason, round.wrongGuesses, plausible),
+    message: feedback(result.status, result.reason, round.wrongGuesses, voice, plausible),
     offerHint: round.wrongGuesses >= 2 || Boolean(plausible),
     plausible,
     hasMoreClues,
@@ -640,13 +657,14 @@ function feedback(
   status: "close" | "wrong",
   reason: string,
   wrongGuesses: number,
+  voice: Voice,
   plausible?: Plausible,
 ): string {
   if (status === "close") {
     if (reason === "partial-word") return "כמעט! זה חלק מהתשובה — חסרה עוד מילה 🙂";
-    return "ממש ממש קרוב! נסו שוב.";
+    return `ממש ממש קרוב! ${say(voice, VERBS.tryAgain)}.`;
   }
-  if (reason === "too-short") return "כתבו לי מילה שלמה ואבדוק אותה.";
+  if (reason === "too-short") return say(voice, VERBS.write);
 
   if (plausible) {
     /*
@@ -667,10 +685,10 @@ function feedback(
   }
 
   if (reason === "ambiguous") {
-    return "הניחוש הזה מתאים גם לפריט אחר. תוסיפו מילה, או בקשו עוד רמז.";
+    return `הניחוש הזה מתאים גם לפריט אחר. ${say(voice, VERBS.addWord)}`;
   }
   if (wrongGuesses >= 3) return "עוד לא. הרמז הבא יצמצם את האפשרויות.";
-  return "לא הפעם. נסו עוד ניחוש!";
+  return `לא הפעם. ${say(voice, VERBS.guessAgain)}`;
 }
 
 
@@ -696,7 +714,13 @@ function submitDaily(profileId: string, guess: string): AnswerResult {
     const hasMoreClues = state.cluesRevealed < riddle.clues.length;
     return {
       status: result.status,
-      message: feedback(result.status, result.reason, 1, plausible),
+      message: feedback(
+        result.status,
+        result.reason,
+        1,
+        { address: profile.address, plural: false },
+        plausible,
+      ),
       offerHint: hasMoreClues,
       plausible,
       hasMoreClues,

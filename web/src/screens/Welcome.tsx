@@ -46,7 +46,10 @@ export function Welcome({
             🧒
           </span>
           <strong>משחק עצמאי</strong>
-          <small>הילד קורא ומקליד את התשובות בעצמו.</small>
+          <small>
+            הילד עונה בעצמו — בהקלדה, או בבחירה מתוך תמונות למי שעדיין לא
+            קורא.
+          </small>
         </button>
 
         <button className="entry-card" onClick={onParentMode}>

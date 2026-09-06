@@ -20,6 +20,7 @@ export const WORDS = {
   item: { one: "פריט", many: "פריטים" },
   riddle: { one: "חידה", many: "חידות", feminine: true },
   star: { one: "כוכב", many: "כוכבים" },
+  clue: { one: "רמז", many: "רמזים" },
   day: { one: "יום", many: "ימים" },
   player: { one: "שחקן", many: "שחקנים" },
 } as const satisfies Record<string, Plural>;
@@ -65,3 +66,49 @@ export function isFeminine(name: string): boolean {
   const last = name.trim().slice(-1);
   return last === "ה" || last === "ת";
 }
+
+/**
+ * לשון פנייה.
+ *
+ * בעברית כל פועל בגוף שני מגודר, ואי אפשר לכתוב משפט אחד שמתאים
+ * לכולם. המשחק שמר את ההעדפה מאז יצירת הפרופיל אבל דיבר בלשון רבים
+ * לכולם — מה שנשמע נכון בסבב משפחתי, וזר לילד שמשחק לבד.
+ *
+ * `plural` גובר על המין: במצב "הורה שואל" מדברים באמת אל כמה אנשים.
+ */
+export type Address = "male" | "female";
+
+export interface Voice {
+  address: Address;
+  plural: boolean;
+}
+
+/** בוחר את הנוסח המתאים מתוך שלוש הצורות */
+export function say(
+  voice: Voice,
+  forms: { male: string; female: string; plural: string },
+): string {
+  if (voice.plural) return forms.plural;
+  return voice.address === "female" ? forms.female : forms.male;
+}
+
+/** הפעלים הבודדים שחוזרים בטקסטים של המשחק */
+export const VERBS = {
+  solved: { male: "פתרת", female: "פתרת", plural: "פתרתם" },
+  tryAgain: { male: "נסה שוב", female: "נסי שוב", plural: "נסו שוב" },
+  guessAgain: {
+    male: "נסה עוד ניחוש!",
+    female: "נסי עוד ניחוש!",
+    plural: "נסו עוד ניחוש!",
+  },
+  write: {
+    male: "כתוב לי מילה שלמה ואבדוק אותה.",
+    female: "כתבי לי מילה שלמה ואבדוק אותה.",
+    plural: "כתבו לי מילה שלמה ואבדוק אותה.",
+  },
+  addWord: {
+    male: "תוסיף מילה, או בקש עוד רמז.",
+    female: "תוסיפי מילה, או בקשי עוד רמז.",
+    plural: "תוסיפו מילה, או בקשו עוד רמז.",
+  },
+} as const;
