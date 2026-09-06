@@ -61,12 +61,27 @@ export default function App() {
     if (match) {
       // חוזרים בדיוק לאן שהיו — אותו שחקן, אותו עולם
       const lastWorld = store.lastWorld();
-      const world =
-        lastWorld === DAILY ? DEFAULT_WORLD : getWorld(lastWorld ?? DEFAULT_WORLD).id;
       const full = store.getProfile(match.id);
-      setWorld(world);
-      setActive(full ? publicProfile(full, world) : match);
-      setScreen("solo");
+
+      /*
+       * חידת היום היא מקום שאפשר לחזור אליו.
+       *
+       * קודם רענון אחרי פתרון החזיר למשחק הרגיל: ההתקדמות נשמרה,
+       * אבל ההקשר התחלף בלי הסבר. עכשיו חוזרים לחידת היום — ואם
+       * היא כבר נגמרה להיום, חוזרים לבחירת העולמות, שם רואים את
+       * הכוכבים שנצברו.
+       */
+      if (lastWorld === DAILY && full) {
+        const today = dailyView(full.id);
+        setWorld(DAILY);
+        setActive(publicProfile(full));
+        setScreen(today.done || today.gaveUp ? "worlds" : "solo");
+      } else {
+        const world = getWorld(lastWorld ?? DEFAULT_WORLD).id;
+        setWorld(world);
+        setActive(full ? publicProfile(full, world) : match);
+        setScreen("solo");
+      }
     }
 
     log("app", "המשחק נטען", { data: { profiles: list.length } });
@@ -97,6 +112,7 @@ export default function App() {
     const profile = active && store.getProfile(active.id);
     if (!profile) return;
     setWorld(DAILY);
+    store.rememberLastWorld(DAILY);
     setActive(publicProfile(profile));
     setScreen("solo");
     log("app", "נכנסו לחידת היום");

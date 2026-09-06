@@ -1149,3 +1149,70 @@ describe("מצב ההורה והמשחק העצמאי — אותה התקדמו�
     expect(marketProgress(first.id).rating).toBeGreaterThan(before);
   });
 });
+
+describe("חידת היום אחרי רענון", () => {
+  beforeEach(() => storage.clear());
+
+  it("מצב חידת היום שורד רענון — הכוכבים והרצף נשמרים", () => {
+    const player = newPlayer(8);
+    const riddle = engine.startRiddle(player.id, "daily").riddle!;
+    engine.submitAnswer(player.id, riddleById.get(riddle.id)!.answer, "daily");
+
+    // רענון: קוראים מחדש מאותו אחסון
+    const view = engine.dailyView(player.id);
+    expect(view.done).toBe(true);
+    expect(view.stars).toBe(3);
+    expect(view.total).toBe(3);
+    expect(view.streak).toBe(1);
+    expect(view.answer).toBeTruthy();
+  });
+
+  it("אין כפל פרסים: פתרון שוב אחרי רענון לא מוסיף כוכבים", () => {
+    const player = newPlayer(8);
+    const riddle = engine.startRiddle(player.id, "daily").riddle!;
+    const answer = riddleById.get(riddle.id)!.answer;
+
+    engine.submitAnswer(player.id, answer, "daily");
+    const afterFirst = engine.dailyView(player.id).total;
+
+    // "רענון" ואז אותה תשובה שוב
+    engine.startRiddle(player.id, "daily");
+    engine.submitAnswer(player.id, answer, "daily");
+
+    expect(engine.dailyView(player.id).total).toBe(afterFirst);
+    expect(store.getProfile(player.id)!.solved.filter((id) => id === riddle.id)).toHaveLength(1);
+  });
+
+  it("הרצף לא נספר פעמיים באותו יום", () => {
+    const player = newPlayer(8);
+    const riddle = engine.startRiddle(player.id, "daily").riddle!;
+    const answer = riddleById.get(riddle.id)!.answer;
+
+    engine.submitAnswer(player.id, answer, "daily");
+    engine.submitAnswer(player.id, answer, "daily");
+
+    expect(engine.dailyView(player.id).streak).toBe(1);
+  });
+
+  it("החידה נשארת אותה חידה אחרי רענון באמצע", () => {
+    const player = newPlayer(8);
+    const first = engine.startRiddle(player.id, "daily").riddle!.id;
+    engine.nextHint(player.id, "daily");
+
+    // רענון באמצע — אותה חידה, ואותם רמזים שנחשפו
+    const again = engine.startRiddle(player.id, "daily").riddle!;
+    expect(again.id).toBe(first);
+    expect(again.cluesRevealed).toBe(2);
+  });
+
+  it("ההתקדמות בעולם לא אבדה בזמן חידת היום", () => {
+    const player = newPlayer(8);
+    const before = marketProgress(player.id).rating;
+
+    const riddle = engine.startRiddle(player.id, "daily").riddle!;
+    engine.submitAnswer(player.id, riddleById.get(riddle.id)!.answer, "daily");
+
+    expect(marketProgress(player.id).rating).toBe(before);
+    expect(store.getProfile(player.id)!.solved).toContain(riddle.id);
+  });
+});
