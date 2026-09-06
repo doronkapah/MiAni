@@ -7,7 +7,7 @@ import { Cart } from "./Cart";
 import { RecipeModal } from "./RecipeModal";
 import { RecipeBook } from "./RecipeBook";
 import { HowToPlay, markHowToSeen } from "./HowToPlay";
-import { Tip } from "./Tip";
+import { Tip, useCoach } from "./Tip";
 import {
   nextHint,
   revealAnswer,
@@ -100,6 +100,7 @@ export function Game({
    */
   const answering = useRef(false);
 
+
   const canHear = voiceReady && !muted;
   /*
    * ההקראה נקבעת לפי יכולת הקריאה ולא לפי הרמה. ילד שעדיין לא
@@ -107,6 +108,18 @@ export function Game({
    */
   const readsAloud = profile.reading === "notYet" && canHear;
   const byPictures = profile.answering === "pictures";
+
+  /*
+   * טיפ אחד בכל רגע, לפי סדר חשיבות. שלושה טיפים שמופיעים יחד
+   * דוחפים את התשובות מתחת לקפל המסך, וזו בדיוק הבעיה שההדרכה
+   * הישנה יצרה.
+   */
+  const coach = useCoach(profile.id, [
+    { id: "pick", when: byPictures && !solved && !feedback },
+    { id: "typo", when: !byPictures && !solved && !feedback },
+    { id: "hint", when: Boolean(feedback) && Boolean(riddle?.hasMoreClues) },
+    { id: "collection", when: Boolean(solved) && !daily },
+  ]);
   const chatEnabled = FEATURES.agaliChat && store.getSettings().chatSource !== "off";
 
   useEffect(
@@ -197,6 +210,8 @@ export function Game({
     const text = raw.trim();
     if (!text || solved || answering.current) return;
     answering.current = true;
+    // ניחוש ראשון סוגר את ההסבר על *איך* מנחשים
+    coach.done(byPictures ? "pick" : "typo");
     try {
       const result = submitAnswer(profile.id, text, world);
       log("answer", `ניחוש: ${text}`, {
@@ -245,6 +260,8 @@ export function Game({
 
   function askHint() {
     if (!riddle?.hasMoreClues) return;
+    // מי שכבר ביקש רמז לא צריך שיסבירו לו על רמזים
+    coach.done("hint");
     setRiddle(nextHint(profile.id, world));
     setFeedback(null);
     log("riddle", "רמז נוסף", { who: profile.name, data: { riddle: riddle.id } });
@@ -283,7 +300,7 @@ export function Game({
   const recipesOpen = profile.recipes.filter((recipe) => recipe.unlocked).length;
 
   return (
-    <div className="game">
+    <div className={`game${byPictures ? " by-pictures" : ""}`}>
       {/* מי שמנווט במקלדת מגיע לחידה בלחיצה אחת */}
       <a className="skip-link" href="#riddle">
         דילוג לחידה
@@ -432,9 +449,11 @@ export function Game({
 
                 {byPictures ? (
                   <>
-                    <Tip id="pick" profileId={profile.id}>
-                      נגעו בתמונה של מה שאני. אפשר לנסות שוב.
-                    </Tip>
+                    {coach.current === "pick" && (
+                      <Tip onClose={() => coach.done("pick")}>
+                        נגעו בתמונה של מה שאני. אפשר לנסות שוב.
+                      </Tip>
+                    )}
 
                     {/*
                       כפתור השמיעה נפרד מהבחירה בכוונה: ילד צריך
@@ -470,9 +489,11 @@ export function Game({
                   </>
                 ) : (
                   <>
-                <Tip id="typo" profileId={profile.id}>
-                  כתבו איך שנשמע לכם. גם עם שגיאת כתיב אני אבין.
-                </Tip>
+                {coach.current === "typo" && (
+                  <Tip onClose={() => coach.done("typo")}>
+                    כתבו איך שנשמע לכם. גם עם שגיאת כתיב אני אבין.
+                  </Tip>
+                )}
 
                 <form
                   className="guess-row"
@@ -525,9 +546,11 @@ export function Game({
                   </div>
                 )}
 
-                <Tip id="hint" profileId={profile.id} when={Boolean(feedback)}>
-                  נתקעתם? "עוד רמז" מצמצם את האפשרויות, וזה חלק מהמשחק.
-                </Tip>
+                {coach.current === "hint" && (
+                  <Tip onClose={() => coach.done("hint")}>
+                    נתקעתם? "עוד רמז" מצמצם את האפשרויות, וזה חלק מהמשחק.
+                  </Tip>
+                )}
 
                 <div className="actions">
                   {/* אחרי "בדקו!", זו הפעולה שהכי צריך למצוא */}
@@ -602,10 +625,12 @@ export function Game({
                   </p>
                 )}
 
-                <Tip id="collection" profileId={profile.id} when={!daily}>
-                  הפריט נכנס {info.collection.into}. כשמצטברים מספיק — נפתח{" "}
-                  {info.sets.singular} חדש.
-                </Tip>
+                {coach.current === "collection" && (
+                  <Tip onClose={() => coach.done("collection")}>
+                    הפריט נכנס {info.collection.into}. כשמצטברים מספיק — נפתח{" "}
+                    {info.sets.singular} חדש.
+                  </Tip>
+                )}
                 {solved.celebration?.milestone && (
                   <div className="streak-banner">
                     <span className="streak-flames" aria-hidden="true">

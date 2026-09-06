@@ -1,14 +1,15 @@
-import { useEffect, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 /**
- * הסבר קצר, ליד הדבר שהוא מסביר.
+ * הסבר קצר, ליד הדבר שהוא מסביר — אחד בכל רגע.
  *
- * ההדרכה הקודמת הייתה מודאל של תשעה שלבים שנפתח לפני החידה
- * הראשונה — כלומר לפני שלמישהו היה הקשר להיתלות בו. ילד בן חמש
- * לא קורא מסך הסבר, והורה סוגר אותו כדי להתחיל לשחק.
+ * ההדרכה הקודמת הייתה מודאל של תשעה שלבים לפני החידה הראשונה,
+ * וזה הוחלף בטיפים בהקשר. אבל שלושה טיפים שמופיעים יחד הם בדיוק
+ * אותה בעיה בתחפושת: הם דחפו את התשובות מתחת לקפל המסך.
  *
- * במקום זה: משפט אחד, מופיע ברגע שהדבר רלוונטי, ונעלם אחרי
- * שראו אותו. כל טיפ נספר פעם אחת לכל שחקן.
+ * לכן יש כאן תור: רשימה מסודרת לפי חשיבות, ומוצג ממנה הראשון
+ * שרלוונטי ושעוד לא נראה. טיפ נסגר כשהפעולה שהוא מסביר בוצעה —
+ * מי שכבר ביקש רמז לא צריך שיסבירו לו על רמזים.
  */
 
 const KEY = "agali:tip";
@@ -26,7 +27,7 @@ function remember(profileId: string, id: string): void {
   try {
     localStorage.setItem(`${KEY}:${profileId}:${id}`, "1");
   } catch {
-    /* אין אחסון — הטיפ פשוט לא יזכר */
+    /* אין אחסון — הטיפ פשוט לא ייזכר */
   }
 }
 
@@ -42,36 +43,55 @@ export function resetTips(profileId: string): void {
   }
 }
 
-export function Tip({
-  id,
-  profileId,
-  when = true,
-  children,
-}: {
-  /** מזהה הטיפ, כדי לזכור שראו אותו */
+export interface Candidate {
   id: string;
-  profileId: string;
-  /** מציגים רק כשזה נכון — הרגע שבו ההסבר רלוונטי */
-  when?: boolean;
-  children: React.ReactNode;
-}) {
-  const [show, setShow] = useState(false);
+  /** מוצג רק כשזה נכון — הרגע שבו ההסבר רלוונטי */
+  when: boolean;
+}
 
-  useEffect(() => {
-    if (!when || seen(profileId, id)) return;
-    setShow(true);
-    remember(profileId, id);
-  }, [when, profileId, id]);
+export interface Coach {
+  /** מזהה הטיפ היחיד שמוצג עכשיו, אם יש */
+  current: string | null;
+  /** סוגר טיפ ומסמן שראו אותו — גם כשהפעולה בוצעה בלי לסגור ידנית */
+  done: (id: string) => void;
+}
 
-  if (!show) return null;
+/**
+ * בוחר טיפ אחד מתוך רשימה מסודרת.
+ * הראשון ברשימה שרלוונטי ושעוד לא נראה — וזהו.
+ */
+export function useCoach(profileId: string, candidates: Candidate[]): Coach {
+  const [closed, setClosed] = useState<string[]>([]);
 
+  const done = useCallback(
+    (id: string) => {
+      remember(profileId, id);
+      setClosed((list) => (list.includes(id) ? list : [...list, id]));
+    },
+    [profileId],
+  );
+
+  const current = useMemo(() => {
+    for (const candidate of candidates) {
+      if (!candidate.when) continue;
+      if (closed.includes(candidate.id)) continue;
+      if (seen(profileId, candidate.id)) continue;
+      return candidate.id;
+    }
+    return null;
+  }, [candidates, closed, profileId]);
+
+  return { current, done };
+}
+
+export function Tip({ onClose, children }: { onClose: () => void; children: React.ReactNode }) {
   return (
     <p className="tip" role="note">
       <span className="tip-mark" aria-hidden="true">
         💡
       </span>
       <span>{children}</span>
-      <button className="tip-close" onClick={() => setShow(false)} aria-label="הבנתי">
+      <button className="tip-close" onClick={onClose} aria-label="הבנתי">
         ×
       </button>
     </p>

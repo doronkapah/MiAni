@@ -3377,3 +3377,46 @@ body {
   font-size: 15px;
   line-height: 1.45;
 }
+
+
+/* ------------------------------- מצב בחירה: פחות קישוט, יותר תשובות */
+
+/*
+ * ארבע תמונות תופסות הרבה מקום, והן הדבר החשוב במסך.
+ * המדף הוא אווירה, ובמצב הזה האווירה מצטמצמת.
+ */
+.game.by-pictures .shelf-items {
+  min-height: 64px;
+}
+
+.game.by-pictures .shelf {
+  padding-bottom: 22px;
+}
+
+.game.by-pictures .shelf-plank {
+  height: 8px;
+  margin-bottom: 5px;
+}
+
+.game.by-pictures .decor {
+  opacity: 0.4;
+}
+
+.game.by-pictures .riddle-card {
+  gap: 10px;
+}
+
+/* הרמז הוא מה שצריך לקרוא לפני שבוחרים */
+.game.by-pictures .clues {
+  font-size: 20px;
+}
+
+@media (max-height: 620px) {
+  .game.by-pictures .shelf {
+    display: none;
+  }
+
+  .game.by-pictures .riddle-card {
+    margin-top: 0;
+  }
+}
