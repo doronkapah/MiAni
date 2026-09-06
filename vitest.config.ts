@@ -4,7 +4,7 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
   test: {
     root: ".",
-    include: ["shared/**/*.test.ts", "web/src/**/*.test.ts"],
+    include: ["shared/**/*.test.ts", "web/src/**/*.test.ts", "scripts/**/*.test.ts"],
     environment: "node",
     globals: true,
   },

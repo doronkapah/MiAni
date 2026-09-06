@@ -1,0 +1,93 @@
+# הסוכן שכותב חידות בבוקר.
+#
+# הוא כותב טיוטות ופותח Pull Request — הוא לא דוחף ל-main ולא נוגע
+# בבנק. חידה נכנסת למשחק רק אחרי שאדם קרא אותה, סימן approved,
+# והריץ riddles:promote.
+#
+# דורש שני דברים בהגדרות המאגר:
+#   Secrets → ANTHROPIC_API_KEY
+#   Settings → Actions → General → "Allow GitHub Actions to create pull requests"
+#
+# בלי המפתח ה-workflow פשוט מדלג, ולא נכשל.
+
+name: חידות הבוקר
+
+on:
+  schedule:
+    # 04:30 UTC — 07:30 בישראל בשעון חורף, 07:30 גם בקיץ בקירוב
+    - cron: "30 4 * * *"
+  workflow_dispatch:
+    inputs:
+      world:
+        description: "עולם (market/space/olympics/disney). ריק = הדל ביותר"
+        required: false
+        type: string
+      level:
+        description: "רמה 1–6"
+        required: false
+        type: string
+      count:
+        description: "כמה חידות"
+        required: false
+        default: "5"
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  draft:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: יש מפתח?
+        id: gate
+        env:
+          KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: echo "ready=${{ env.KEY != '' }}" >> "$GITHUB_OUTPUT"
+
+      - name: כתיבת טיוטות
+        if: steps.gate.outputs.ready == 'true'
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          npm run riddles:write -- \
+            ${{ inputs.world }} ${{ inputs.level }} \
+            --count ${{ inputs.count || '5' }}
+
+      # הטיוטות עברו כבר את כללי החידה, אבל הבנק עצמו חייב להישאר תקין
+      - name: בדיקות
+        if: steps.gate.outputs.ready == 'true'
+        run: |
+          npm run check
+          npm test
+
+      - name: פתיחת Pull Request
+        if: steps.gate.outputs.ready == 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          branch: riddles/daily
+          base: main
+          add-paths: shared/data/drafts.json
+          commit-message: "טיוטות חידות מ-${{ github.run_id }}"
+          title: "חידות חדשות לבדיקה"
+          body: |
+            הסוכן כתב טיוטות חדשות ל-`shared/data/drafts.json`.
+            כולן עברו את כללי החידה, אבל **אף אחת לא במשחק**.
+
+            כדי להכניס:
+            1. קראו את הטיוטות בקובץ.
+            2. סמנו `"approved": true` על מה שאהבתם. מחקו את השאר.
+            3. `npm run riddles:promote -- --write`
+            4. `npm test && npm run report:collisions`
+          labels: riddles
+          delete-branch: false

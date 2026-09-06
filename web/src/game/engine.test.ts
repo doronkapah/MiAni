@@ -382,13 +382,14 @@ describe("סיכום שימוש", () => {
   it("הסטטיסטיקה נכללת בגיבוי ולא מכילה טקסט חופשי", () => {
     const profile = newPlayer(7);
     engine.startRiddle(profile.id);
-    engine.submitAnswer(profile.id, "מכונית");
+    // ניחוש שרחוק מכל הבנק, כדי שהבדיקה לא תהיה תלויה בחידה שהוגרלה
+    engine.submitAnswer(profile.id, "זגזוגתמנון");
 
     const backup = store.exportBackup();
     expect(backup.stats).toBeDefined();
     expect(backup.stats!.profiles[profile.id]!.wrong).toBe(1);
     // מונים בלבד — לא נשמר מה הילד הקליד
-    expect(JSON.stringify(backup.stats)).not.toContain("מכונית");
+    expect(JSON.stringify(backup.stats)).not.toContain("זגזוגתמנון");
   });
 });
 

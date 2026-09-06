@@ -16,6 +16,8 @@
     "report:typos": "tsx scripts/typo-report.ts",
     "report:collisions": "tsx scripts/collision-report.ts",
     "merge:nikud": "tsx scripts/merge-nikud.ts",
+    "riddles:write": "tsx scripts/write-riddles.ts",
+    "riddles:promote": "tsx scripts/promote-drafts.ts",
     "preview": "vite preview"
   },
   "dependencies": {

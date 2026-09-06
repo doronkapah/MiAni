@@ -50,6 +50,11 @@ const allSteps = (world: World): Step[] => [
     needsChat: true,
   },
   {
+    icon: "⭐",
+    title: "חידת היום",
+    text: "כל בוקר מחכה חידה אחת מיוחדת. פתרון מהיר מזכה בשלושה כוכבים!",
+  },
+  {
     icon: world.sets.icon,
     title: `${world.collection.name} ו${world.sets.name}`,
     text: `כל מה שפותרים נכנס ${world.collection.into}. כשמצטברים מספיק — נפתח ${world.sets.singular} חדש!`,
