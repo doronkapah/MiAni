@@ -2808,3 +2808,113 @@ body {
   color: var(--ink-2);
   font-size: 15px;
 }
+
+
+/* ================================================== כניסה ראשונה */
+
+.entry-cards {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  margin: 10px 0 18px;
+}
+
+.entry-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 20px 16px;
+  border: 3px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--card);
+  color: var(--ink);
+  font: inherit;
+  text-align: center;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.entry-card:hover,
+.entry-card:focus-visible {
+  transform: translateY(-3px);
+  border-color: var(--green);
+}
+
+/* ההתנסות היא הדרך הקצרה להבין מה זה, ולכן היא בולטת */
+.entry-card.try {
+  border-color: var(--green);
+  background: var(--green-soft);
+}
+
+.entry-icon {
+  font-size: 40px;
+  line-height: 1;
+}
+
+.entry-card strong {
+  font-family: "Secular One", sans-serif;
+  font-size: 20px;
+}
+
+.entry-card small {
+  color: var(--ink-2);
+  font-size: 14.5px;
+  line-height: 1.45;
+  max-width: 28ch;
+}
+
+.welcome-note {
+  margin: 0 0 14px;
+  color: var(--ink-3);
+  font-size: 14px;
+  text-align: center;
+}
+
+.trial-note {
+  margin: 4px 0 14px;
+  color: var(--ink-2);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+/* ------------------------------------------------------- הסבר בזמן אמת */
+
+.tip {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0 0 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--paper-2);
+  color: var(--ink-2);
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+.tip-mark {
+  flex-shrink: 0;
+  font-size: 17px;
+}
+
+.tip-close {
+  flex-shrink: 0;
+  margin-inline-start: auto;
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ink-3);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.tip-close:hover,
+.tip-close:focus-visible {
+  background: var(--line);
+  color: var(--ink);
+}

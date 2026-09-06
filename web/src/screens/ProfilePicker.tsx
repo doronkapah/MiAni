@@ -8,8 +8,14 @@ import type { PublicProfile } from "../game/engine";
 const AGES = [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 18];
 const ADULT = 18;
 
+/** כמה דמויות מוצגות לפני שמבקשים "עוד" — רשת אחת, בלי גלילה */
+const FIRST_AVATARS = 8;
+
 export function ProfilePicker({
   profiles,
+  startCreating = false,
+  onDoneCreating,
+  onTry,
   onPick,
   onCreate,
   onDelete,
@@ -17,6 +23,10 @@ export function ProfilePicker({
   onParentMode,
 }: {
   profiles: PublicProfile[];
+  /** האם להיפתח ישר בטופס — כשהגיעו לכאן מ"משחק עצמאי" */
+  startCreating?: boolean;
+  onDoneCreating?: () => void;
+  onTry?: () => void;
   onPick: (profile: PublicProfile) => void;
   onCreate: (input: {
     name: string;
@@ -28,7 +38,8 @@ export function ProfilePicker({
   onParentPanel: () => void;
   onParentMode: () => void;
 }) {
-  const [creating, setCreating] = useState(profiles.length === 0);
+  const [creating, setCreating] = useState(startCreating);
+  const [allAvatars, setAllAvatars] = useState(false);
   const [name, setName] = useState("");
   const [age, setAge] = useState(7);
   const [address, setAddress] = useState<"male" | "female">("female");
@@ -44,6 +55,7 @@ export function ProfilePicker({
       onCreate({ name: name.trim(), age, address, avatar });
       setName("");
       setCreating(false);
+      onDoneCreating?.();
     } finally {
       setBusy(false);
     }
@@ -107,6 +119,11 @@ export function ProfilePicker({
             <button className="link-btn" onClick={onParentPanel}>
               לוח הורים
             </button>
+            {onTry && (
+              <button className="link-btn" onClick={onTry}>
+                חידה לנסות
+              </button>
+            )}
             <button className="link-btn" onClick={() => setTerms(true)}>
               תנאי שימוש
             </button>
@@ -162,11 +179,14 @@ export function ProfilePicker({
 
           <div className="field">
             <span>בחרו דמות</span>
-            {AVATAR_GROUPS.map((group) => (
-              <div className="avatar-group" key={group.title}>
-                <h3 className="avatar-group-title">{group.title}</h3>
+            {/*
+              עשרים ושבע דמויות במסך אחד הן לא בחירה, הן עיכוב. מראים
+              שמונה — מספיק כדי למצוא משהו שאוהבים — והשאר מחכה למי שרוצה.
+            */}
+            {!allAvatars ? (
+              <>
                 <div className="avatar-grid">
-                  {group.avatars.map((option) => (
+                  {AVATARS.slice(0, FIRST_AVATARS).map((option) => (
                     <button
                       key={option.id}
                       className={`avatar-pick ${avatar === option.id ? "on" : ""}`}
@@ -179,8 +199,31 @@ export function ProfilePicker({
                     </button>
                   ))}
                 </div>
-              </div>
-            ))}
+                <button className="link-btn" onClick={() => setAllAvatars(true)}>
+                  עוד דמויות ({AVATARS.length - FIRST_AVATARS})
+                </button>
+              </>
+            ) : (
+              AVATAR_GROUPS.map((group) => (
+                <div className="avatar-group" key={group.title}>
+                  <h3 className="avatar-group-title">{group.title}</h3>
+                  <div className="avatar-grid">
+                    {group.avatars.map((option) => (
+                      <button
+                        key={option.id}
+                        className={`avatar-pick ${avatar === option.id ? "on" : ""}`}
+                        onClick={() => setAvatar(option.id)}
+                        aria-label={option.label}
+                        title={option.label}
+                      >
+                        <AvatarArt id={option.id} size={64} />
+                        <small>{option.label}</small>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))
+            )}
           </div>
 
           <div className="row">

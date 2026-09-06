@@ -6,7 +6,8 @@ import { Chat } from "./Chat";
 import { Cart } from "./Cart";
 import { RecipeModal } from "./RecipeModal";
 import { RecipeBook } from "./RecipeBook";
-import { HowToPlay, hasSeenHowTo, markHowToSeen } from "./HowToPlay";
+import { HowToPlay, markHowToSeen } from "./HowToPlay";
+import { Tip } from "./Tip";
 import {
   nextHint,
   revealAnswer,
@@ -83,7 +84,7 @@ export function Game({
 
   // ההסבר מוצג פעם אחת לכל שחקן, ואחר כך רק לפי בקשה
   useEffect(() => {
-    if (!hasSeenHowTo(profile.id)) setOverlay("howto");
+    // ההדרכה נשארת זמינה בכפתור "?", אבל היא לא קופצת יותר מעצמה
     setNikud(readNikudPreference(profile));
     setMuted(readFlag(MUTE_KEY, profile.id, false));
   }, [profile.id, profile.level]);
@@ -335,6 +336,10 @@ export function Game({
                   )}
                 </ol>
 
+                <Tip id="typo" profileId={profile.id}>
+                  כתבו איך שנשמע לכם. גם עם שגיאת כתיב אני אבין.
+                </Tip>
+
                 <form
                   className="guess-row"
                   onSubmit={(event) => {
@@ -384,6 +389,10 @@ export function Game({
                   </div>
                 )}
 
+                <Tip id="hint" profileId={profile.id} when={Boolean(feedback)}>
+                  נתקעתם? "עוד רמז" מצמצם את האפשרויות, וזה חלק מהמשחק.
+                </Tip>
+
                 <div className="actions">
                   <button className="btn" onClick={askHint} disabled={!riddle.hasMoreClues}>
                     {riddle.hasMoreClues ? "עוד רמז" : "אין עוד רמזים"}
@@ -428,6 +437,11 @@ export function Game({
                 )}
                 <p className="answer">{solved.answer}</p>
                 <p className="reveal">{solved.reveal}</p>
+
+                <Tip id="collection" profileId={profile.id} when={!daily}>
+                  הפריט נכנס {info.collection.into}. כשמצטברים מספיק — נפתח{" "}
+                  {info.sets.singular} חדש.
+                </Tip>
                 {solved.celebration?.milestone && (
                   <div className="streak-banner">
                     <span className="streak-flames" aria-hidden="true">

@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { ProfilePicker } from "./screens/ProfilePicker";
+import { Welcome } from "./screens/Welcome";
+import { TryRiddle } from "./screens/TryRiddle";
+import { Terms } from "./screens/Terms";
 import { Game } from "./screens/Game";
 import { ParentPanel } from "./screens/ParentPanel";
 import { ParentSetup } from "./screens/ParentSetup";
@@ -15,6 +18,9 @@ import { DAILY } from "../../shared/daily";
 import { log } from "./lib/log";
 
 type Screen =
+  | "welcome"
+  | "try"
+  | "terms"
   | "picker"
   | "worlds"
   | "solo"
@@ -27,6 +33,8 @@ export default function App() {
   const [active, setActive] = useState<PublicProfile | null>(null);
   const [session, setSession] = useState<GroupSession | null>(null);
   const [screen, setScreen] = useState<Screen>("picker");
+  // הביקור הראשון מתחיל בבחירה, לא בטופס
+  const [creating, setCreating] = useState(false);
   const [world, setWorld] = useState<string>(DEFAULT_WORLD);
   const [ready, setReady] = useState(false);
   const [noStorage, setNoStorage] = useState(false);
@@ -41,6 +49,7 @@ export default function App() {
     if (!store.storageAvailable()) setNoStorage(true);
 
     const list = refresh();
+    if (!list.length) setScreen("welcome");
     const remembered = store.lastProfileId();
     const match = list.find((profile) => profile.id === remembered);
     if (match) {
@@ -110,20 +119,22 @@ export default function App() {
 
   function remove(id: string) {
     store.deleteProfile(id);
-    refresh();
+    const left = refresh();
     if (active?.id === id) {
       setActive(null);
       store.rememberLastProfile(null);
-      setScreen("picker");
+      // מחקו את האחרון — חוזרים למסך הפתיחה, לא לרשימה ריקה
+      setScreen(left.length ? "picker" : "welcome");
     }
   }
 
   function backToPicker() {
+    setCreating(false);
     setActive(null);
     setSession(null);
     store.rememberLastProfile(null);
-    refresh();
-    setScreen("picker");
+    const left = refresh();
+    setScreen(left.length ? "picker" : "welcome");
   }
 
   function startGroup(input: {
@@ -149,6 +160,39 @@ export default function App() {
         }}
       />
     );
+  }
+
+  if (screen === "welcome") {
+    return (
+      <Welcome
+        onTry={() => setScreen("try")}
+        onSolo={() => {
+          setCreating(true);
+          setScreen("picker");
+        }}
+        onParentMode={() => {
+          setCreating(true);
+          setScreen("picker");
+        }}
+        onTerms={() => setScreen("terms")}
+      />
+    );
+  }
+
+  if (screen === "try") {
+    return (
+      <TryRiddle
+        onCreate={() => {
+          setCreating(true);
+          setScreen("picker");
+        }}
+        onBack={() => setScreen(profiles.length ? "picker" : "welcome")}
+      />
+    );
+  }
+
+  if (screen === "terms") {
+    return <Terms onClose={() => setScreen(profiles.length ? "picker" : "welcome")} />;
   }
 
   if (screen === "parent-setup") {
@@ -203,6 +247,9 @@ export default function App() {
       )}
       <ProfilePicker
         profiles={profiles}
+        startCreating={creating}
+        onDoneCreating={() => setCreating(false)}
+        onTry={() => setScreen("try")}
         onPick={pick}
         onCreate={create}
         onDelete={remove}
