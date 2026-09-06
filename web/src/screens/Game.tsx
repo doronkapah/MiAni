@@ -42,6 +42,9 @@ interface Solved {
   advanced?: { name: string; held: number; needed: number };
 }
 
+/** אורך הסבב במשחק לבד */
+const ROUND = 5;
+
 export function Game({
   profile,
   world,
@@ -76,6 +79,15 @@ export function Game({
   const [nikud, setNikud] = useState(() => readNikudPreference(profile));
   const [unlockedQueue, setUnlockedQueue] = useState<Recipe[]>([]);
   const [overlay, setOverlay] = useState<"none" | "cart" | "book" | "howto">("none");
+  /*
+   * סבב קצר גם למשחק לבד.
+   *
+   * בלי נקודת עצירה טבעית המשחק נגמר תמיד כשמישהו מתעייף או
+   * שלוקחים את המכשיר — כלומר באמצע. חמש חידות זה סבב שאפשר
+   * לסיים בהרגשה טובה. הוא לא נשמר בין ביקורים, ואין עונש על
+   * מי שעצר קודם.
+   */
+  const [inRound, setInRound] = useState(0);
   const [muted, setMuted] = useState(() => readFlag(MUTE_KEY, profile.id, false));
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -179,6 +191,7 @@ export function Game({
         setSolved({ ...result, gaveUp: false });
         setFeedback(null);
         setUnlockedQueue(result.unlockedRecipes);
+        setInRound((count) => count + 1);
         stopSpeaking();
         if (canHear) speak(`${result.celebration.title} ${result.answer}`);
         for (const recipe of result.unlockedRecipes) {
@@ -553,7 +566,35 @@ export function Game({
                 {solved.levelUp && (
                   <p className="levelup">🎉 עלית רמה! עכשיו {profile.levelName}</p>
                 )}
-                {daily ? (
+                {!daily && inRound >= ROUND ? (
+                  <div className="round-done">
+                    <p>
+                      🎉 סיימתם סבב של {ROUND}! אפשר להמשיך, ואפשר לעצור כאן —
+                      הכול נשמר.
+                    </p>
+                    <div className="row">
+                      <button
+                        className="btn primary big"
+                        onClick={() => {
+                          setInRound(0);
+                          loadRiddle();
+                        }}
+                      >
+                        עוד סבב
+                      </button>
+                      <button
+                        className="btn ghost"
+                        onClick={() => {
+                          // עוד אחת, ואז מציעים לעצור שוב
+                          setInRound(ROUND - 1);
+                          loadRiddle();
+                        }}
+                      >
+                        רק עוד חידה אחת
+                      </button>
+                    </div>
+                  </div>
+                ) : daily ? (
                   <>
                     <p className="daily-done">
                       זהו להיום. חידה חדשה מחכה מחר בבוקר 🌅
