@@ -1,6 +1,7 @@
 import { Product } from "../art/Product";
 import type { CartItem } from "../game/engine";
 import { getWorld } from "../../../shared/worlds";
+import { WORDS, count } from "../../../shared/hebrew";
 
 /**
  * העגלה, כמסך שנפתח בלחיצה.
@@ -31,7 +32,7 @@ export function Cart({
           <h1>
             {info.collection.icon} {info.collection.name}
           </h1>
-          <span className="book-count">{items.length} פריטים</span>
+          <span className="book-count">{count(items.length, WORDS.item)}</span>
         </header>
 
         {items.length === 0 ? (

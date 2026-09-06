@@ -88,10 +88,15 @@ export function WorldPicker({
         </span>
         <span className="daily-score">
           <b>{daily.total}</b>
-          <small>כוכבים</small>
+          <small>{daily.total === 1 ? "כוכב" : "כוכבים"}</small>
           {daily.streak > 1 && <em>🔥 {daily.streak} ימים</em>}
         </span>
       </button>
+
+      {/* איך נצברים הכוכבים — קצר, וליד המקום שבו הם מוצגים */}
+      <p className="daily-rule">
+        ⭐⭐⭐ פתרון מהרמז הראשון · ⭐⭐ אחרי רמז · ⭐ אחרי שניים
+      </p>
 
       <div className="world-grid">
         {WORLDS.map((world) => {

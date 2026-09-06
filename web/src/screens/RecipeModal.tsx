@@ -3,6 +3,7 @@ import { RecipeArt } from "../art/RecipeArt";
 import type { Recipe } from "../../../shared/recipes";
 import { canSpeak, speak, stopSpeaking } from "../lib/speech";
 import { getWorld } from "../../../shared/worlds";
+import { fresh, opened } from "../../../shared/hebrew";
 
 /**
  * המתכון שנפתח, קופץ על המסך.
@@ -65,8 +66,12 @@ export function RecipeModal({
       >
         <p className="recipe-banner">
           {owner
-            ? `🎉 ${owner} פתח/ה ${info.sets.singular} חדש!`
-            : `🎉 פתחתם ${info.sets.singular} חדש!`}
+            ? `🎉 ל${owner} ${opened(info.sets.singular)} ${info.sets.singular} ${fresh(
+                info.sets.singular,
+              )}!`
+            : `🎉 ${opened(info.sets.singular)} ${info.sets.singular} ${fresh(
+                info.sets.singular,
+              )}!`}
         </p>
 
         <div className="recipe-head">
@@ -96,7 +101,9 @@ export function RecipeModal({
 
         <div className="recipe-actions">
           <button className="btn primary big" onClick={onClose} ref={closeRef}>
-            {remaining > 0 ? `יופי! ועוד ${remaining} ב${info.sets.name}` : "יופי!"}
+            {remaining > 0
+              ? `יופי! ועוד ${remaining} ב${info.sets.name}`
+              : "יופי!"}
           </button>
           {voice && (
             <button className="btn" onClick={readAloud}>

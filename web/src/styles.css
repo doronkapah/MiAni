@@ -6,10 +6,10 @@
   --card: #ffffff;
   --ink: #24291f;
   --ink-2: #5e675a;
-  --ink-3: #8d9686;
+  --ink-3: #687061;
   --line: #e6dcc8;
 
-  --green: #23955c;
+  --green: #1c7b4c;
   --green-deep: #14663d;
   --green-soft: #e1f2e7;
   --tag: #ffc93c;
@@ -17,7 +17,7 @@
   --tag-ink: #4a3600;
   --wood: #c98a45;
   --wood-dark: #a56c31;
-  --berry: #d64b6a;
+  --berry: #bc3556;
   --berry-soft: #fde8ec;
 
   --radius: 18px;
@@ -65,7 +65,11 @@ body {
   background: var(--paper);
   color: var(--ink);
   font-family: "Varela Round", "Segoe UI", Arial, sans-serif;
-  font-size: 18px;
+  /*
+   * רם ולא פיקסלים: מי שהגדיל את גודל הטקסט בדפדפן רוצה
+   * שזה יעבוד גם כאן. 1.125rem = 18px בברירת המחדל.
+   */
+  font-size: 1.125rem;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
 }
@@ -89,6 +93,9 @@ input {
 :focus-visible {
   outline: 3px solid var(--green);
   outline-offset: 3px;
+  /* הילה לבנה מבפנים, כדי שהמיקוד ייראה גם על רקע ירוק */
+  box-shadow: 0 0 0 2px var(--card);
+  border-radius: 6px;
 }
 
 /* ------------------------------------------------------------ כפתורים */
@@ -3146,4 +3153,137 @@ body {
 /* התשובה מוסתרת כברירת מחדל — המסך משותף */
 .parent-answer-value {
   letter-spacing: 0.01em;
+}
+
+
+/* --------------------------------------------- היררכיה על המסך */
+
+/*
+ * "עוד רמז" הוא הפעולה השנייה בחשיבותה אחרי "בדקו!",
+ * ולכן הוא נראה כמו כפתור ולא כמו קישור.
+ */
+.btn.hint {
+  border-color: var(--tag-deep);
+  background: var(--tag);
+  color: var(--tag-ink);
+  font-size: 19px;
+}
+
+.btn.hint:hover:not(:disabled) {
+  background: var(--tag-deep);
+}
+
+.btn.hint:disabled {
+  background: var(--card);
+  border-color: var(--line);
+  color: var(--ink-3);
+}
+
+/* שיתוף, ניקוד ודילוג — נחוצים, אבל לא עוזרים לפתור */
+.actions.minor {
+  margin-top: 4px;
+  gap: 8px;
+}
+
+.btn.small {
+  min-height: 40px;
+  padding: 6px 14px;
+  border-color: transparent;
+  background: transparent;
+  color: var(--ink-3);
+  font-size: 15px;
+}
+
+.btn.small:hover:not(:disabled) {
+  background: var(--paper-2);
+  color: var(--ink-2);
+}
+
+.btn.small.toggle.on {
+  background: var(--green-soft);
+  color: var(--green-deep);
+}
+
+.switch-hint {
+  color: var(--ink-3);
+}
+
+
+/* ------------------------------------------- מובייל עם מקלדת פתוחה */
+
+/*
+ * כשהמקלדת נפתחת באייפון היא תופסת כמעט חצי מסך. מה שצריך
+ * להישאר גלוי הוא הרמז ותיבת הניחוש — המדף יכול להמתין.
+ * הגובה נמדד ב-dvh, שמתכווץ עם המקלדת.
+ */
+@media (max-height: 560px) {
+  .shelf-items {
+    min-height: 56px;
+  }
+
+  .shelf {
+    padding-bottom: 22px;
+  }
+
+  .shelf-plank {
+    height: 8px;
+    margin-bottom: 4px;
+  }
+
+  .goal-strip,
+  .tip {
+    display: none;
+  }
+
+  .riddle-card {
+    padding: 12px 14px;
+    gap: 8px;
+  }
+
+  .actions.minor {
+    display: none;
+  }
+}
+
+/* המקלדת לא מכסה את כפתור "בדקו!" */
+.guess-row {
+  scroll-margin-bottom: 24px;
+}
+
+/* --------------------------------------------------- ניווט מקלדת */
+
+/*
+ * קפיצה לתוכן: מי שמנווט בטאב לא צריך לעבור שוב ושוב
+ * על שישה כפתורים בסרגל כדי להגיע לחידה.
+ */
+.skip-link {
+  position: absolute;
+  inset-inline-start: -9999px;
+  top: 8px;
+  z-index: 100;
+  padding: 10px 18px;
+  border-radius: 12px;
+  background: var(--green);
+  color: #ffffff;
+  font-size: 17px;
+}
+
+.skip-link:focus {
+  inset-inline-start: 8px;
+}
+
+/* יעד מגע של 44 פיקסל לכל מה שלוחצים */
+.link-btn,
+.tip-close,
+.clear-guess {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+
+.daily-rule {
+  margin: -12px 0 16px;
+  color: var(--ink-3);
+  font-size: 13.5px;
+  text-align: center;
 }

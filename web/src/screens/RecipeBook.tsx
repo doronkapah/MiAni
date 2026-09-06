@@ -4,6 +4,7 @@ import { recipeById } from "../../../shared/recipes";
 import type { RecipeProgress } from "../../../shared/recipes";
 import { RecipeModal } from "./RecipeModal";
 import { getWorld } from "../../../shared/worlds";
+import { WORDS, count } from "../../../shared/hebrew";
 
 /**
  * ספר המתכונים.
@@ -82,7 +83,8 @@ export function RecipeBook({
                   <span className="book-text">
                     <strong>???</strong>
                     <small>
-                      חסרים עוד {recipe.needed - recipe.held} פריטים מתוך {recipe.needed}
+                      חסרים עוד {count(recipe.needed - recipe.held, WORDS.item)} מתוך{" "}
+                      {recipe.needed}
                     </small>
                   </span>
                   <span className="book-progress" aria-hidden="true">

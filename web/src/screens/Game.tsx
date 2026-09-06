@@ -26,6 +26,7 @@ import type { Art } from "../../../shared/types";
 import type { Recipe } from "../../../shared/recipes";
 import type { AisleView } from "../../../shared/aisles";
 import { getWorld } from "../../../shared/worlds";
+import { WORDS, count, fresh, opened } from "../../../shared/hebrew";
 import { canSpeak, speak, stopSpeaking, watchVoices } from "../lib/speech";
 
 interface Solved {
@@ -243,13 +244,19 @@ export function Game({
 
   return (
     <div className="game">
+      {/* מי שמנווט במקלדת מגיע לחידה בלחיצה אחת */}
+      <a className="skip-link" href="#riddle">
+        דילוג לחידה
+      </a>
+
       <header className="topbar">
-        <button className="who" onClick={onSwitchWorld}>
+        <button className="who" onClick={onSwitchWorld} aria-label="החלפת עולם">
           <AvatarArt id={profile.avatar} size={38} />
           <span className="who-text">
             <strong>{profile.name}</strong>
             <small>
               {daily ? "⭐ חידת היום" : `${info.icon} ${info.name} · ${profile.levelName}`}
+              {!daily && <span className="switch-hint"> · החלפה</span>}
             </small>
           </span>
         </button>
@@ -279,7 +286,11 @@ export function Game({
               <button
                 className="icon-btn"
                 onClick={() => setOverlay("book")}
-                aria-label={`${info.sets.name}, ${recipesOpen} פתוחים`}
+                aria-label={`${info.sets.name}: ${count(recipesOpen, {
+                  one: info.sets.singular,
+                  many: info.sets.name,
+                })} ${opened(info.sets.singular)}`}
+                title={info.sets.name}
               >
                 {info.sets.icon}
                 <b>{recipesOpen}</b>
@@ -287,7 +298,8 @@ export function Game({
               <button
                 className="icon-btn"
                 onClick={() => setOverlay("cart")}
-                aria-label={`${info.collection.name}, ${profile.solvedCount} פריטים`}
+                aria-label={`${info.collection.name}: ${count(profile.solvedCount, WORDS.item)}`}
+                title={info.collection.name}
               >
                 {info.collection.icon}
                 <b>{profile.solvedCount}</b>
@@ -348,7 +360,7 @@ export function Game({
             </button>
           )}
 
-          <section className="riddle-card">
+          <section className="riddle-card" id="riddle" tabIndex={-1}>
             {!solved && riddle && (
               <>
                 <h1 className="riddle-title">מי אני?</h1>
@@ -461,32 +473,41 @@ export function Game({
                 </Tip>
 
                 <div className="actions">
-                  <button className="btn" onClick={askHint} disabled={!riddle.hasMoreClues}>
-                    {riddle.hasMoreClues ? "עוד רמז" : "אין עוד רמזים"}
+                  {/* אחרי "בדקו!", זו הפעולה שהכי צריך למצוא */}
+                  <button
+                    className="btn hint"
+                    onClick={askHint}
+                    disabled={!riddle.hasMoreClues}
+                  >
+                    💡 {riddle.hasMoreClues ? "עוד רמז" : "אין עוד רמזים"}
                   </button>
                   {chatEnabled && (
                     <button className="btn" onClick={() => setChatOpen((open) => !open)}>
                       {chatOpen ? "סגירת עגלי" : "שאלו את עגלי"}
                     </button>
                   )}
+                  <button className="btn ghost" onClick={giveUp}>
+                    גלו לי
+                  </button>
+                </div>
+
+                {/* שורה משנית: דברים שלא עוזרים לפתור את החידה */}
+                <div className="actions minor">
                   <button
-                    className={`btn toggle ${nikud ? "on" : ""}`}
+                    className={`btn small toggle ${nikud ? "on" : ""}`}
                     onClick={toggleNikud}
                     aria-pressed={nikud}
                   >
                     נִיקּוּד {nikud ? "פועל" : "כבוי"}
                   </button>
-                  <button className="btn" onClick={() => void shareRiddle()}>
+                  <button className="btn small" onClick={() => void shareRiddle()}>
                     📤 שיתוף
                   </button>
                   {!daily && (
-                    <button className="btn ghost" onClick={skip}>
-                      דלג
+                    <button className="btn small" onClick={skip}>
+                      דילוג
                     </button>
                   )}
-                  <button className="btn ghost" onClick={giveUp}>
-                    גלה לי
-                  </button>
                 </div>
               </>
             )}
@@ -524,7 +545,9 @@ export function Game({
                     <span className="streak-flames" aria-hidden="true">
                       {"🔥".repeat(Math.min(5, Math.ceil(solved.celebration.milestone / 3)))}
                     </span>
-                    <span>{solved.celebration.milestone} חידות ברצף בלי לוותר</span>
+                    <span>
+                      {count(solved.celebration.milestone, WORDS.riddle)} ברצף בלי לוותר
+                    </span>
                   </div>
                 )}
                 {solved.levelUp && (
