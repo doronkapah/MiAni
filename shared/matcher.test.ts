@@ -7,6 +7,7 @@ import {
   toTarget,
   variants,
   weightedDistance,
+  checkAgainstAll,
 } from "./matcher";
 import { allTargets, riddles, targetById } from "./bank";
 import { commonTypos } from "../scripts/typo-report";
@@ -295,4 +296,46 @@ describe("סלחנות על פני כל הבנק", () => {
     }
     expect(leaks).toEqual([]);
   }, 30_000);
+});
+
+describe("בדיקה מרוכזת מול כל הבנק", () => {
+  /**
+   * `checkAgainstAll` קיים רק כדי לחסוך זמן. אם הוא מכריע אחרת
+   * מ-`checkAnswer` אפילו במקרה אחד, הוא לא חוסך — הוא משקר.
+   */
+  it("מכריעה בדיוק כמו הבדיקה אחת-אחת", () => {
+    /*
+     * המדגם קטן בכוונה: המסלול האיטי סורק את כל הבנק לכל יעד,
+     * ולכן כל ניחוש כאן עולה מאתיים ושלושים סריקות מלאות. מדגם
+     * פרוס על כל הבנק, עם תשובות, נרדפים, שגיאות כתיב וחלופות,
+     * מכסה את כל סוגי ההכרעה — כולל "ambiguous", שהוא היחיד
+     * שתלוי ביריב ולכן היחיד שהאופטימיזציה יכולה לשבור.
+     */
+    const sample = riddles.filter((_, index) => index % 30 === 0);
+    const guesses = sample.flatMap((riddle) => [
+      riddle.answer,
+      ...(riddle.aliases ?? []).slice(0, 1),
+      ...commonTypos(riddle.answer).slice(0, 2),
+      ...(riddle.alsoFits ?? []).slice(0, 1),
+    ]);
+
+    for (const guess of guesses) {
+      const batch = checkAgainstAll(guess, allTargets);
+      for (const target of allTargets) {
+        const one = checkAnswer({ guess, target, others: allTargets });
+        const many = batch.get(target.id)!;
+        expect(
+          [many.status, many.reason],
+          `"${guess}" מול ${target.id}`,
+        ).toEqual([one.status, one.reason]);
+        expect(many.distance, `"${guess}" מול ${target.id}`).toBe(one.distance);
+      }
+    }
+  }, 120_000);
+
+  it("ניחוש קצר מדי מוחזר לכל היעדים", () => {
+    const batch = checkAgainstAll("א", allTargets);
+    expect(batch.size).toBe(allTargets.length);
+    for (const result of batch.values()) expect(result.reason).toBe("too-short");
+  });
 });

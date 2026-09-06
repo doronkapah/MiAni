@@ -236,9 +236,9 @@ docs/seo.md             מדריך אינדוקס במנועי חיפוש ובמ
 ## בדיקות
 
 ```bash
-npm test                  # 221 בדיקות
+npm test                  # 229 בדיקות
 npm run report:typos      # שגיאות כתיב נפוצות שמתקבלות
-npm run report:collisions # תשובה של פריט אחד לא מתקבלת באחר (כרגע 0 דליפות)
+npm run report:collisions # תשובה של פריט אחד לא מתקבלת באחר (כרגע 0 דליפות, ~15 שניות)
 npm run check             # בדיקת טיפוסים
 ```
 

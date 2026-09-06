@@ -6,22 +6,28 @@
  * (כל ניחוש מושווה לכל הבנק), ולכן היא סקריפט ולא בדיקה רגילה.
  */
 
-import { allTargets, riddles, targetById } from "../shared/bank";
-import { checkAnswer, thresholdsFor, weightedDistance } from "../shared/matcher";
+import { allTargets, riddles } from "../shared/bank";
+import { checkAgainstAll, thresholdsFor, weightedDistance } from "../shared/matcher";
 import { commonTypos } from "./typo-report";
 
 const leaks: string[] = [];
 let checks = 0;
 
+/*
+ * כל ניחוש נבדק מול כל הבנק בבת אחת.
+ *
+ * `checkAnswer` סורק את כל היריבות מחדש עבור כל יעד, וכאן היעדים
+ * הם כל הבנק — כלומר אותה סריקה חוזרת מאתיים ושלושים פעם על אותו
+ * ניחוש. `checkAgainstAll` עושה אותה פעם אחת, ומגיע לאותן הכרעות
+ * בדיוק (יש על זה בדיקה ב-matcher.test.ts).
+ */
 for (const source of riddles) {
-  const guesses = [source.answer, ...commonTypos(source.answer)];
-  for (const other of riddles) {
-    if (other.id === source.id) continue;
-    const target = targetById.get(other.id)!;
-    for (const guess of guesses) {
+  for (const guess of [source.answer, ...commonTypos(source.answer)]) {
+    const results = checkAgainstAll(guess, allTargets);
+    for (const other of riddles) {
+      if (other.id === source.id) continue;
       checks += 1;
-      const result = checkAnswer({ guess, target, others: allTargets });
-      if (result.status === "correct") {
+      if (results.get(other.id)?.status === "correct") {
         leaks.push(`"${guess}" (${source.answer}) התקבל בחידה של ${other.answer}`);
       }
     }

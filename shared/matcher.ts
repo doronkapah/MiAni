@@ -355,26 +355,32 @@ export interface CheckOptions {
  * 5. הניחוש הוא מילה אחת מתוך תשובה מרובת מילים — כמעט.
  * 6. מרחק בתוך סף ה"כמעט" — כמעט.
  */
-export function checkAnswer({ guess, target, others = [] }: CheckOptions): MatchResult {
-  const guesses = expand(guess);
-  if (!guesses.length || guesses.every((g) => g.form.replace(/\s/g, "").length < 2)) {
-    return { status: "wrong", distance: Infinity, reason: "too-short" };
-  }
+const TOO_SHORT: MatchResult = {
+  status: "wrong",
+  distance: Infinity,
+  reason: "too-short",
+};
 
-  const mine = distanceTo(guesses, target);
+function tooShort(guesses: Form[]): boolean {
+  return !guesses.length || guesses.every((g) => g.form.replace(/\s/g, "").length < 2);
+}
 
+/**
+ * ההכרעה עצמה, כשכבר יודעים את המרחק ליעד ואת המרחק ליריב הקרוב.
+ *
+ * מופרד כדי שגם `checkAnswer` וגם `checkAgainstAll` יעברו דרכו —
+ * שני מסלולים שמכריעים אחרת הם באג שמחכה לקרות.
+ */
+function decide(
+  guesses: Form[],
+  target: Target,
+  mine: Distance,
+  rival: Distance,
+): MatchResult {
   // "שמן" כשהתשובה היא "שמן זית" — חצי תשובה, ולא ניחוש של פריט אחר.
   // נבדק לפני כלל ההבחנה, כי מילה בודדת דומה בהכרח להמון פריטים.
   if (mine.value > 0 && isPartialWord(guesses, target)) {
     return { status: "close", distance: mine.value, reason: "partial-word" };
-  }
-
-  let rival: Distance = { value: Infinity, form: "" };
-  for (const other of others) {
-    if (other.id === target.id) continue;
-    const distance = distanceTo(guesses, other);
-    if (distance.value < rival.value) rival = distance;
-    if (rival.value === 0) break;
   }
 
   // הניחוש שייך לפריט אחר בבנק, או שהוא בדיוק על הגבול בין שניים.
@@ -400,4 +406,73 @@ export function checkAnswer({ guess, target, others = [] }: CheckOptions): Match
   }
 
   return { status: "wrong", distance: mine.value, reason: "far" };
+}
+
+export function checkAnswer({ guess, target, others = [] }: CheckOptions): MatchResult {
+  const guesses = expand(guess);
+  if (tooShort(guesses)) return TOO_SHORT;
+
+  const mine = distanceTo(guesses, target);
+
+  let rival: Distance = { value: Infinity, form: "" };
+  for (const other of others) {
+    if (other.id === target.id) continue;
+    const distance = distanceTo(guesses, other);
+    if (distance.value < rival.value) rival = distance;
+    if (rival.value === 0) break;
+  }
+
+  return decide(guesses, target, mine, rival);
+}
+
+/**
+ * אותו ניחוש מול כל היעדים, בבת אחת.
+ *
+ * `checkAnswer` סורק את כל היריבות מחדש עבור כל יעד, אבל הסריקה
+ * הזאת תלויה רק בניחוש — ולכן היא חוזרת על עצמה פי מספר היעדים.
+ * כאן היא נעשית פעם אחת, ומכל יעד נגזר היריב שלו: הקרוב ביותר,
+ * ואם הקרוב ביותר הוא הוא עצמו — זה שאחריו.
+ *
+ * זה מה שהופך את דוח ההתנגשויות מארבעים דקות לשניות.
+ *
+ * שימו לב: `targets` הוא גם רשימת היעדים לבדיקה וגם מאגר היריבות.
+ * להעביר כאן תת־קבוצה זה לשאול שאלה אחרת — "האם זו התשובה, בהינתן
+ * שרק אלה קיימים" — ולא לקצר את אותה שאלה.
+ */
+export function checkAgainstAll(guess: string, targets: Target[]): Map<string, MatchResult> {
+  const out = new Map<string, MatchResult>();
+  const guesses = expand(guess);
+  if (tooShort(guesses)) {
+    for (const target of targets) out.set(target.id, TOO_SHORT);
+    return out;
+  }
+
+  const distances = new Map<string, Distance>();
+  let best: { id: string; distance: Distance } | null = null;
+  let second: { id: string; distance: Distance } | null = null;
+
+  for (const target of targets) {
+    const distance = distanceTo(guesses, target);
+    distances.set(target.id, distance);
+
+    // השוואה חזקה בלבד, כדי לשמור על אותה הכרעת שוויון כמו בלולאה המקורית
+    if (!best || distance.value < best.distance.value) {
+      second = best;
+      best = { id: target.id, distance };
+    } else if (!second || distance.value < second.distance.value) {
+      second = { id: target.id, distance };
+    }
+  }
+
+  const none: Distance = { value: Infinity, form: "" };
+  for (const target of targets) {
+    const mine = distances.get(target.id)!;
+    const rival =
+      best && best.id !== target.id
+        ? best.distance
+        : (second?.distance ?? none);
+    out.set(target.id, decide(guesses, target, mine, rival));
+  }
+
+  return out;
 }
