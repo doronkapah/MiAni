@@ -211,7 +211,8 @@ export function Game({
         setFeedback({
           text: result.message,
           tone: result.status,
-          offerDistinguish: Boolean(result.plausible),
+          // אחרי שההבדל כבר הוסבר אין מה להציע — הרמז המבחין כבר על המסך
+          offerDistinguish: result.plausible?.status === "fits",
         });
         /*
          * הניחוש נשאר בתיבה. ילד שכתב "פסטה" בשגיאה אחת צריך לתקן

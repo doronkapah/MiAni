@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { plausibleGuess } from "./plausible";
+import { fitsList, plausibleGuess, rulingClue } from "./plausible";
 import { riddles, allTargets, targetById } from "./bank";
 import { checkAnswer } from "./matcher";
 
@@ -57,7 +57,7 @@ describe("שלמות רשימת החלופות", () => {
   it("חלופה אף פעם אינה התשובה עצמה", () => {
     for (const riddle of withFits) {
       const target = targetById.get(riddle.id)!;
-      for (const option of riddle.alsoFits!) {
+      for (const option of fitsList(riddle)) {
         const result = checkAnswer({ guess: option, target, others: allTargets });
         expect(result.status, `${riddle.answer}: "${option}" מתקבל כתשובה`).not.toBe("correct");
       }
@@ -66,13 +66,14 @@ describe("שלמות רשימת החלופות", () => {
 
   it("אין חלופות כפולות באותה חידה", () => {
     for (const riddle of withFits) {
-      expect(new Set(riddle.alsoFits!).size, riddle.id).toBe(riddle.alsoFits!.length);
+      const list = fitsList(riddle);
+      expect(new Set(list).size, riddle.id).toBe(list.length);
     }
   });
 
   it("כל חלופה מזוהה כהגיונית", () => {
     for (const riddle of withFits) {
-      for (const option of riddle.alsoFits!) {
+      for (const option of fitsList(riddle)) {
         expect(
           plausibleGuess(option, riddle),
           `${riddle.answer}: "${option}" לא זוהה`,
@@ -80,4 +81,49 @@ describe("שלמות רשימת החלופות", () => {
       }
     }
   }, 60_000);
+});
+
+describe("חלופה שרמז פסל", () => {
+  const icecream = riddleOf("גלידה");
+
+  it("לפני הרמז המבחין — מתאימה", () => {
+    const before = plausibleGuess("קרטיב", icecream, 1);
+    expect(before?.status).toBe("fits");
+    expect(before?.because).toBeUndefined();
+  });
+
+  it("אחרי הרמז המבחין — נפסלת, עם הסבר", () => {
+    const after = plausibleGuess("קרטיב", icecream, 2);
+    expect(after?.status).toBe("ruledOut");
+    expect(after?.because).toContain("גביע");
+  });
+
+  it("החלופה עדיין מזוהה — היא לא הופכת ל'סתם טעות'", () => {
+    expect(plausibleGuess("קרטיב", icecream, 2)).not.toBeNull();
+  });
+
+  it("חלופה בלי רמז פוסל מתאימה תמיד", () => {
+    const milk = riddleOf("חלב");
+    expect(plausibleGuess("חלב סויה", milk, 1)?.status).toBe("fits");
+    expect(plausibleGuess("חלב סויה", milk, 2)?.status).toBe("fits");
+  });
+
+  it("rulingClue מחזיר את מספר הרמז", () => {
+    expect(rulingClue("קרטיב", icecream)).toBe(2);
+    expect(rulingClue("שלגון", icecream)).toBe(2);
+    expect(rulingClue("גלידה בטעם שוקולד", icecream)).toBeNull();
+  });
+
+  it("כל רמז פוסל מצביע על רמז שקיים בחידה", () => {
+    for (const riddle of riddles) {
+      for (const option of riddle.alsoFits ?? []) {
+        if (typeof option === "string") continue;
+        expect(option.ruledOutBy, `${riddle.id}: ${option.guess}`).toBeGreaterThan(0);
+        expect(option.ruledOutBy, `${riddle.id}: ${option.guess}`).toBeLessThanOrEqual(
+          riddle.clues.length,
+        );
+        expect(option.because.length, `${riddle.id}: ${option.guess}`).toBeGreaterThan(8);
+      }
+    }
+  });
 });

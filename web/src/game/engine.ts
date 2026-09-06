@@ -440,8 +440,11 @@ export interface MissResult {
   message: string;
   offerHint: boolean;
   /**
-   * הניחוש היה הגיוני — פריט אמיתי שמתאים לרמזים שנחשפו.
-   * המסך מודה בזה, ומציע רמז שיבדיל בין השניים.
+   * הניחוש היה הגיוני — פריט אמיתי, ולא ניחוש מהאוויר.
+   *
+   * מוחזר תמיד כשזה המצב, כולל אחרי שרמז כבר פסל אותו. *הכפתור*
+   * "רמז שיבדיל" הוא זה שתלוי גם ב-`hasMoreClues` וגם בכך שהניחוש
+   * עדיין מתאים — אין מה להבדיל כשההבדל כבר הוסבר.
    */
   plausible?: Plausible;
   /** האם יש עוד רמז לתת. בלעדיו אין מה להציע */
@@ -521,7 +524,7 @@ export function submitAnswer(
   round.wrongGuesses += 1;
   stats.recordMiss(profile.id, riddle.id, result.status);
 
-  const plausible = plausibleGuess(guess, riddle) ?? undefined;
+  const plausible = plausibleGuess(guess, riddle, round.cluesRevealed) ?? undefined;
   const level = levelOf(progressIn(profile, world).rating);
   const hasMoreClues =
     round.cluesRevealed < Math.min(riddle.clues.length, cluesAtLevel(level));
@@ -530,7 +533,7 @@ export function submitAnswer(
     status: result.status,
     message: feedback(result.status, result.reason, round.wrongGuesses, plausible),
     offerHint: round.wrongGuesses >= 2 || Boolean(plausible),
-    plausible: plausible && hasMoreClues ? plausible : undefined,
+    plausible,
     hasMoreClues,
   };
 }
@@ -646,6 +649,16 @@ function feedback(
   if (reason === "too-short") return "כתבו לי מילה שלמה ואבדוק אותה.";
 
   if (plausible) {
+    /*
+     * שני מצבים שונים לגמרי.
+     *
+     * לפני הרמז המבחין הניחוש באמת מסתדר עם כל מה שנחשף, ואומרים
+     * את זה. אחריו הוא כבר לא — ואז מסבירים מה בדיוק לא מסתדר,
+     * כי "הניחוש מתאים לרמזים" יהיה פשוט לא נכון.
+     */
+    if (plausible.status === "ruledOut") {
+      return `${plausible.guess} התאים יפה קודם! אבל לפי הרמז החדש — ${plausible.because}`;
+    }
     const opening = `${plausible.guess} זה ניחוש חכם`;
     if (plausible.shared) {
       return `${opening} — גם הוא ב${plausible.shared}, והוא מתאים לרמזים. אבל אני משהו אחר.`;
@@ -679,13 +692,13 @@ function submitDaily(profileId: string, guess: string): AnswerResult {
 
   if (result.status !== "correct") {
     stats.recordMiss(profile.id, riddle.id, result.status);
-    const plausible = plausibleGuess(guess, riddle) ?? undefined;
+    const plausible = plausibleGuess(guess, riddle, state.cluesRevealed) ?? undefined;
     const hasMoreClues = state.cluesRevealed < riddle.clues.length;
     return {
       status: result.status,
       message: feedback(result.status, result.reason, 1, plausible),
       offerHint: hasMoreClues,
-      plausible: plausible && hasMoreClues ? plausible : undefined,
+      plausible,
       hasMoreClues,
     };
   }

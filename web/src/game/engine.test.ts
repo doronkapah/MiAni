@@ -46,6 +46,27 @@ function newPlayer(age = 7) {
   return store.createProfile({ name: "בדיקה", age, address: "female", avatar: "tomato" });
 }
 
+/** הגיל שפותח את הרמה המבוקשת */
+const AGE_BY_LEVEL: Record<number, number> = { 1: 5, 2: 7, 3: 9, 4: 11, 5: 18, 6: 18 };
+
+/** מתחיל סבב על חידה מסוימת, בלי להסתמך על ההגרלה */
+function playingIn(riddleId: string) {
+  const wanted = riddleById.get(riddleId)!;
+  const player = store.createProfile({
+    name: "בדיקה",
+    age: AGE_BY_LEVEL[wanted.level] ?? 7,
+    address: "female",
+    avatar: "tomato",
+  });
+  for (let attempt = 0; attempt < 300; attempt += 1) {
+    const started = engine.startRiddle(player.id, wanted.world);
+    if (started.riddle?.id === riddleId) return { player, riddle: wanted };
+    if (started.done) break;
+    engine.skipRiddle(player.id, wanted.world);
+  }
+  throw new Error(`לא הגעתי ל-${riddleId}`);
+}
+
 describe("מנוע המשחק בדפדפן", () => {
   beforeEach(() => storage.clear());
 
@@ -647,14 +668,16 @@ describe("הוגנות המשוב", () => {
     expect(miss.message).not.toContain("לחידה אחרת");
   });
 
-  it("אין הצעת רמז מבחין כשנגמרו הרמזים", () => {
+  it("כשנגמרו הרמזים ההבדל מוסבר, ואין מה להציע", () => {
     const { player, riddle } = playing("apple");
     for (let index = 0; index < riddle.clues.length + 2; index += 1) {
       engine.nextHint(player.id, "market");
     }
     const miss = engine.submitAnswer(player.id, "דובדבן", "market") as MissResult;
     expect(miss.hasMoreClues).toBe(false);
-    expect(miss.plausible).toBeUndefined();
+    // הניחוש עדיין מוכר כהגיוני, אבל הרמז האחרון כבר פסל אותו
+    expect(miss.plausible?.status).toBe("ruledOut");
+    expect(miss.plausible?.because).toBeTruthy();
   });
 
   it("פתרון מהרמז הראשון נאמר במילים נכונות", () => {
@@ -962,5 +985,43 @@ describe("שמירה על פרופילים קיימים", () => {
     const back = store.getProfile(player.id)!;
     expect(back.reading).toBe("learning");
     expect(back.answering).toBe("pictures");
+  });
+});
+
+describe("משוב שמשתנה עם הרמזים", () => {
+  beforeEach(() => storage.clear());
+
+  it('"קרטיב" מקבל משוב אחד לפני הרמז המבחין, ואחר אחריו', () => {
+    const { player } = playingIn("icecream");
+
+    const before = engine.submitAnswer(player.id, "קרטיב", "market") as MissResult;
+    expect(before.plausible?.status).toBe("fits");
+    expect(before.message).toContain("ניחוש חכם");
+
+    engine.nextHint(player.id, "market");
+
+    const after = engine.submitAnswer(player.id, "קרטיב", "market") as MissResult;
+    expect(after.plausible?.status).toBe("ruledOut");
+    expect(after.message).toContain("גביע");
+    expect(after.message).not.toContain("ניחוש חכם");
+    expect(after.message).not.toBe(before.message);
+  });
+
+  it("אחרי שההבדל הוסבר, לא מציעים עוד רמז מבחין", () => {
+    const { player } = playingIn("icecream");
+    engine.nextHint(player.id, "market");
+    const after = engine.submitAnswer(player.id, "קרטיב", "market") as MissResult;
+    expect(after.plausible?.status).toBe("ruledOut");
+    // ההבדל כבר על המסך — אין מה להבדיל
+    expect(after.plausible?.because).toBeTruthy();
+  });
+
+  it("חלופה בלי רמז פוסל נשארת מתאימה גם בסוף", () => {
+    const { player, riddle } = playingIn("milk");
+    for (let index = 1; index < riddle.clues.length; index += 1) {
+      engine.nextHint(player.id, "market");
+    }
+    const late = engine.submitAnswer(player.id, "חלב סויה", "market") as MissResult;
+    expect(late.plausible?.status).toBe("fits");
   });
 });

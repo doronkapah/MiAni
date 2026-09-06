@@ -10,6 +10,7 @@ import {
   checkAgainstAll,
 } from "./matcher";
 import { allTargets, riddles, targetById } from "./bank";
+import { fitsList } from "./plausible";
 import { commonTypos } from "../scripts/typo-report";
 
 const pasta = toTarget("pasta", "פסטה", ["ספגטי", "מקרוני", "אטריות"]);
@@ -316,7 +317,7 @@ describe("בדיקה מרוכזת מול כל הבנק", () => {
       riddle.answer,
       ...(riddle.aliases ?? []).slice(0, 1),
       ...commonTypos(riddle.answer).slice(0, 2),
-      ...(riddle.alsoFits ?? []).slice(0, 1),
+      ...fitsList(riddle).slice(0, 1),
     ]);
 
     for (const guess of guesses) {
