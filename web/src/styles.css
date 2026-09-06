@@ -3078,3 +3078,72 @@ body {
   color: var(--green-deep);
   font-size: 16px;
 }
+
+
+/* --------------------------------------------- סבב משפחתי */
+
+.turn-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--green-soft);
+  color: var(--green-deep);
+  font-family: "Secular One", sans-serif;
+  font-size: 16px;
+  width: fit-content;
+}
+
+.round-count {
+  font-family: "Varela Round", sans-serif;
+  font-size: 15px;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.round-end {
+  gap: 12px;
+}
+
+.round-scores {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: min(420px, 100%);
+  margin: 6px 0 4px;
+  padding: 0;
+  list-style: none;
+}
+
+.round-scores li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border: 2px solid var(--line);
+  border-radius: 14px;
+  background: var(--card);
+}
+
+.round-scores li.top {
+  border-color: var(--tag-deep);
+  background: var(--tag);
+  color: var(--tag-ink);
+}
+
+.round-scores strong {
+  font-family: "Secular One", sans-serif;
+  font-size: 17px;
+}
+
+.round-scores span {
+  margin-inline-start: auto;
+  font-variant-numeric: tabular-nums;
+}
+
+/* התשובה מוסתרת כברירת מחדל — המסך משותף */
+.parent-answer-value {
+  letter-spacing: 0.01em;
+}

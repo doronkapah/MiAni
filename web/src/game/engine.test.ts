@@ -871,3 +871,37 @@ describe("יעד קרוב", () => {
     expect(advanced?.needed).toBe(goal.needed);
   });
 });
+
+describe("סבב משפחתי", () => {
+  beforeEach(() => storage.clear());
+
+  it("תור מסתובב עובר בין הילדים לפי הסדר", () => {
+    const a = newPlayer(7);
+    const b = newPlayer(9);
+    const session = group.createSession([a.id, b.id], "coop", 2, "market", 5, true);
+
+    expect(group.whoseTurn(session, 0)).toBe(a.id);
+    expect(group.whoseTurn(session, 1)).toBe(b.id);
+    expect(group.whoseTurn(session, 2)).toBe(a.id);
+  });
+
+  it("אין תור כשיש משתתף אחד", () => {
+    const solo = newPlayer(7);
+    const session = group.createSession([solo.id], "competitive", 2, "market", 5, true);
+    expect(group.whoseTurn(session, 0)).toBeNull();
+  });
+
+  it("אין תור כשלא ביקשו אותו", () => {
+    const a = newPlayer(7);
+    const b = newPlayer(9);
+    const session = group.createSession([a.id, b.id], "coop", 2, "market", 5, false);
+    expect(group.whoseTurn(session, 0)).toBeNull();
+  });
+
+  it("אורך הסבב נשמר בסשן, ואפשר לבקש בלי סוף", () => {
+    const solo = newPlayer(7);
+    expect(group.createSession([solo.id], "coop", 2, "market").roundLength).toBe(5);
+    expect(group.createSession([solo.id], "coop", 2, "market", 10).roundLength).toBe(10);
+    expect(group.createSession([solo.id], "coop", 2, "market", 0).roundLength).toBe(0);
+  });
+});

@@ -150,8 +150,19 @@ export default function App() {
     mode: GroupMode;
     level: number;
     world: string;
+    roundLength: number;
+    turns: boolean;
   }) {
-    setSession(createSession(input.profileIds, input.mode, input.level, input.world));
+    setSession(
+      createSession(
+        input.profileIds,
+        input.mode,
+        input.level,
+        input.world,
+        input.roundLength,
+        input.turns,
+      ),
+    );
     setScreen("parent-game");
   }
 

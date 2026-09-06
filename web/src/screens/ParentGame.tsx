@@ -18,6 +18,7 @@ import * as store from "../store/local";
 import { canSpeak, speak, stopSpeaking, watchVoices } from "../lib/speech";
 import { log } from "../lib/log";
 import { getWorld } from "../../../shared/worlds";
+import { whoseTurn } from "../game/group";
 
 /**
  * המסך של ההורה.
@@ -37,7 +38,15 @@ export function ParentGame({
   const [players, setPlayers] = useState<PublicProfile[]>([]);
   const [wins, setWins] = useState<Record<string, number>>({});
   const [finished, setFinished] = useState(false);
-  const [showAnswer, setShowAnswer] = useState(true);
+  /*
+   * התשובה מוסתרת כברירת מחדל.
+   *
+   * זה מסך משותף: ההורה מחזיק אותו, והילדים מסתכלים מהצד. תשובה
+   * שמוצגת כל הזמן היא תשובה שנקראת מהצד, וזה סוף המשחק.
+   */
+  const [showAnswer, setShowAnswer] = useState(false);
+  const [asked, setAsked] = useState(0);
+  const [roundOver, setRoundOver] = useState(false);
   const [voiceReady, setVoiceReady] = useState(canSpeak());
   const [recipeQueue, setRecipeQueue] = useState<{ who: string; recipe: Recipe }[]>([]);
   const info = getWorld(session.world);
@@ -82,6 +91,7 @@ export function ParentGame({
 
   function award(winnerIds: string[]) {
     const result = awardSolve(session, winnerIds);
+    setAsked((count) => count + 1);
     if (!result) return;
     setOutcome(result);
     refreshPlayers();
@@ -104,6 +114,7 @@ export function ParentGame({
     if (!result) return;
     log("parent", `אף אחד לא פתר: ${result.answer}`);
     setOutcome(result);
+    setAsked((count) => count + 1);
     refreshPlayers();
     stopSpeaking();
   }
@@ -120,6 +131,57 @@ export function ParentGame({
         <button className="btn primary big" onClick={onExit}>
           חזרה למסך הפתיחה
         </button>
+      </div>
+    );
+  }
+
+  /*
+   * סוף הסבב.
+   *
+   * משחק שנגמר בהחלטה של מישהו להפסיק נגמר תמיד באמצע. סבב של
+   * חמש חידות נגמר בסיכום, וזה ההבדל בין "נמאס לי" ל"סיימנו".
+   */
+  if (roundOver) {
+    const scored = [...players].sort((a, b) => (wins[b.id] ?? 0) - (wins[a.id] ?? 0));
+    const best = scored[0] ? (wins[scored[0].id] ?? 0) : 0;
+
+    return (
+      <div className="finished round-end">
+        <h1>🎉 סיימתם סבב של {session.roundLength}</h1>
+
+        <ul className="round-scores">
+          {scored.map((player) => (
+            <li key={player.id} className={(wins[player.id] ?? 0) === best && best > 0 ? "top" : ""}>
+              <AvatarArt id={player.avatar} size={44} />
+              <strong>{player.name}</strong>
+              <span>
+                {wins[player.id] ?? 0} {(wins[player.id] ?? 0) === 1 ? "חידה" : "חידות"}
+              </span>
+            </li>
+          ))}
+        </ul>
+
+        <p className="muted">
+          {session.mode === "coop"
+            ? "פתרתם ביחד. כל אחד קיבל את הפריטים לאוסף שלו."
+            : "כל אחד שומר את מה שפתר. אפשר לשחק עוד סבב מתי שתרצו."}
+        </p>
+
+        <div className="row">
+          <button
+            className="btn primary big"
+            onClick={() => {
+              setAsked(0);
+              setRoundOver(false);
+              nextRiddle();
+            }}
+          >
+            עוד סבב
+          </button>
+          <button className="btn ghost" onClick={onExit}>
+            סיימנו להיום
+          </button>
+        </div>
       </div>
     );
   }
@@ -159,17 +221,38 @@ export function ParentGame({
           {!outcome && riddle && (
             <>
               <div className="parent-answer">
-                <span className="parent-answer-label">התשובה, לעיניכם בלבד</span>
+                <span className="parent-answer-label">
+                  התשובה — לעיניכם בלבד, לא למסך המשותף
+                </span>
                 <button
                   className="parent-answer-value"
                   onClick={() => setShowAnswer((on) => !on)}
                 >
-                  {showAnswer ? riddle.answerNikud : "הקישו כדי לראות"}
+                  {showAnswer ? riddle.answerNikud : "👁 הקישו כדי לראות"}
                 </button>
                 <small>{riddle.aisleName}</small>
               </div>
 
-              <h1 className="riddle-title">מי אני?</h1>
+              {(() => {
+                const turnId = whoseTurn(session, asked);
+                const child = turnId && players.find((player) => player.id === turnId);
+                return child ? (
+                  <p className="turn-line">
+                    <AvatarArt id={child.avatar} size={30} />
+                    <span>התור של {child.name}</span>
+                  </p>
+                ) : null;
+              })()}
+
+              <h1 className="riddle-title">
+                מי אני?
+                {session.roundLength > 0 && (
+                  <small className="round-count">
+                    {" "}
+                    {Math.min(asked + 1, session.roundLength)} מתוך {session.roundLength}
+                  </small>
+                )}
+              </h1>
 
               <ol className="clues">
                 {riddle.cluesNikud.map((clue, index) => (
@@ -193,12 +276,17 @@ export function ParentGame({
 
               <div className="who-solved">
                 <p className="who-solved-title">
-                  {session.mode === "coop" ? "פתרתם?" : "מי פתר ראשון?"}
+                  {players.length === 1
+                    ? `${players[0]!.name} פתר/ה?`
+                    : session.mode === "coop"
+                      ? "פתרתם?"
+                      : "מי פתר ראשון?"}
                 </p>
                 <div className="who-solved-row">
-                  {session.mode === "coop" ? (
+                  {/* עם משתתף אחד אין מרוץ, ואין את מי לבחור */}
+                  {players.length === 1 || session.mode === "coop" ? (
                     <button className="btn primary big" onClick={() => award(session.profileIds)}>
-                      🤝 פתרנו!
+                      {players.length === 1 ? "✅ כן, פתר/ה!" : "🤝 פתרנו!"}
                     </button>
                   ) : (
                     players.map((player) => (
@@ -239,7 +327,16 @@ export function ParentGame({
                 </p>
               )}
 
-              <button className="btn primary big" onClick={nextRiddle}>
+              <button
+                className="btn primary big"
+                onClick={() => {
+                  if (session.roundLength > 0 && asked >= session.roundLength) {
+                    setRoundOver(true);
+                    return;
+                  }
+                  nextRiddle();
+                }}
+              >
                 החידה הבאה
               </button>
             </div>

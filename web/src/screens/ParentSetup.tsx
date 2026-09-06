@@ -19,6 +19,8 @@ export function ParentSetup({
     mode: GroupMode;
     level: number;
     world: string;
+    roundLength: number;
+    turns: boolean;
   }) => void;
   onCancel: () => void;
 }) {
@@ -26,6 +28,8 @@ export function ParentSetup({
   const [mode, setMode] = useState<GroupMode>("competitive");
   const [level, setLevel] = useState<number | null>(null);
   const [world, setWorld] = useState<string>(DEFAULT_WORLD);
+  const [roundLength, setRoundLength] = useState(5);
+  const [turns, setTurns] = useState(true);
 
   const chosen = profiles.filter((profile) => selected.includes(profile.id));
   const levels = levelsInWorld(world);
@@ -97,25 +101,77 @@ export function ParentSetup({
           </div>
         </div>
 
+        {/*
+          הבחירה מוצגת תמיד, גם לפני שבחרו ילדים — כדי שיהיה ברור
+          שיש כאן שתי דרכים לשחק, ולא רק אחת.
+        */}
+        <div className="field">
+          <span>איך משחקים?</span>
+          <div className="mode-cards">
+            <button
+              className={`mode-card ${mode === "coop" ? "on" : ""}`}
+              onClick={() => setMode("coop")}
+            >
+              <strong>🤝 ביחד</strong>
+              <small>
+                מספיק שאחד אמר — כולם מקבלים את הפריט. בלי מנצחים ובלי מפסידים.
+              </small>
+            </button>
+            <button
+              className={`mode-card ${mode === "competitive" ? "on" : ""}`}
+              onClick={() => setMode("competitive")}
+            >
+              <strong>🏁 תחרות</strong>
+              <small>מי שפתר ראשון מקבל את הפריט לאוסף שלו. השאר לא.</small>
+            </button>
+          </div>
+          {selected.length === 1 && (
+            <p className="muted small">
+              עם ילד אחד אין הבדל — אין מול מי להתחרות.
+            </p>
+          )}
+        </div>
+
+        <div className="field">
+          <span>כמה חידות בסבב?</span>
+          <div className="chips">
+            {[5, 10, 0].map((option) => (
+              <button
+                key={option}
+                className={`chip wide ${roundLength === option ? "on" : ""}`}
+                onClick={() => setRoundLength(option)}
+              >
+                {option === 0 ? "בלי סוף" : option}
+              </button>
+            ))}
+          </div>
+          <p className="muted small">
+            סבב שנגמר נגמר בסיכום. אפשר תמיד להמשיך לעוד אחד.
+          </p>
+        </div>
+
         {selected.length > 1 && (
           <div className="field">
-            <span>איך מנקדים?</span>
-            <div className="mode-cards">
+            <span>תור מסתובב?</span>
+            <div className="chips">
               <button
-                className={`mode-card ${mode === "competitive" ? "on" : ""}`}
-                onClick={() => setMode("competitive")}
+                className={`chip wide ${turns ? "on" : ""}`}
+                onClick={() => setTurns(true)}
               >
-                <strong>🏁 תחרותי</strong>
-                <small>מי שפתר ראשון מקבל את הפריט לעגלה שלו. השאר לא.</small>
+                כן, אחד־אחד
               </button>
               <button
-                className={`mode-card ${mode === "coop" ? "on" : ""}`}
-                onClick={() => setMode("coop")}
+                className={`chip wide ${!turns ? "on" : ""}`}
+                onClick={() => setTurns(false)}
               >
-                <strong>🤝 שיתוף פעולה</strong>
-                <small>מספיק שאחד אמר — כולם מקבלים את הפריט. בלי מפסידים.</small>
+                כולם ביחד
               </button>
             </div>
+            <p className="muted small">
+              {turns
+                ? "כל חידה מופנית לילד אחד, לפי הסדר. מי שיודע בכל זאת יכול לענות."
+                : "כל החידות פתוחות לכולם."}
+            </p>
           </div>
         )}
 
@@ -142,7 +198,16 @@ export function ParentSetup({
         <div className="row">
           <button
             className="btn primary big"
-            onClick={() => onStart({ profileIds: selected, mode, level: activeLevel, world })}
+            onClick={() =>
+              onStart({
+                profileIds: selected,
+                mode,
+                level: activeLevel,
+                world,
+                roundLength,
+                turns: turns && selected.length > 1,
+              })
+            }
             disabled={selected.length === 0}
           >
             מתחילים!

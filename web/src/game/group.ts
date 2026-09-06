@@ -34,6 +34,15 @@ export interface GroupSession {
   profileIds: string[];
   level: number;
   world: string;
+  /**
+   * אורך הסבב. 0 = בלי סוף.
+   *
+   * סבב שנגמר הוא סבב שאפשר לסיים בהרגשה טובה, ולא רק לנטוש
+   * באמצע כשמישהו מתעייף.
+   */
+  roundLength: number;
+  /** תור מסתובב בין הילדים, במקום מרוץ */
+  turns: boolean;
 }
 
 interface GroupRound {
@@ -48,9 +57,17 @@ export function createSession(
   mode: GroupMode,
   level: number,
   world: string = DEFAULT_WORLD,
+  roundLength = 5,
+  turns = false,
 ): GroupSession {
   const id = `g_${Date.now().toString(36)}`;
-  return { id, mode, profileIds, level, world };
+  return { id, mode, profileIds, level, world, roundLength, turns };
+}
+
+/** של מי התור בחידה מספר `index` */
+export function whoseTurn(session: GroupSession, index: number): string | null {
+  if (!session.turns || session.profileIds.length < 2) return null;
+  return session.profileIds[index % session.profileIds.length] ?? null;
 }
 
 /** רמת ברירת המחדל לקבוצה: של הצעיר ביותר, כדי שכולם יוכלו להשתתף */
