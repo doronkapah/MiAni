@@ -27,7 +27,7 @@ import type { Recipe } from "../../../shared/recipes";
 import type { AisleView } from "../../../shared/aisles";
 import { getWorld } from "../../../shared/worlds";
 import { WORDS, count, fresh, opened } from "../../../shared/hebrew";
-import { canSpeak, speak, stopSpeaking, watchVoices } from "../lib/speech";
+import { canSpeak, speak, stopSpeaking, voiceStatus, watchVoices } from "../lib/speech";
 
 interface Solved {
   answer: string;
@@ -76,6 +76,7 @@ export function Game({
   const [chatLeft, setChatLeft] = useState(profile.chat.left);
   const [finished, setFinished] = useState<string | null>(null);
   const [voiceReady, setVoiceReady] = useState(canSpeak());
+  const [voice, setVoice] = useState(voiceStatus());
   const [nikud, setNikud] = useState(() => readNikudPreference(profile));
   const [unlockedQueue, setUnlockedQueue] = useState<Recipe[]>([]);
   const [overlay, setOverlay] = useState<"none" | "cart" | "book" | "howto">("none");
@@ -108,7 +109,14 @@ export function Game({
   const byPictures = profile.answering === "pictures";
   const chatEnabled = FEATURES.agaliChat && store.getSettings().chatSource !== "off";
 
-  useEffect(() => watchVoices(() => setVoiceReady(canSpeak())), []);
+  useEffect(
+    () =>
+      watchVoices(() => {
+        setVoiceReady(canSpeak());
+        setVoice(voiceStatus());
+      }),
+    [],
+  );
 
   // ההסבר מוצג פעם אחת לכל שחקן, ואחר כך רק לפי בקשה
   useEffect(() => {
@@ -428,19 +436,37 @@ export function Game({
                       נגעו בתמונה של מה שאני. אפשר לנסות שוב.
                     </Tip>
 
+                    {/*
+                      כפתור השמיעה נפרד מהבחירה בכוונה: ילד צריך
+                      לשמוע מה כל אפשרות אומרת *לפני* שהוא מגיש
+                      אותה כתשובה. ריחוף עכבר לא קיים בטאבלט.
+                    */}
                     <div className="choice-grid">
                       {riddle.choices.map((choice) => (
-                        <button
-                          key={choice.id}
-                          className="choice"
-                          onClick={() => answer(choice.label)}
-                          onMouseEnter={() => canHear && speak(choice.label)}
-                        >
-                          <Product shape={choice.art.shape} color={choice.art.color} size={72} />
-                          <span>{choice.label}</span>
-                        </button>
+                        <div className="choice-slot" key={choice.id}>
+                          <button className="choice" onClick={() => answer(choice.label)}>
+                            <Product shape={choice.art.shape} color={choice.art.color} size={72} />
+                            <span>{choice.label}</span>
+                          </button>
+                          {canHear && (
+                            <button
+                              className="choice-hear"
+                              onClick={() => speak(choice.label)}
+                              aria-label={`להשמיע: ${choice.label}`}
+                            >
+                              🔊
+                            </button>
+                          )}
+                        </div>
                       ))}
                     </div>
+
+                    {byPictures && voice !== "ready" && voice !== "loading" && (
+                      <p className="voice-warning" role="status">
+                        אין קול עברי במכשיר הזה, ולכן אי אפשר להשמיע את האפשרויות.
+                        אפשר להקריא אותן בקול, או להתקין קול עברי בהגדרות המכשיר.
+                      </p>
+                    )}
                   </>
                 ) : (
                   <>
@@ -515,6 +541,15 @@ export function Game({
                   {chatEnabled && (
                     <button className="btn" onClick={() => setChatOpen((open) => !open)}>
                       {chatOpen ? "סגירת עגלי" : "שאלו את עגלי"}
+                    </button>
+                  )}
+                  {canHear && (
+                    <button
+                      className="btn"
+                      onClick={() => speak(clueText(riddle, nikud))}
+                      aria-label="להקריא את הרמזים שוב"
+                    >
+                      🔊 שוב
                     </button>
                   )}
                   <button className="btn ghost" onClick={giveUp}>
@@ -701,4 +736,9 @@ function writeFlag(key: string, profileId: string, value: boolean): void {
  */
 function readNikudPreference(profile: PublicProfile): boolean {
   return readFlag(NIKUD_KEY, profile.id, profile.reading !== "fluent");
+}
+
+/** הרמזים שנחשפו, כטקסט אחד להקראה */
+function clueText(riddle: PublicRiddle, nikud: boolean): string {
+  return (nikud ? riddle.cluesNikud : riddle.clues).join(" ");
 }

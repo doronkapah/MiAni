@@ -20,7 +20,9 @@ export type Shape =
   // דיסני
   | "castle" | "crown" | "wand" | "ears" | "lamp" | "lampPixar" | "rose"
   | "slipper" | "fish" | "paw" | "horns" | "potion" | "note" | "filmReel"
-  | "pencil" | "ticket";
+  | "pencil" | "ticket"
+  // דמויות שצריך לזהות בלי לקרוא
+  | "snowman" | "lion" | "elephant" | "monkey";
 
 /** מכהה צבע, לצללית ולפרטים */
 export function darken(hex: string, amount = 0.22): string {
@@ -599,6 +601,63 @@ function Body({ shape, color }: { shape: Shape; color: string }) {
           <path d="M14 32h72v14a6 6 0 0 0 0 12v14H14V58a6 6 0 0 0 0-12z" fill={color} />
           <path d="M46 34v32" stroke={dark} strokeWidth="3" strokeDasharray="5 5" />
           <circle cx="66" cy="50" r="8" fill={light} />
+        </>
+      );
+
+    // --- דמויות שצריך לזהות בלי לקרוא ---
+
+    case "snowman":
+      return (
+        <>
+          <circle cx="50" cy="72" r="22" fill={color} />
+          <circle cx="50" cy="42" r="16" fill={color} />
+          <circle cx="50" cy="20" r="11" fill={color} />
+          <path d="M61 20l14 4-14 4z" fill="#E5781C" />
+          <circle cx="46" cy="18" r="2" fill="#2E2E2E" />
+          <circle cx="55" cy="18" r="2" fill="#2E2E2E" />
+          <circle cx="50" cy="38" r="2.4" fill="#2E2E2E" />
+          <circle cx="50" cy="48" r="2.4" fill="#2E2E2E" />
+          <path d="M28 40 12 30M72 40l16-10" stroke="#8B5E3C" strokeWidth="3" strokeLinecap="round" />
+        </>
+      );
+
+    case "lion":
+      return (
+        <>
+          <circle cx="50" cy="50" r="34" fill={dark} />
+          <circle cx="50" cy="52" r="23" fill={color} />
+          <circle cx="41" cy="47" r="3" fill="#2E2E2E" />
+          <circle cx="59" cy="47" r="3" fill="#2E2E2E" />
+          <path d="M50 56l-5 4h10z" fill="#7A4A2A" />
+          <path d="M50 60v5M50 65q-6 4-10 0M50 65q6 4 10 0" stroke="#7A4A2A" strokeWidth="2.4" fill="none" strokeLinecap="round" />
+          <path d="M30 52h-10M30 58h-10M70 52h10M70 58h10" stroke="#7A4A2A" strokeWidth="2" strokeLinecap="round" />
+        </>
+      );
+
+    case "elephant":
+      return (
+        <>
+          <ellipse cx="46" cy="52" rx="26" ry="24" fill={color} />
+          <ellipse cx="20" cy="46" rx="16" ry="22" fill={light} />
+          <ellipse cx="76" cy="46" rx="16" ry="22" fill={light} />
+          <path d="M46 70q2 18 -8 22" stroke={color} strokeWidth="11" fill="none" strokeLinecap="round" />
+          <circle cx="38" cy="46" r="3" fill="#2E2E2E" />
+          <circle cx="55" cy="46" r="3" fill="#2E2E2E" />
+        </>
+      );
+
+    case "monkey":
+      return (
+        <>
+          <circle cx="24" cy="42" r="11" fill={dark} />
+          <circle cx="76" cy="42" r="11" fill={dark} />
+          <circle cx="50" cy="50" r="28" fill={dark} />
+          <ellipse cx="50" cy="56" rx="18" ry="20" fill="#E8C9A8" />
+          <circle cx="42" cy="48" r="3" fill="#2E2E2E" />
+          <circle cx="58" cy="48" r="3" fill="#2E2E2E" />
+          <ellipse cx="50" cy="62" rx="8" ry="5" fill={color} />
+          <circle cx="47" cy="61" r="1.4" fill="#2E2E2E" />
+          <circle cx="53" cy="61" r="1.4" fill="#2E2E2E" />
         </>
       );
 

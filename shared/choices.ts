@@ -1,9 +1,13 @@
 /**
  * תשובה בבחירה, לילדים שעדיין לא מקלידים.
  *
- * ארבע אפשרויות: התשובה, ושלושה מסיחים מאותו מקום ואותה רמה —
- * כך שהבחירה דורשת להבין את הרמז ולא רק לזהות איזו מילה יפה יותר.
- * אם אין מספיק מאותו מקום, מרחיבים לאותו עולם.
+ * ארבע אפשרויות: התשובה, ושלושה מסיחים. שני כללים, לפי סדר:
+ *
+ *   1. **כל ארבע הצורות שונות זו מזו.** זה הכלל החשוב. ילד שלא
+ *      קורא רואה ציורים, ואם שלוש מהאפשרויות הן אותו כיכר לחם
+ *      בגוונים שונים — אין כאן בחירה, יש ניחוש.
+ *   2. אחרי זה, מסיחים מאותו מקום ואותה רמה. כך הבחירה דורשת
+ *      להבין את הרמז, ולא רק לזהות איזה ציור יפה יותר.
  *
  * הסדר נקבע מזהה החידה ולא באקראי, כך שהאפשרויות לא קופצות
  * ממקום למקום בכל רינדור.
@@ -45,26 +49,33 @@ function shuffle<T>(items: T[], key: string): T[] {
  * `pool` קיים לבדיקות; ברירת המחדל היא הבנק כולו.
  */
 export function choicesFor(riddle: Riddle, pool: Riddle[] = riddles): Choice[] {
-  const sameSpot = pool.filter(
-    (other) =>
-      other.id !== riddle.id &&
-      other.world === riddle.world &&
-      other.aisle === riddle.aisle,
-  );
-  const sameWorld = pool.filter(
-    (other) =>
-      other.id !== riddle.id &&
-      other.world === riddle.world &&
-      !sameSpot.includes(other),
-  );
+  const others = pool.filter((other) => other.id !== riddle.id);
 
-  // מסיחים מאותו מדף קודם — הם דורשים באמת לקרוא את הרמז
-  const ranked = [
-    ...shuffle(sameSpot, `${riddle.id}:spot`),
-    ...shuffle(sameWorld, `${riddle.id}:world`),
+  /*
+   * שלוש שכבות של קרבה, מהטובה לפחות טובה. עוברים עליהן לפי הסדר
+   * ולוקחים רק מה שמוסיף צורה חדשה — כך שהמסיחים קרובים ככל האפשר,
+   * אבל אף פעם לא על חשבון האבחנה החזותית.
+   */
+  const layers = [
+    others.filter((o) => o.world === riddle.world && o.aisle === riddle.aisle),
+    others.filter((o) => o.world === riddle.world && o.aisle !== riddle.aisle),
+    others.filter((o) => o.world !== riddle.world),
   ];
 
-  const options = [riddle, ...ranked.slice(0, 3)];
+  const used = new Set([riddle.art.shape]);
+  const picked: Riddle[] = [];
+
+  for (const layer of layers) {
+    for (const candidate of shuffle(layer, `${riddle.id}:${layer.length}`)) {
+      if (picked.length >= 3) break;
+      if (used.has(candidate.art.shape)) continue;
+      used.add(candidate.art.shape);
+      picked.push(candidate);
+    }
+    if (picked.length >= 3) break;
+  }
+
+  const options = [riddle, ...picked];
   return shuffle(options, riddle.id).map((option) => ({
     id: option.id,
     label: option.answer,

@@ -23,13 +23,26 @@ describe("בחירה מתוך תמונות", () => {
     }
   });
 
-  it("כל המסיחים מאותו עולם — אחרת הבחירה טריוויאלית", () => {
+  it("ארבע צורות שונות — זה הכלל שמאפשר לבחור בלי לקרוא", () => {
+    for (const riddle of riddles) {
+      const shapes = choicesFor(riddle).map((choice) => choice.art.shape);
+      expect(new Set(shapes).size, `${riddle.id}: ${shapes.join(", ")}`).toBe(4);
+    }
+  });
+
+  it("רוב המסיחים עדיין מגיעים מאותו מדף", () => {
+    let same = 0;
+    let total = 0;
     for (const riddle of riddles) {
       for (const choice of choicesFor(riddle)) {
+        if (choice.id === riddle.id) continue;
+        total += 1;
         const source = riddles.find((other) => other.id === choice.id)!;
-        expect(source.world, `${riddle.id} ← ${choice.id}`).toBe(riddle.world);
+        if (source.world === riddle.world && source.aisle === riddle.aisle) same += 1;
       }
     }
+    // אבחנה חזותית קודמת לקרבה נושאית, אבל הקרבה לא נזנחת
+    expect(same / total).toBeGreaterThan(0.5);
   });
 
   it("הסדר יציב — אותה חידה, אותן אפשרויות באותו סדר", () => {

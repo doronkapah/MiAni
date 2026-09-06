@@ -3331,3 +3331,49 @@ body {
   opacity: 0.55;
   filter: saturate(0.5);
 }
+
+
+/* --- שמיעה לפני בחירה --- */
+
+.choice-slot {
+  position: relative;
+  display: flex;
+}
+
+.choice-slot .choice {
+  flex: 1;
+}
+
+/*
+ * כפתור השמיעה יושב בפינה ולא במרכז: ילד שמכוון
+ * לתמונה אמור לפגוע בתמונה, לא ברמקול.
+ */
+.choice-hear {
+  position: absolute;
+  inset-block-start: 6px;
+  inset-inline-end: 6px;
+  width: 40px;
+  height: 40px;
+  border: 2px solid var(--line);
+  border-radius: 50%;
+  background: var(--card);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.choice-hear:hover,
+.choice-hear:focus-visible {
+  background: var(--green-soft);
+  border-color: var(--green);
+}
+
+.voice-warning {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--tag);
+  color: var(--tag-ink);
+  font-size: 15px;
+  line-height: 1.45;
+}
