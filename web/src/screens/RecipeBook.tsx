@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { RecipeArt } from "../art/RecipeArt";
+import { Product } from "../art/Product";
 import { recipeById } from "../../../shared/recipes";
 import type { RecipeProgress } from "../../../shared/recipes";
 import { RecipeModal } from "./RecipeModal";
@@ -76,16 +77,34 @@ export function RecipeBook({
                   <span className="book-open">פתוח ✓</span>
                 </button>
               ) : (
+                /*
+                  סט נעול מציג את שמו ואת האיור שלו.
+                  "???" הפך את היעד לחסר משמעות: פס היעד במסך המשחק
+                  אמר "סלט פירות", וכאן זה נראה כמו משהו אחר לגמרי.
+                  מה שנשאר מוסתר הוא רק *שמות* הפריטים החסרים —
+                  אלה תשובות של חידות שעוד לא נשאלו.
+                */
                 <div className="book-card locked">
-                  <span className="book-lock" aria-hidden="true">
-                    🔒
-                  </span>
+                  <RecipeArt art={recipe.art} size={64} />
                   <span className="book-text">
-                    <strong>???</strong>
+                    <strong>{recipe.name}</strong>
                     <small>
-                      חסרים עוד {count(recipe.needed - recipe.held, WORDS.item)} מתוך{" "}
-                      {recipe.needed}
+                      {recipe.held > 0
+                        ? `נאספו ${recipe.held} מתוך ${recipe.needed}`
+                        : `${count(recipe.needed, WORDS.item)} לאסוף`}
                     </small>
+                    <span className="book-slots">
+                      {Array.from({ length: recipe.needed }, (_, index) => {
+                        const item = recipe.have[index];
+                        return item ? (
+                          <span className="goal-dot on" key={item.id} title={item.answer}>
+                            <Product shape={item.art.shape} color={item.art.color} size={20} />
+                          </span>
+                        ) : (
+                          <span className="goal-dot" key={`empty-${index}`} />
+                        );
+                      })}
+                    </span>
                   </span>
                   <span className="book-progress" aria-hidden="true">
                     <span style={{ width: `${(recipe.held / recipe.needed) * 100}%` }} />

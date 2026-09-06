@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { riddleById } from "./bank";
+import { riddleById, riddles } from "./bank";
 import { stripNikud } from "./matcher";
 import {
   completedRecipes,
@@ -8,6 +8,8 @@ import {
   newlyCompleted,
   recipeProgress,
   recipes,
+  recipeById,
+  nextGoal,
 } from "./recipes";
 
 const ids = (list: { id: string }[]) => list.map((item) => item.id);
@@ -102,5 +104,52 @@ describe("ספר המתכונים", () => {
   it("מתכון פתוח מסומן ככזה גם אחרי שנשמר בפרופיל", () => {
     const progress = recipeProgress([], ["omelet"]);
     expect(progress.find((recipe) => recipe.id === "omelet")!.unlocked).toBe(true);
+  });
+});
+
+describe("היעד גלוי גם כשהוא נעול", () => {
+  const bank = riddles;
+
+  it("סט נעול מדווח את שמו — לא ??? ", () => {
+    const progress = recipeProgress([], [], "market", bank);
+    for (const recipe of progress) {
+      expect(recipe.name.length, recipe.id).toBeGreaterThan(2);
+    }
+  });
+
+  it("הפריטים שנאספו מגיעים עם ציור ושם", () => {
+    const omelet = recipeById.get("omelet")!;
+    const first = omelet.requires[0]!;
+    const progress = recipeProgress([first], [], "market", bank);
+    const mine = progress.find((recipe) => recipe.id === "omelet")!;
+
+    expect(mine.held).toBe(1);
+    expect(mine.have).toHaveLength(1);
+    expect(mine.have[0]!.id).toBe(first);
+    expect(mine.have[0]!.art.shape.length).toBeGreaterThan(2);
+  });
+
+  it("פריטים שעוד לא נאספו לא מודלפים", () => {
+    const omelet = recipeById.get("omelet")!;
+    const progress = recipeProgress([omelet.requires[0]!], [], "market", bank);
+    const mine = progress.find((recipe) => recipe.id === "omelet")!;
+
+    // רק מה שנפתר; השאר נשאר משבצת ריקה על המסך
+    expect(mine.have).toHaveLength(1);
+    expect(mine.have.length).toBeLessThan(mine.needed);
+  });
+
+  it("פס היעד והספר מסכימים על אותו מספר", () => {
+    const some = riddles.filter((riddle) => riddle.world === "market").slice(0, 3);
+    const solved = some.map((riddle) => riddle.id);
+
+    const goal = nextGoal(solved, [], "market", bank)!;
+    const inBook = recipeProgress(solved, [], "market", bank).find(
+      (recipe) => recipe.id === goal.id,
+    )!;
+
+    expect(inBook.held).toBe(goal.held);
+    expect(inBook.needed).toBe(goal.needed);
+    expect(inBook.name).toBe(goal.name);
   });
 });

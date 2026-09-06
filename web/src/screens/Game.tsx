@@ -361,38 +361,37 @@ export function Game({
             />
           )}
 
-          {/*
-            היעד הקרוב. "תאספו פריטים" הוא הוראה, לא יעד — יעד הוא
-            שם, מספר, ותמונה של מה שכבר יש.
-          */}
-          {!daily && profile.goal && (
-            <button
-              className="goal-strip"
-              onClick={() => setOverlay("book")}
-              aria-label={`היעד: ${profile.goal.name}, ${profile.goal.held} מתוך ${profile.goal.needed}`}
-            >
-              <span className="goal-name">
-                🎯 {profile.goal.name}
-              </span>
-              <span className="goal-dots" aria-hidden="true">
-                {Array.from({ length: profile.goal.needed }, (_, index) => {
-                  const item = profile.goal!.have[index];
-                  return item ? (
-                    <span className="goal-dot on" key={item.id} title={item.answer}>
-                      <Product shape={item.art.shape} color={item.art.color} size={26} />
-                    </span>
-                  ) : (
-                    <span className="goal-dot" key={`empty-${index}`} />
-                  );
-                })}
-              </span>
-              <span className="goal-count">
-                {profile.goal.held}/{profile.goal.needed}
-              </span>
-            </button>
-          )}
-
           <section className="riddle-card" id="riddle" tabIndex={-1}>
+            {/*
+              היעד הקרוב, בתוך הכרטיס.
+              הכרטיס יושב על המדף עם margin שלילי, וכל מה שמעליו
+              נחתך — אז הוא לא יכול לגור שם.
+            */}
+            {!daily && profile.goal && (
+              <button
+                className="goal-strip"
+                onClick={() => setOverlay("book")}
+                aria-label={`היעד: ${profile.goal.name}, ${profile.goal.held} מתוך ${profile.goal.needed}`}
+              >
+                <span className="goal-name">🎯 {profile.goal.name}</span>
+                <span className="goal-dots" aria-hidden="true">
+                  {Array.from({ length: profile.goal.needed }, (_, index) => {
+                    const item = profile.goal!.have[index];
+                    return item ? (
+                      <span className="goal-dot on" key={item.id} title={item.answer}>
+                        <Product shape={item.art.shape} color={item.art.color} size={22} />
+                      </span>
+                    ) : (
+                      <span className="goal-dot" key={`empty-${index}`} />
+                    );
+                  })}
+                </span>
+                <span className="goal-count">
+                  {profile.goal.held}/{profile.goal.needed}
+                </span>
+              </button>
+            )}
+
             {!solved && riddle && (
               <>
                 <h1 className="riddle-title">מי אני?</h1>

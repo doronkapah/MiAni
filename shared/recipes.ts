@@ -93,6 +93,13 @@ export interface RecipeProgress {
   unlocked: boolean;
   held: number;
   needed: number;
+  /**
+   * הפריטים שכבר נאספו לסט הזה.
+   *
+   * מה שחסר לא מופיע כאן בכוונה: שם של פריט חסר הוא התשובה של
+   * חידה שעוד לא נשאלה. המסך מצייר משבצת ריקה במקומו.
+   */
+  have: { id: string; answer: string; art: Riddle["art"] }[];
 }
 
 /**
@@ -105,18 +112,30 @@ export function recipeProgress(
   solvedIds: string[],
   unlocked: string[],
   world?: string,
+  bank: Riddle[] = [],
 ): RecipeProgress[] {
   const solved = new Set(solvedIds);
   const known = new Set(unlocked);
-  return (world ? recipesOfWorld(world) : recipes).map((recipe) => ({
-    id: recipe.id,
-    name: recipe.name,
-    teaser: recipe.teaser,
-    art: recipe.art,
-    unlocked: known.has(recipe.id) || isComplete(recipe, solved),
-    held: ingredientsHeld(recipe, solved),
-    needed: recipe.totalNeeded,
-  }));
+  const byId = new Map(bank.map((riddle) => [riddle.id, riddle]));
+
+  return (world ? recipesOfWorld(world) : recipes).map((recipe) => {
+    const members = [...recipe.requires, ...(recipe.anyOf?.items ?? [])];
+    return {
+      id: recipe.id,
+      name: recipe.name,
+      teaser: recipe.teaser,
+      art: recipe.art,
+      unlocked: known.has(recipe.id) || isComplete(recipe, solved),
+      held: ingredientsHeld(recipe, solved),
+      needed: recipe.totalNeeded,
+      have: members
+        .filter((id) => solved.has(id))
+        .slice(0, recipe.totalNeeded)
+        .map((id) => byId.get(id))
+        .filter((riddle): riddle is Riddle => Boolean(riddle))
+        .map((riddle) => ({ id: riddle.id, answer: riddle.answer, art: riddle.art })),
+    };
+  });
 }
 
 export interface Goal {

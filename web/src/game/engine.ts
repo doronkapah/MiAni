@@ -143,7 +143,7 @@ export function publicProfile(profile: Profile, world: string = DEFAULT_WORLD): 
       art: riddle.art,
     })),
     chat: store.chatUsage(profile, store.getSettings().dailyLimit),
-    recipes: recipeProgress(profile.solved, profile.recipes, world),
+    recipes: recipeProgress(profile.solved, profile.recipes, world, riddles),
     goal: nextGoal(profile.solved, profile.recipes, world, riddles),
   };
 }
