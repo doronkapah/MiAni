@@ -41,12 +41,15 @@ interface Solved {
 export function Game({
   profile,
   world,
+  daily = false,
   setProfile,
   onSwitchWorld,
   onParentPanel,
 }: {
   profile: PublicProfile;
   world: string;
+  /** מצב חידת היום: חידה אחת, כוכבים, ובלי דילוג */
+  daily?: boolean;
   setProfile: (profile: PublicProfile) => void;
   onSwitchWorld: () => void;
   onParentPanel: () => void;
@@ -219,7 +222,7 @@ export function Game({
           <span className="who-text">
             <strong>{profile.name}</strong>
             <small>
-              {info.icon} {info.name} · {profile.levelName}
+              {daily ? "⭐ חידת היום" : `${info.icon} ${info.name} · ${profile.levelName}`}
             </small>
           </span>
         </button>
@@ -244,28 +247,37 @@ export function Game({
               {muted ? "🔇" : "🔊"}
             </button>
           )}
-          <button
-            className="icon-btn"
-            onClick={() => setOverlay("book")}
-            aria-label={`${info.sets.name}, ${recipesOpen} פתוחים`}
-          >
-            {info.sets.icon}
-            <b>{recipesOpen}</b>
-          </button>
-          <button
-            className="icon-btn"
-            onClick={() => setOverlay("cart")}
-            aria-label={`${info.collection.name}, ${profile.solvedCount} פריטים`}
-          >
-            {info.collection.icon}
-            <b>{profile.solvedCount}</b>
-          </button>
+          {!daily && (
+            <>
+              <button
+                className="icon-btn"
+                onClick={() => setOverlay("book")}
+                aria-label={`${info.sets.name}, ${recipesOpen} פתוחים`}
+              >
+                {info.sets.icon}
+                <b>{recipesOpen}</b>
+              </button>
+              <button
+                className="icon-btn"
+                onClick={() => setOverlay("cart")}
+                aria-label={`${info.collection.name}, ${profile.solvedCount} פריטים`}
+              >
+                {info.collection.icon}
+                <b>{profile.solvedCount}</b>
+              </button>
+            </>
+          )}
         </div>
       </header>
 
-      <div className="progress" aria-label={`התקדמות ברמה ${profile.level}`}>
-        <div className="progress-fill" style={{ width: `${Math.round(profile.progress * 100)}%` }} />
-      </div>
+      {!daily && (
+        <div className="progress" aria-label={`התקדמות ברמה ${profile.level}`}>
+          <div
+            className="progress-fill"
+            style={{ width: `${Math.round(profile.progress * 100)}%` }}
+          />
+        </div>
+      )}
 
       <main className="board">
         {/* המפתח מכריח ריצה מחדש של האנימציה בכל חידה */}
@@ -354,9 +366,11 @@ export function Game({
                   <button className="btn" onClick={() => void shareRiddle()}>
                     📤 שיתוף
                   </button>
-                  <button className="btn ghost" onClick={skip}>
-                    דלג
-                  </button>
+                  {!daily && (
+                    <button className="btn ghost" onClick={skip}>
+                      דלג
+                    </button>
+                  )}
                   <button className="btn ghost" onClick={giveUp}>
                     גלה לי
                   </button>
@@ -388,9 +402,20 @@ export function Game({
                 {solved.levelUp && (
                   <p className="levelup">🎉 עלית רמה! עכשיו {profile.levelName}</p>
                 )}
-                <button className="btn primary big" onClick={loadRiddle}>
-                  החידה הבאה
-                </button>
+                {daily ? (
+                  <>
+                    <p className="daily-done">
+                      זהו להיום. חידה חדשה מחכה מחר בבוקר 🌅
+                    </p>
+                    <button className="btn primary big" onClick={onSwitchWorld}>
+                      חזרה
+                    </button>
+                  </>
+                ) : (
+                  <button className="btn primary big" onClick={loadRiddle}>
+                    החידה הבאה
+                  </button>
+                )}
               </div>
             )}
           </section>

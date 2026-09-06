@@ -6,7 +6,7 @@
  * משחק לשרת ילד בן חמש שמזהה בננה, ומבוגר שמזהה אצן מ-1968.
  */
 
-export type WorldId = "market" | "space" | "olympics";
+export type WorldId = "market" | "space" | "olympics" | "disney";
 
 export interface World {
   id: WorldId;
@@ -95,6 +95,26 @@ export const WORLDS: World[] = [
     },
     sets: { name: "נבחרות", singular: "נבחרת", icon: "🏆", linesLabel: "על הנבחרת" },
     levels: [2, 3, 4, 5, 6],
+  },
+  {
+    id: "disney",
+    name: "דיסני",
+    fullName: "חידות דיסני",
+    icon: "🏰",
+    tagline: "נסיכות, חיות מדברות ונבלים. מהסרטים שכולם גדלו עליהם.",
+    ageHint: "גילאי 4 ומעלה",
+    placeLabel: "אזור",
+    mysteryPlace: "אי־שם בממלכה",
+    intro: "יש דמות, סרט או מקום סודי מעולם דיסני. הרמזים מספרים עליו, אחד־אחד.",
+    placeHint: "הוא מגלה באיזה אזור בממלכה מחפשים.",
+    collection: {
+      name: "אלבום הקסם",
+      icon: "✨",
+      empty: "האלבום עוד ריק. כל מי שמזהים מקבל בו עמוד.",
+      into: "לאלבום הקסם",
+    },
+    sets: { name: "סיפורים", singular: "סיפור", icon: "🎬", linesLabel: "על הסיפור" },
+    levels: [1, 2, 3, 4, 5, 6],
   },
 ];
 

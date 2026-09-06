@@ -16,7 +16,11 @@ export type Shape =
   | "rocket" | "satellite"
   // האולימפיאדה
   | "medal" | "trophy" | "ball" | "torch" | "rings" | "stopwatch"
-  | "shoe" | "wave" | "snowflake" | "ribbon" | "belt";
+  | "shoe" | "wave" | "snowflake" | "ribbon" | "belt"
+  // דיסני
+  | "castle" | "crown" | "wand" | "ears" | "lamp" | "lampPixar" | "rose"
+  | "slipper" | "fish" | "paw" | "horns" | "potion" | "note" | "filmReel"
+  | "pencil" | "ticket";
 
 /** מכהה צבע, לצללית ולפרטים */
 export function darken(hex: string, amount = 0.22): string {
@@ -423,6 +427,178 @@ function Body({ shape, color }: { shape: Shape; color: string }) {
           <rect x="40" y="38" width="22" height="30" rx="4" fill={dark} />
           <rect x="46" y="44" width="10" height="18" rx="2" fill={light} opacity="0.6" />
           <path d="M8 62q10 18 22 22M92 62q-10 18-22 22" stroke={color} strokeWidth="9" fill="none" strokeLinecap="round" />
+        </>
+      );
+
+    // --- דיסני ---
+
+    case "castle":
+      return (
+        <>
+          <path d="M18 88V44h14v44zM68 88V44h14v44z" fill={color} />
+          <path d="M38 88V34h24v54z" fill={light} />
+          <path d="M18 44l7-14 7 14zM68 44l7-14 7 14zM38 34l12-18 12 18z" fill={dark} />
+          <path d="M50 16v-8l10 3-10 3z" fill="#D6402C" />
+          <path d="M44 88V68a6 6 0 0 1 12 0v20z" fill={dark} />
+          <rect x="22" y="52" width="6" height="8" rx="2" fill={dark} />
+          <rect x="72" y="52" width="6" height="8" rx="2" fill={dark} />
+        </>
+      );
+
+    case "crown":
+      return (
+        <>
+          <path d="M20 72 14 32l16 12 20-24 20 24 16-12-6 40z" fill={color} />
+          <rect x="20" y="72" width="60" height="12" rx="4" fill={dark} />
+          <circle cx="50" cy="54" r="5" fill={light} />
+          <circle cx="32" cy="60" r="3.5" fill={light} />
+          <circle cx="68" cy="60" r="3.5" fill={light} />
+        </>
+      );
+
+    case "wand":
+      return (
+        <>
+          <path d="M42 54 26 86a4 4 0 0 0 6 5l24-28z" fill={dark} />
+          <path d="M50 8l7 20 21 2-16 14 5 21-17-11-17 11 5-21-16-14 21-2z" fill={color} />
+          <circle cx="50" cy="36" r="6" fill={light} />
+        </>
+      );
+
+    case "ears":
+      return (
+        <>
+          <circle cx="26" cy="26" r="16" fill={color} />
+          <circle cx="74" cy="26" r="16" fill={color} />
+          <circle cx="50" cy="60" r="28" fill={color} />
+          <circle cx="50" cy="66" r="16" fill={light} opacity="0.35" />
+        </>
+      );
+
+    case "lamp":
+      return (
+        <>
+          <path d="M22 60q0-20 26-20t26 20z" fill={color} />
+          <path d="M18 60h64a4 4 0 0 1-4 12H22a4 4 0 0 1-4-12z" fill={dark} />
+          <path d="M74 48q14 2 14 12t-12 10" fill="none" stroke={color} strokeWidth="6" strokeLinecap="round" />
+          <path d="M40 34q4-8 10-8" fill="none" stroke={dark} strokeWidth="5" strokeLinecap="round" />
+          <circle cx="50" cy="22" r="4" fill={light} />
+        </>
+      );
+
+    case "lampPixar":
+      return (
+        <>
+          <ellipse cx="50" cy="88" rx="24" ry="6" fill={dark} />
+          <path d="M50 84 34 56M34 56l14-20" fill="none" stroke={dark} strokeWidth="6" strokeLinecap="round" />
+          <path d="M48 36 30 24l-8 20 26 6z" fill={color} />
+          <circle cx="36" cy="42" r="6" fill={light} />
+        </>
+      );
+
+    case "rose":
+      return (
+        <>
+          <path d="M50 56v32" stroke={LEAF_DARK} strokeWidth="5" strokeLinecap="round" />
+          <path d="M50 74q-14-2-16-14 14-2 16 14z" fill={LEAF} />
+          <circle cx="50" cy="38" r="22" fill={color} />
+          <circle cx="50" cy="38" r="13" fill={dark} />
+          <circle cx="50" cy="38" r="5" fill={light} />
+        </>
+      );
+
+    case "slipper":
+      return (
+        <>
+          <path d="M22 74q4-24 26-24 20 0 26 16-16 6-30 8t-22 0z" fill={color} opacity="0.85" />
+          <path d="M22 74h52v6H22z" fill={dark} />
+          <path d="M66 80l6 12" stroke={dark} strokeWidth="5" strokeLinecap="round" />
+          <circle cx="46" cy="52" r="4" fill={light} />
+        </>
+      );
+
+    case "fish":
+      return (
+        <>
+          <ellipse cx="46" cy="52" rx="30" ry="20" fill={color} />
+          <path d="M74 52 92 36v32z" fill={dark} />
+          <path d="M30 40q10 4 10 24M52 34q6 6 6 18" fill="none" stroke={dark} strokeWidth="5" />
+          <circle cx="26" cy="46" r="5" fill="#FFFFFF" />
+          <circle cx="25" cy="46" r="2.5" fill="#1B1B1B" />
+        </>
+      );
+
+    case "paw":
+      return (
+        <>
+          <ellipse cx="50" cy="66" rx="22" ry="18" fill={color} />
+          <ellipse cx="28" cy="42" rx="9" ry="11" fill={color} />
+          <ellipse cx="44" cy="32" rx="9" ry="11" fill={color} />
+          <ellipse cx="60" cy="32" rx="9" ry="11" fill={color} />
+          <ellipse cx="74" cy="42" rx="9" ry="11" fill={color} />
+          <ellipse cx="50" cy="66" rx="11" ry="9" fill={dark} opacity="0.5" />
+        </>
+      );
+
+    case "horns":
+      return (
+        <>
+          <path d="M28 84q-14-30-6-56 14 10 18 34z" fill={color} />
+          <path d="M72 84q14-30 6-56-14 10-18 34z" fill={color} />
+          <path d="M40 62h20l-4 26H44z" fill={dark} />
+          <circle cx="50" cy="52" r="6" fill={light} />
+        </>
+      );
+
+    case "potion":
+      return (
+        <>
+          <rect x="42" y="12" width="16" height="14" rx="3" fill={dark} />
+          <path d="M38 26h24v10l14 34a10 10 0 0 1-9 16H33a10 10 0 0 1-9-16l14-34z" fill={light} opacity="0.45" />
+          <path d="M28 60h44l4 10a10 10 0 0 1-9 16H33a10 10 0 0 1-9-16z" fill={color} />
+          <circle cx="44" cy="70" r="3" fill={light} />
+          <circle cx="58" cy="76" r="2.2" fill={light} />
+        </>
+      );
+
+    case "note":
+      return (
+        <>
+          <path d="M42 78V22l30-8v56" fill="none" stroke={color} strokeWidth="7" strokeLinecap="round" />
+          <ellipse cx="34" cy="78" rx="13" ry="10" fill={color} />
+          <ellipse cx="64" cy="70" rx="13" ry="10" fill={color} />
+        </>
+      );
+
+    case "filmReel":
+      return (
+        <>
+          <circle cx="50" cy="50" r="34" fill={color} />
+          <circle cx="50" cy="50" r="8" fill={light} />
+          <circle cx="50" cy="26" r="7" fill={light} />
+          <circle cx="50" cy="74" r="7" fill={light} />
+          <circle cx="26" cy="50" r="7" fill={light} />
+          <circle cx="74" cy="50" r="7" fill={light} />
+          <circle cx="50" cy="50" r="34" fill="none" stroke={dark} strokeWidth="4" />
+        </>
+      );
+
+    case "pencil":
+      return (
+        <>
+          <path d="M34 12h32v56H34z" fill={color} />
+          <path d="M34 68h32L50 92z" fill={light} />
+          <path d="M44 82l6 10 6-10z" fill="#2E2E2E" />
+          <rect x="34" y="12" width="32" height="10" fill={dark} />
+        </>
+      );
+
+    case "ticket":
+      return (
+        <>
+          <path d="M14 32h72v14a6 6 0 0 0 0 12v14H14V58a6 6 0 0 0 0-12z" fill={color} />
+          <path d="M46 34v32" stroke={dark} strokeWidth="3" strokeDasharray="5 5" />
+          <circle cx="66" cy="50" r="8" fill={light} />
         </>
       );
 

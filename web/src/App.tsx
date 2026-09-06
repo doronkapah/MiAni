@@ -5,12 +5,13 @@ import { ParentPanel } from "./screens/ParentPanel";
 import { ParentSetup } from "./screens/ParentSetup";
 import { ParentGame } from "./screens/ParentGame";
 import { WorldPicker } from "./screens/WorldPicker";
-import { publicProfile, type PublicProfile } from "./game/engine";
+import { dailyView, publicProfile, type PublicProfile } from "./game/engine";
 import { createSession, type GroupMode, type GroupSession } from "./game/group";
 import { probeServer } from "./game/server";
 import * as store from "./store/local";
 import { FEATURES } from "./config";
 import { DEFAULT_WORLD, getWorld } from "../../shared/worlds";
+import { DAILY } from "../../shared/daily";
 import { log } from "./lib/log";
 
 type Screen =
@@ -44,7 +45,9 @@ export default function App() {
     const match = list.find((profile) => profile.id === remembered);
     if (match) {
       // חוזרים בדיוק לאן שהיו — אותו שחקן, אותו עולם
-      const world = getWorld(store.lastWorld() ?? DEFAULT_WORLD).id;
+      const lastWorld = store.lastWorld();
+      const world =
+        lastWorld === DAILY ? DEFAULT_WORLD : getWorld(lastWorld ?? DEFAULT_WORLD).id;
       const full = store.getProfile(match.id);
       setWorld(world);
       setActive(full ? publicProfile(full, world) : match);
@@ -73,6 +76,15 @@ export default function App() {
     setActive(profile);
     store.rememberLastProfile(profile.id);
     setScreen("worlds");
+  }
+
+  function enterDaily() {
+    const profile = active && store.getProfile(active.id);
+    if (!profile) return;
+    setWorld(DAILY);
+    setActive(publicProfile(profile));
+    setScreen("solo");
+    log("app", "נכנסו לחידת היום");
   }
 
   function enterWorld(next: string) {
@@ -157,7 +169,13 @@ export default function App() {
     const profile = store.getProfile(active.id);
     if (profile) {
       return (
-        <WorldPicker profile={profile} onPick={enterWorld} onBack={backToPicker} />
+        <WorldPicker
+          profile={profile}
+          daily={dailyView(profile.id)}
+          onPick={enterWorld}
+          onDaily={enterDaily}
+          onBack={backToPicker}
+        />
       );
     }
   }
@@ -167,6 +185,7 @@ export default function App() {
       <Game
         profile={active}
         world={world}
+        daily={world === DAILY}
         setProfile={setActive}
         onSwitchWorld={() => setScreen("worlds")}
         onParentPanel={() => setScreen("settings")}

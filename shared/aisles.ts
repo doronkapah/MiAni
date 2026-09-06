@@ -190,7 +190,7 @@ const OLYMPICS: PlaceMap = {
     { shape: "trophy", color: "#D9A511" },
     { shape: "ball", color: "#4A9A4A" },
   ],
-  "שחייה ומים": [
+  "ענפי המים": [
     { shape: "wave", color: "#3FA9C8" },
     { shape: "medal", color: "#F5C518" },
     { shape: "wave", color: "#6FC8E0" },
@@ -234,10 +234,74 @@ const OLYMPICS: PlaceMap = {
   ],
 };
 
+/** האזורים של עולם דיסני */
+const DISNEY: PlaceMap = {
+  "נסיכות וממלכות": [
+    { shape: "crown", color: "#F2C53D" },
+    { shape: "castle", color: "#B9C7E8" },
+    { shape: "slipper", color: "#CFE4F5" },
+    { shape: "rose", color: "#D6402C" },
+    { shape: "crown", color: "#E8A0B4" },
+    { shape: "castle", color: "#D8C3E8" },
+  ],
+  "חברים וחיות": [
+    { shape: "ears", color: "#2E2E2E" },
+    { shape: "paw", color: "#C4894A" },
+    { shape: "fish", color: "#E5781C" },
+    { shape: "paw", color: "#E0A040" },
+    { shape: "ears", color: "#4A4A4A" },
+    { shape: "fish", color: "#4FA8D8" },
+  ],
+  "נבלים": [
+    { shape: "horns", color: "#4B2E6B" },
+    { shape: "potion", color: "#5CB85C" },
+    { shape: "horns", color: "#2E2E3E" },
+    { shape: "potion", color: "#7B3F98" },
+    { shape: "crown", color: "#3A3A4A" },
+  ],
+  "פיקסאר": [
+    { shape: "lampPixar", color: "#F2E3A8" },
+    { shape: "box", color: "#4FA8D8" },
+    { shape: "ball", color: "#D6402C" },
+    { shape: "star", color: "#F5C518" },
+    { shape: "lampPixar", color: "#E8EDF2" },
+  ],
+  "קלאסיקות מצוירות": [
+    { shape: "filmReel", color: "#3A3A3A" },
+    { shape: "ears", color: "#2E2E2E" },
+    { shape: "paw", color: "#8B5E3C" },
+    { shape: "filmReel", color: "#5A5A5A" },
+    { shape: "star", color: "#EFE6D2" },
+  ],
+  "מוזיקה וקסם": [
+    { shape: "wand", color: "#F5C518" },
+    { shape: "note", color: "#7B3F98" },
+    { shape: "lamp", color: "#E0A040" },
+    { shape: "note", color: "#4FA8D8" },
+    { shape: "wand", color: "#E8E0F5" },
+    { shape: "lamp", color: "#D9A616" },
+  ],
+  "מאחורי המסך": [
+    { shape: "filmReel", color: "#3A3A3A" },
+    { shape: "pencil", color: "#E8B972" },
+    { shape: "filmReel", color: "#4A4A4A" },
+    { shape: "pencil", color: "#C4894A" },
+    { shape: "note", color: "#8A9384" },
+  ],
+  "פארקים ואטרקציות": [
+    { shape: "castle", color: "#E8A0B4" },
+    { shape: "ticket", color: "#F2C53D" },
+    { shape: "castle", color: "#B9C7E8" },
+    { shape: "ticket", color: "#4FA8D8" },
+    { shape: "ears", color: "#2E2E2E" },
+  ],
+};
+
 const PLACES: Record<WorldId, PlaceMap> = {
   market: MARKET,
   space: SPACE,
   olympics: OLYMPICS,
+  disney: DISNEY,
 };
 
 /** פריטים חסרי זהות, למדף שלא אמור לרמוז */
@@ -265,6 +329,14 @@ const NEUTRAL: Record<WorldId, DecorItem[]> = {
     { shape: "trophy", color: "#969EA6" },
     { shape: "ball", color: "#A0A8B0" },
     { shape: "medal", color: "#8E969E" },
+  ],
+  disney: [
+    { shape: "star", color: "#A8A0B8" },
+    { shape: "filmReel", color: "#98909E" },
+    { shape: "star", color: "#B0A8C0" },
+    { shape: "note", color: "#8E8898" },
+    { shape: "filmReel", color: "#A29AAA" },
+    { shape: "star", color: "#948C9E" },
   ],
 };
 
@@ -297,10 +369,20 @@ const ZONES: Record<WorldId, Record<string, string>> = {
     "חלליות": "מעשה ידי אדם",
     "מצפים ותחנות": "מעשה ידי אדם",
   },
+  disney: {
+    "נסיכות וממלכות": "אגדות ושירים",
+    "מוזיקה וקסם": "אגדות ושירים",
+    "חברים וחיות": "חברים והרפתקאות",
+    "פיקסאר": "חברים והרפתקאות",
+    "נבלים": "הסרטים הגדולים",
+    "קלאסיקות מצוירות": "הסרטים הגדולים",
+    "מאחורי המסך": "מחוץ למסך",
+    "פארקים ואטרקציות": "מחוץ למסך",
+  },
   olympics: {
     "אתלטיקה": "מסלול ומגרש",
     "משחקי כדור": "מסלול ומגרש",
-    "שחייה ומים": "מים וקרח",
+    "ענפי המים": "מים וקרח",
     "אולימפיאדת החורף": "מים וקרח",
     "התעמלות": "אולם",
     "לחימה": "אולם",

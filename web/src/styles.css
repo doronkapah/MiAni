@@ -2609,6 +2609,10 @@ body {
   --world-accent: #2f7fc0;
 }
 
+.world-disney {
+  --world-accent: #8b5fc9;
+}
+
 /*
  * המדף מקבל את צבעי העולם דרך אותם משתנים שהוא כבר משתמש בהם,
  * כך שהשלט, הקרשים והרקע מתחלפים ביחד ובלי להכפיל כללים.
@@ -2641,6 +2645,19 @@ body {
   );
 }
 
+.shelf.world-disney {
+  --paper-2: #241a3d;
+  --wood: #6f4fb0;
+  --wood-dark: #452f78;
+  --green: #8b5fc9;
+  background-image:
+    radial-gradient(1.5px 1.5px at 18% 26%, rgba(255, 240, 200, 0.9), transparent),
+    radial-gradient(1.2px 1.2px at 40% 70%, rgba(255, 240, 200, 0.6), transparent),
+    radial-gradient(1.7px 1.7px at 66% 22%, rgba(255, 240, 200, 0.8), transparent),
+    radial-gradient(1.3px 1.3px at 84% 60%, rgba(255, 240, 200, 0.55), transparent),
+    linear-gradient(180deg, rgba(139, 95, 201, 0.35), transparent 62%);
+}
+
 @media (prefers-color-scheme: dark) {
   .shelf.world-olympics {
     --paper-2: #1b2532;
@@ -2652,4 +2669,95 @@ body {
       rgba(160, 205, 240, 0.12) 46px 48px
     );
   }
+}
+
+
+/* --- חידת היום --- */
+
+.daily-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  margin: 4px 0 18px;
+  padding: 14px 16px;
+  border: 3px solid var(--tag-deep);
+  border-radius: var(--radius);
+  background: linear-gradient(135deg, var(--tag) 0%, #ffdd7a 100%);
+  color: var(--tag-ink);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  transition: transform 0.15s ease;
+}
+
+.daily-card:hover:not(:disabled),
+.daily-card:focus-visible:not(:disabled) {
+  transform: translateY(-2px);
+}
+
+.daily-card:disabled {
+  cursor: default;
+  opacity: 0.92;
+}
+
+.daily-card.done {
+  background: linear-gradient(135deg, #d8ecd8 0%, #eef7ee 100%);
+  border-color: var(--green);
+  color: var(--green-deep);
+}
+
+.daily-star {
+  font-size: 34px;
+  line-height: 1;
+}
+
+.daily-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.daily-text strong {
+  font-family: "Secular One", sans-serif;
+  font-size: 19px;
+}
+
+.daily-text small {
+  font-size: 14px;
+  opacity: 0.85;
+}
+
+.daily-score {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.15;
+  flex-shrink: 0;
+}
+
+.daily-score b {
+  font-family: "Secular One", sans-serif;
+  font-size: 24px;
+}
+
+.daily-score small {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.daily-score em {
+  margin-top: 2px;
+  font-size: 12px;
+  font-style: normal;
+  white-space: nowrap;
+}
+
+.daily-done {
+  margin: 6px 0 10px;
+  color: var(--ink-2);
+  font-size: 15px;
 }

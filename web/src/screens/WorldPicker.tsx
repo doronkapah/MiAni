@@ -1,10 +1,11 @@
 import { AvatarArt } from "../art/avatars";
 import { Product } from "../art/Product";
 import { WORLDS } from "../../../shared/worlds";
-import { levelsInWorld, worldRiddles } from "../../../shared/bank";
-import { levelOf, progressIn } from "../../../shared/difficulty";
+import { levelsInWorld } from "../../../shared/bank";
+import { levelOf, progressIn, progressInLevel } from "../../../shared/difficulty";
 import { LEVEL_NAMES } from "../../../shared/worlds";
 import type { Profile } from "../../../shared/types";
+import type { DailyView } from "../game/engine";
 import { riddleById } from "../../../shared/bank";
 
 /**
@@ -30,15 +31,24 @@ const SAMPLE: Record<string, { shape: string; color: string }[]> = {
     { shape: "torch", color: "#E8703A" },
     { shape: "ball", color: "#E8843A" },
   ],
+  disney: [
+    { shape: "castle", color: "#B9C7E8" },
+    { shape: "wand", color: "#F5C518" },
+    { shape: "ears", color: "#2E2E2E" },
+  ],
 };
 
 export function WorldPicker({
   profile,
+  daily,
   onPick,
+  onDaily,
   onBack,
 }: {
   profile: Profile;
+  daily: DailyView;
   onPick: (world: string) => void;
+  onDaily: () => void;
   onBack: () => void;
 }) {
   return (
@@ -51,11 +61,39 @@ export function WorldPicker({
         </div>
       </header>
 
+      {/*
+        חידת היום יושבת מעל הרשת ולא בתוכה: היא לא עולם, היא הדבר
+        היחיד שמשתנה מעצמו כל בוקר.
+      */}
+      <button
+        className={`daily-card ${daily.done ? "done" : ""}`}
+        onClick={onDaily}
+        disabled={daily.done || daily.gaveUp}
+      >
+        <span className="daily-star" aria-hidden="true">
+          {daily.done ? "⭐" : "🌅"}
+        </span>
+        <span className="daily-text">
+          <strong>חידת היום</strong>
+          <small>
+            {daily.done
+              ? `נפתרה! ${"⭐".repeat(daily.stars)}`
+              : daily.gaveUp
+                ? "נגמרה להיום. מחר יש חדשה"
+                : "חידה אחת ביום, וכוכבים על פתרון"}
+          </small>
+        </span>
+        <span className="daily-score">
+          <b>{daily.total}</b>
+          <small>כוכבים</small>
+          {daily.streak > 1 && <em>🔥 {daily.streak} ימים</em>}
+        </span>
+      </button>
+
       <div className="world-grid">
         {WORLDS.map((world) => {
           const progress = progressIn(profile, world.id);
           const level = levelOf(progress.rating);
-          const total = worldRiddles(world.id).length;
           const solved = profile.solved.filter(
             (id) => riddleById.get(id)?.world === world.id,
           ).length;
@@ -82,7 +120,6 @@ export function WorldPicker({
 
               <span className="world-meta">
                 <span className="world-pill">{world.ageHint}</span>
-                <span className="world-pill">{total} חידות</span>
                 <span className="world-pill">
                   רמות {levels[0]}–{levels[levels.length - 1]}
                 </span>
@@ -91,7 +128,7 @@ export function WorldPicker({
               <span className="world-status">
                 {started ? (
                   <>
-                    <b>{LEVEL_NAMES[level]}</b> · פתרתם {solved} מתוך {total}
+                    <b>{LEVEL_NAMES[level]}</b> · {solved} פתורות
                   </>
                 ) : (
                   "עוד לא התחלתם כאן"
@@ -100,7 +137,10 @@ export function WorldPicker({
 
               {started && (
                 <span className="world-bar" aria-hidden="true">
-                  <span style={{ width: `${Math.round((solved / total) * 100)}%` }} />
+                  {/* ההתקדמות בתוך הרמה הנוכחית, ולא מתוך הבנק */}
+                  <span
+                    style={{ width: `${Math.round(progressInLevel(progress.rating) * 100)}%` }}
+                  />
                 </span>
               )}
             </button>

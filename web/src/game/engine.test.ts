@@ -484,12 +484,118 @@ describe("שיתוף", () => {
   it("הדוח האנונימי לא מכיל שמות של שחקנים", () => {
     const report = shareLib.statsReport({
       solved: 5, guesses: 8, accuracy: 0.62, activeDays: 2, reveals: 1, skips: 1,
-      players: 2, bankSize: 101,
-      byLevel: [{ level: 1, name: "מדף הגן", solved: 5 }],
+      players: 2,
+      byLevel: [{ level: 1, name: "מתחילים", solved: 5 }],
       hardest: [{ answer: "שמרים", wrong: 3, reveals: 1 }],
     });
     expect(report).not.toContain("בדיקה");
     expect(report).toContain("אין בדוח שמות");
-    expect(report).toContain("מדף הגן");
+    expect(report).toContain("מתחילים");
+    // גודל הבנק לא מוצג לאף אחד
+    expect(report).not.toContain("מתוך");
+  });
+});
+
+describe("חידת היום", () => {
+  beforeEach(() => storage.clear());
+
+  it("מגישה חידה, ומגישה את אותה אחת עד שפותרים", () => {
+    const player = newPlayer(8);
+    const first = engine.startRiddle(player.id, "daily");
+    const second = engine.startRiddle(player.id, "daily");
+    expect(first.riddle).toBeDefined();
+    expect(first.riddle!.id).toBe(second.riddle!.id);
+  });
+
+  it("פתרון בלי רמזים נוסף מזכה בשלושה כוכבים", () => {
+    const player = newPlayer(8);
+    const riddle = engine.startRiddle(player.id, "daily").riddle!;
+    const answer = riddleById.get(riddle.id)!.answer;
+
+    const result = engine.submitAnswer(player.id, answer, "daily");
+    expect(result.status).toBe("correct");
+
+    const view = engine.dailyView(player.id);
+    expect(view.done).toBe(true);
+    expect(view.stars).toBe(3);
+    expect(view.total).toBe(3);
+    expect(view.streak).toBe(1);
+  });
+
+  it("כל רמז נוסף עולה כוכב", () => {
+    const player = newPlayer(8);
+    const riddle = engine.startRiddle(player.id, "daily").riddle!;
+    engine.nextHint(player.id, "daily");
+    engine.submitAnswer(player.id, riddleById.get(riddle.id)!.answer, "daily");
+    expect(engine.dailyView(player.id).stars).toBe(2);
+  });
+
+  it("הפתרון נכנס לאוסף של העולם שממנו החידה באה", () => {
+    const player = newPlayer(8);
+    const riddle = engine.startRiddle(player.id, "daily").riddle!;
+    const source = riddleById.get(riddle.id)!;
+    engine.submitAnswer(player.id, source.answer, "daily");
+
+    const cart = engine.publicProfile(store.getProfile(player.id)!, source.world).cart;
+    expect(cart.some((item) => item.id === source.id)).toBe(true);
+  });
+
+  it("חידת היום לא מזיזה את הדירוג בעולם", () => {
+    const player = newPlayer(8);
+    const before = marketProgress(player.id).rating;
+    const riddle = engine.startRiddle(player.id, "daily").riddle!;
+    engine.submitAnswer(player.id, riddleById.get(riddle.id)!.answer, "daily");
+    expect(marketProgress(player.id).rating).toBe(before);
+  });
+
+  it("ניחוש שגוי לא מזכה בכוכבים ולא נועל את היום", () => {
+    const player = newPlayer(8);
+    engine.startRiddle(player.id, "daily");
+    const result = engine.submitAnswer(player.id, "בננה מעופפת", "daily");
+    expect(result.status).not.toBe("correct");
+    expect(engine.dailyView(player.id).done).toBe(false);
+  });
+
+  it("פתרון שני באותו יום לא מוסיף כוכבים", () => {
+    const player = newPlayer(8);
+    const riddle = engine.startRiddle(player.id, "daily").riddle!;
+    const answer = riddleById.get(riddle.id)!.answer;
+    engine.submitAnswer(player.id, answer, "daily");
+    engine.submitAnswer(player.id, answer, "daily");
+    expect(engine.dailyView(player.id).total).toBe(3);
+  });
+
+  it("שחקן חדש עוד לא פתר היום", () => {
+    const player = newPlayer(8);
+    const view = engine.dailyView(player.id);
+    expect(view.done).toBe(false);
+    expect(view.total).toBe(0);
+    expect(view.answer).toBeUndefined();
+  });
+});
+
+describe("ויתור בחידת היום", () => {
+  beforeEach(() => storage.clear());
+
+  it("גלה לי סוגר את היום, מאפס את הרצף ולא נותן כוכבים", () => {
+    const player = newPlayer(8);
+    engine.startRiddle(player.id, "daily");
+    const result = engine.revealAnswer(player.id, "daily");
+    expect(result.answer).toBeTruthy();
+
+    const view = engine.dailyView(player.id);
+    expect(view.gaveUp).toBe(true);
+    expect(view.done).toBe(false);
+    expect(view.stars).toBe(0);
+    expect(view.streak).toBe(0);
+    expect(view.answer).toBe(result.answer);
+  });
+
+  it("ויתור לא מוריד את הדירוג בעולם", () => {
+    const player = newPlayer(8);
+    const before = marketProgress(player.id).rating;
+    engine.startRiddle(player.id, "daily");
+    engine.revealAnswer(player.id, "daily");
+    expect(marketProgress(player.id).rating).toBe(before);
   });
 });

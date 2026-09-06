@@ -222,6 +222,48 @@ function AllTime() {
   );
 }
 
+/* --- דיסני --- */
+
+function PrideLands() {
+  return (
+    <>
+      <circle cx="50" cy="34" r="18" fill="#F2A03D" />
+      <path d="M8 78q14-30 42-30t42 30z" fill="#C98A45" />
+      <path d="M8 78h84v10H8z" fill="#A56C31" />
+      <circle cx="34" cy="60" r="12" fill="#E8A33D" />
+      <circle cx="34" cy="60" r="7" fill="#C4894A" />
+      <path d="M60 54q10-6 18 0 4 10-4 16-10 2-14-6z" fill="#7A5A3A" />
+      <circle cx="70" cy="62" r="2.4" fill="#2E2E2E" />
+    </>
+  );
+}
+
+function Princesses() {
+  return (
+    <>
+      <path d="M20 64 14 30l16 10 20-22 20 22 16-10-6 34z" fill="#F2C53D" />
+      <rect x="20" y="64" width="60" height="10" rx="3" fill="#D9A616" />
+      <circle cx="50" cy="46" r="5" fill="#E8A0B4" />
+      <circle cx="32" cy="52" r="3.5" fill="#4FA8D8" />
+      <circle cx="68" cy="52" r="3.5" fill="#7B3F98" />
+      <path d="M26 84q10-6 24-6t24 6" fill="none" stroke="#CFE4F5" strokeWidth="5" strokeLinecap="round" />
+    </>
+  );
+}
+
+function Baddies() {
+  return (
+    <>
+      <path d="M24 82q-12-28-4-52 12 10 16 32z" fill="#4B2E6B" />
+      <path d="M76 82q12-28 4-52-12 10-16 32z" fill="#4B2E6B" />
+      <path d="M36 58h28l-5 30H41z" fill="#2E2E3E" />
+      <circle cx="44" cy="68" r="3.4" fill="#5CB85C" />
+      <circle cx="56" cy="68" r="3.4" fill="#5CB85C" />
+      <path d="M42 80q8 5 16 0" fill="none" stroke="#7B3F98" strokeWidth="3" strokeLinecap="round" />
+    </>
+  );
+}
+
 const ART: Record<string, () => React.ReactNode> = {
   omelet: Omelet,
   fruitsalad: FruitSalad,
@@ -237,6 +279,9 @@ const ART: Record<string, () => React.ReactNode> = {
   trackLegends: TrackLegends,
   winterGames: WinterGames,
   allTime: AllTime,
+  pridelands: PrideLands,
+  princesses: Princesses,
+  baddies: Baddies,
 };
 
 export function RecipeArt({

@@ -127,7 +127,6 @@ export function Stats({ onClose }: { onClose: () => void }) {
       reveals: total.reveals,
       skips: total.skips,
       players: data.children.length,
-      bankSize: riddles.length,
       byLevel: LEVELS.map((level) => ({
         level,
         name: LEVEL_NAMES[level]!,

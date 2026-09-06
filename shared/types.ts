@@ -1,5 +1,15 @@
 /** טיפוסים משותפים לשרת ולקליינט. */
 
+/** מצב חידת היום של היום הנוכחי */
+export interface DailyState {
+  day: string;
+  riddleId: string;
+  cluesRevealed: number;
+  solved: boolean;
+  gaveUp: boolean;
+  stars: number;
+}
+
 export type ArtShape =
   | "bottle" | "carton" | "box" | "bag" | "can" | "jar" | "tub" | "packet"
   | "sack" | "egg" | "bread" | "roundFruit" | "longFruit" | "root" | "leafy"
@@ -72,6 +82,21 @@ export interface Profile {
   createdAt: number;
   /** מונה הודעות צ'אט יומי */
   chat: { day: string; count: number };
+
+  /**
+   * חידת היום — מצב היום הנוכחי בלבד.
+   *
+   * אופציונלי כדי שפרופילים שנוצרו לפני הפיצ'ר ימשיכו לעבוד.
+   */
+  daily?: DailyState;
+  /** כוכבים שנצברו מחידות יום */
+  stars?: number;
+  /** כמה ימים ברצף נפתרה חידת היום */
+  dailyStreak?: number;
+  /** הרצף הארוך ביותר עד כה */
+  bestDailyStreak?: number;
+  /** היום האחרון שבו נפתרה חידת היום */
+  lastDailyDay?: string;
 }
 
 /** מצב החידה הפעילה, נשמר בשרת בלבד — התשובה לא יוצאת ללקוח */

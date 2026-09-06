@@ -25,8 +25,22 @@ import {
   type RecipeProgress,
 } from "../../../shared/recipes";
 import { aisleView, solvedAisleView, type AisleView } from "../../../shared/aisles";
+import {
+  DAILY,
+  dailyRiddle,
+  dayKey,
+  emptyDaily,
+  nextStreak,
+  starsFor,
+} from "../../../shared/daily";
 import { DEFAULT_WORLD, LEVEL_NAMES, getWorld } from "../../../shared/worlds";
-import type { ActiveRound, Profile, Riddle, WorldProgress } from "../../../shared/types";
+import type {
+  ActiveRound,
+  DailyState,
+  Profile,
+  Riddle,
+  WorldProgress,
+} from "../../../shared/types";
 import * as store from "../store/local";
 import * as stats from "../lib/stats";
 
@@ -162,9 +176,80 @@ export interface RiddleResult {
 }
 
 /** מתחיל חידה חדשה בעולם, או מחזיר את זו שכבר פתוחה */
+/**
+ * מצב חידת היום.
+ *
+ * הוא לא עולם — אין לו בנק, אין לו דירוג, ואי אפשר להתקדם בו רמה.
+ * הוא שכבה דקה מעל הבנק כולו, ולכן הוא יושב כאן ולא ב-worlds.
+ */
+export interface DailyView {
+  /** האם כבר נפתרה היום */
+  done: boolean;
+  /** האם היום נגמר בגילוי התשובה */
+  gaveUp: boolean;
+  /** כוכבים שנצברו היום */
+  stars: number;
+  /** סך הכוכבים */
+  total: number;
+  streak: number;
+  best: number;
+  /** התשובה, רק אחרי שהיום נגמר */
+  answer?: string;
+}
+
+/** מצב חידת היום, לכרטיס במסך בחירת העולם */
+export function dailyView(profileId: string, now: Date = new Date()): DailyView {
+  const profile = store.getProfile(profileId);
+  if (!profile) throw new Error("פרופיל לא נמצא");
+
+  const today = dayKey(now);
+  const state = profile.daily?.day === today ? profile.daily : undefined;
+  const finished = Boolean(state?.solved || state?.gaveUp);
+
+  return {
+    done: Boolean(state?.solved),
+    gaveUp: Boolean(state?.gaveUp),
+    stars: state?.stars ?? 0,
+    total: profile.stars ?? 0,
+    streak: profile.dailyStreak ?? 0,
+    best: profile.bestDailyStreak ?? 0,
+    answer: finished ? riddleById.get(state!.riddleId)?.answerNikud : undefined,
+  };
+}
+
+/** טוען — ובפעם הראשונה ביום גם קובע — את חידת היום */
+function todaysRiddle(profile: Profile, now: Date = new Date()) {
+  const today = dayKey(now);
+  let state = profile.daily?.day === today ? profile.daily : undefined;
+
+  if (!state) {
+    const picked = dailyRiddle(profile, today);
+    if (!picked) return null;
+    state = emptyDaily(today, picked.id);
+    store.updateProfile(profile.id, { daily: state });
+  }
+
+  const riddle = riddleById.get(state.riddleId);
+  return riddle ? { state, riddle } : null;
+}
+
+function saveDaily(profileId: string, state: DailyState) {
+  store.updateProfile(profileId, { daily: state });
+}
+
 export function startRiddle(profileId: string, world: string = DEFAULT_WORLD): RiddleResult {
   const profile = store.getProfile(profileId);
   if (!profile) throw new Error("פרופיל לא נמצא");
+
+  if (world === DAILY) {
+    const today = todaysRiddle(profile);
+    if (!today) return { done: true, message: "אין היום חידה. נסו שוב מחר 🌙" };
+    return {
+      riddle: publicRound(today.riddle, today.state.cluesRevealed, today.riddle.level),
+      greeting: greeting(profile),
+      profile: publicProfile(profile, today.riddle.world),
+    };
+  }
 
   let round = rounds.get(key(profileId, world));
   let riddle = round ? riddleById.get(round.riddleId) : undefined;
@@ -199,6 +284,19 @@ export function startRiddle(profileId: string, world: string = DEFAULT_WORLD): R
 /** חושף את הרמז הבא */
 export function nextHint(profileId: string, world: string = DEFAULT_WORLD): PublicRiddle {
   const profile = store.getProfile(profileId);
+
+  if (world === DAILY) {
+    const today = profile && todaysRiddle(profile);
+    if (!profile || !today) throw new Error("אין חידה פעילה");
+
+    if (today.state.cluesRevealed < today.riddle.clues.length) {
+      today.state.cluesRevealed += 1;
+      saveDaily(profileId, today.state);
+      stats.recordHint(profileId);
+    }
+    return publicRound(today.riddle, today.state.cluesRevealed, today.riddle.level);
+  }
+
   const round = rounds.get(key(profileId, world));
   const riddle = round && riddleById.get(round.riddleId);
   if (!profile || !round || !riddle) throw new Error("אין חידה פעילה");
@@ -268,6 +366,8 @@ export function submitAnswer(
   guess: string,
   world: string = DEFAULT_WORLD,
 ): AnswerResult {
+  if (world === DAILY) return submitDaily(profileId, guess);
+
   const profile = store.getProfile(profileId);
   const round = rounds.get(key(profileId, world));
   const riddle = round && riddleById.get(round.riddleId);
@@ -335,6 +435,28 @@ export interface RevealResult {
 /** "גלה לי" — מסיים את החידה ומראה את התשובה */
 export function revealAnswer(profileId: string, world: string = DEFAULT_WORLD): RevealResult {
   const profile = store.getProfile(profileId);
+
+  if (world === DAILY) {
+    const today = profile && todaysRiddle(profile);
+    if (!profile || !today) throw new Error("אין חידה פעילה");
+
+    // ויתור עולה את היום ואת הרצף, אבל לא את הדירוג בעולם
+    const updated = store.updateProfile(profile.id, {
+      daily: { ...today.state, gaveUp: true, stars: 0 },
+      dailyStreak: 0,
+    })!;
+    stats.recordReveal(profile.id, today.riddle.id);
+
+    return {
+      answer: today.riddle.answerNikud,
+      reveal: today.riddle.reveal,
+      aisle: today.riddle.aisle,
+      art: today.riddle.art,
+      profile: publicProfile(updated, today.riddle.world),
+      aisleView: solvedAisleView(today.riddle.world, today.riddle.aisle),
+    };
+  }
+
   const round = rounds.get(key(profileId, world));
   const riddle = round && riddleById.get(round.riddleId);
   if (!profile || !round || !riddle) throw new Error("אין חידה פעילה");
@@ -405,4 +527,75 @@ function feedback(
   if (reason === "ambiguous") return "זו תשובה לחידה אחרת. תחשבו שוב על הרמזים.";
   if (wrongGuesses >= 3) return "לא זה. אולי כדאי לבקש עוד רמז?";
   return "לא הפעם. נסו עוד ניחוש!";
+}
+
+
+/**
+ * תשובה לחידת היום.
+ *
+ * הפתרון נכנס לאוסף של העולם שממנו החידה באה — כך שיום של חידה
+ * מהחלל מקדם גם את יומן החלל — אבל הדירוג לא זז. חידת היום לא
+ * אמורה לדחוף אף אחד לרמה שהוא לא שם.
+ */
+function submitDaily(profileId: string, guess: string): AnswerResult {
+  const profile = store.getProfile(profileId);
+  const today = profile && todaysRiddle(profile);
+  if (!profile || !today) throw new Error("אין חידה פעילה");
+
+  const { state, riddle } = today;
+  const target = targetById.get(riddle.id)!;
+  const result = checkAnswer({ guess, target, others: allTargets });
+
+  if (result.status !== "correct") {
+    stats.recordMiss(profile.id, riddle.id, result.status);
+    return {
+      status: result.status,
+      message: feedback(result.status, result.reason, 1),
+      offerHint: state.cluesRevealed < riddle.clues.length,
+    };
+  }
+
+  const stars = state.solved ? 0 : starsFor(state.cluesRevealed);
+  const streak = nextStreak(
+    profile.dailyStreak ?? 0,
+    profile.lastDailyDay ?? null,
+    state.day,
+  );
+  const solved = profile.solved.includes(riddle.id)
+    ? profile.solved
+    : [...profile.solved, riddle.id];
+  const unlocked = newlyCompleted(solved, profile.recipes);
+
+  stats.recordSolve(profile.id, riddle.id, state.cluesRevealed);
+
+  const updated = store.updateProfile(profile.id, {
+    daily: { ...state, solved: true, stars },
+    stars: (profile.stars ?? 0) + stars,
+    dailyStreak: streak,
+    bestDailyStreak: Math.max(profile.bestDailyStreak ?? 0, streak),
+    lastDailyDay: state.day,
+    solved,
+    recipes: [...profile.recipes, ...unlocked.map((recipe) => recipe.id)],
+  })!;
+
+  return {
+    status: "correct",
+    answer: riddle.answerNikud,
+    reveal: riddle.reveal,
+    aisle: riddle.aisle,
+    art: riddle.art,
+    levelUp: false,
+    profile: publicProfile(updated, riddle.world),
+    unlockedRecipes: unlocked,
+    aisleView: solvedAisleView(riddle.world, riddle.aisle),
+    celebration: {
+      title: "⭐".repeat(Math.max(1, stars)) + (stars === 3 ? " מושלם!" : " כל הכבוד!"),
+      note:
+        streak > 1
+          ? `חידת היום — ${streak} ימים ברצף`
+          : "חידת היום נפתרה",
+      streak,
+      noHints: state.cluesRevealed === 1,
+    },
+  };
 }

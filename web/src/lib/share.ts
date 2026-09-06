@@ -57,7 +57,6 @@ export interface ReportInput {
   players: number;
   byLevel: { level: number; name: string; solved: number }[];
   hardest: { answer: string; wrong: number; reveals: number }[];
-  bankSize: number;
 }
 
 /**
@@ -72,7 +71,7 @@ export function statsReport(input: ReportInput): string {
     "📊 נתוני משחק אנונימיים — עגלי",
     new Date().toLocaleDateString("he-IL"),
     "",
-    `חידות שנפתרו: ${input.solved} מתוך ${input.bankSize}`,
+    `חידות שנפתרו: ${input.solved}`,
     `ניחושים: ${input.guesses} · דיוק ${Math.round(input.accuracy * 100)}%`,
     `ימי משחק: ${input.activeDays} · שחקנים: ${input.players}`,
     `גלה לי: ${input.reveals} · דילוגים: ${input.skips}`,
