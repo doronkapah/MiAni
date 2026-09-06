@@ -19,7 +19,12 @@
     "art": {
       "shape": "longFruit",
       "color": "#F2C53D"
-    }
+    },
+    "alsoFits": [
+      "תירס",
+      "מלפפון",
+      "קישוא"
+    ]
   },
   {
     "id": "milk",
@@ -41,7 +46,13 @@
     "art": {
       "shape": "carton",
       "color": "#DCE8F2"
-    }
+    },
+    "alsoFits": [
+      "מים",
+      "יוגורט",
+      "שמנת",
+      "חלב סויה"
+    ]
   },
   {
     "id": "egg",
@@ -65,7 +76,12 @@
     "art": {
       "shape": "egg",
       "color": "#F0DFC0"
-    }
+    },
+    "alsoFits": [
+      "אבן",
+      "כדור",
+      "ביצת שוקולד"
+    ]
   },
   {
     "id": "bread",
@@ -87,7 +103,13 @@
     "art": {
       "shape": "bread",
       "color": "#C4894A"
-    }
+    },
+    "alsoFits": [
+      "לחמנייה",
+      "חלה",
+      "פיתה",
+      "בגט"
+    ]
   },
   {
     "id": "apple",
@@ -111,7 +133,14 @@
     "art": {
       "shape": "roundFruit",
       "color": "#D6402C"
-    }
+    },
+    "alsoFits": [
+      "דובדבן",
+      "שזיף",
+      "רימון",
+      "אפרסק",
+      "תות"
+    ]
   },
   {
     "id": "carrot",
@@ -133,7 +162,12 @@
     "art": {
       "shape": "root",
       "color": "#E5781C"
-    }
+    },
+    "alsoFits": [
+      "בטטה",
+      "צנון",
+      "לפת"
+    ]
   },
   {
     "id": "cake",
@@ -155,7 +189,12 @@
     "art": {
       "shape": "cake",
       "color": "#E8A0B4"
-    }
+    },
+    "alsoFits": [
+      "עוגייה",
+      "קאפקייק",
+      "טורט"
+    ]
   },
   {
     "id": "water",
@@ -177,7 +216,12 @@
     "art": {
       "shape": "bottle",
       "color": "#79C6E8"
-    }
+    },
+    "alsoFits": [
+      "סודה",
+      "לימונדה",
+      "תה"
+    ]
   },
   {
     "id": "orange",
@@ -201,7 +245,13 @@
     "art": {
       "shape": "roundFruit",
       "color": "#F08A24"
-    }
+    },
+    "alsoFits": [
+      "קלמנטינה",
+      "אשכולית",
+      "לימון",
+      "מנדרינה"
+    ]
   },
   {
     "id": "chocolate",
@@ -223,7 +273,13 @@
     "art": {
       "shape": "packet",
       "color": "#6B4226"
-    }
+    },
+    "alsoFits": [
+      "ממתק",
+      "סוכריה",
+      "שוקו",
+      "ופל"
+    ]
   },
   {
     "id": "icecream",
@@ -245,7 +301,12 @@
     "art": {
       "shape": "tub",
       "color": "#F4C6D5"
-    }
+    },
+    "alsoFits": [
+      "קרטיב",
+      "שלגון",
+      "גלידה בטעם שוקולד"
+    ]
   },
   {
     "id": "rice",
@@ -267,7 +328,13 @@
     "art": {
       "shape": "sack",
       "color": "#EFEAD8"
-    }
+    },
+    "alsoFits": [
+      "קוסקוס",
+      "בורגול",
+      "קינואה",
+      "פתיתים"
+    ]
   },
   {
     "id": "chicken",
@@ -291,7 +358,12 @@
     "art": {
       "shape": "packet",
       "color": "#EFC7B0"
-    }
+    },
+    "alsoFits": [
+      "הודו",
+      "בשר",
+      "שניצל"
+    ]
   },
   {
     "id": "fish",
@@ -315,7 +387,13 @@
     "art": {
       "shape": "packet",
       "color": "#9EC0D6"
-    }
+    },
+    "alsoFits": [
+      "סלמון",
+      "טונה",
+      "דניס",
+      "בקלה"
+    ]
   },
   {
     "id": "strawberry",
@@ -340,7 +418,12 @@
     "art": {
       "shape": "berry",
       "color": "#D6304A"
-    }
+    },
+    "alsoFits": [
+      "דובדבן",
+      "פטל",
+      "עגבנייה שרי"
+    ]
   },
   {
     "id": "grapes",
@@ -364,7 +447,12 @@
     "art": {
       "shape": "berry",
       "color": "#7B3F98"
-    }
+    },
+    "alsoFits": [
+      "דובדבנים",
+      "אוכמניות",
+      "צימוקים"
+    ]
   },
   {
     "id": "cucumber",
@@ -388,7 +476,12 @@
     "art": {
       "shape": "longFruit",
       "color": "#4E9A3E"
-    }
+    },
+    "alsoFits": [
+      "קישוא",
+      "זוקיני",
+      "חציל"
+    ]
   },
   {
     "id": "cornflakes",
@@ -412,7 +505,11 @@
     "art": {
       "shape": "box",
       "color": "#E0A040"
-    }
+    },
+    "alsoFits": [
+      "גרנולה",
+      "שיבולת שועל"
+    ]
   },
   {
     "id": "bamba",
@@ -434,7 +531,12 @@
     "art": {
       "shape": "bag",
       "color": "#F5A623"
-    }
+    },
+    "alsoFits": [
+      "ביסלי",
+      "צ׳יטוס",
+      "חטיף"
+    ]
   },
   {
     "id": "sugar",
@@ -456,7 +558,12 @@
     "art": {
       "shape": "sack",
       "color": "#F2EFE4"
-    }
+    },
+    "alsoFits": [
+      "מלח",
+      "קמח",
+      "סוכרזית"
+    ]
   },
   {
     "id": "biscuits",
@@ -482,7 +589,11 @@
     "art": {
       "shape": "packet",
       "color": "#C8945A"
-    }
+    },
+    "alsoFits": [
+      "ופלים",
+      "קרקר"
+    ]
   },
   {
     "id": "popcorn",
@@ -504,7 +615,12 @@
     "art": {
       "shape": "bag",
       "color": "#F4E4C1"
-    }
+    },
+    "alsoFits": [
+      "במבה",
+      "צ׳יפס",
+      "חטיף"
+    ]
   },
   {
     "id": "icepop",
@@ -528,7 +644,11 @@
     "art": {
       "shape": "packet",
       "color": "#5FBCE8"
-    }
+    },
+    "alsoFits": [
+      "גלידה",
+      "שלגון"
+    ]
   },
   {
     "id": "pear",
@@ -552,7 +672,12 @@
     "art": {
       "shape": "roundFruit",
       "color": "#C8D14A"
-    }
+    },
+    "alsoFits": [
+      "תפוח",
+      "חבוש",
+      "אפרסק"
+    ]
   },
   {
     "id": "bun",
@@ -577,7 +702,13 @@
     "art": {
       "shape": "bread",
       "color": "#D9A55E"
-    }
+    },
+    "alsoFits": [
+      "לחם",
+      "פיתה",
+      "בגט",
+      "חלה"
+    ]
   },
   {
     "id": "bisli",
@@ -599,7 +730,12 @@
     "art": {
       "shape": "bag",
       "color": "#C4452C"
-    }
+    },
+    "alsoFits": [
+      "במבה",
+      "צ׳יפס",
+      "חטיף"
+    ]
   },
   {
     "id": "tomato",
@@ -626,7 +762,12 @@
     "art": {
       "shape": "roundFruit",
       "color": "#C62D25"
-    }
+    },
+    "alsoFits": [
+      "פלפל אדום",
+      "גמבה",
+      "תות"
+    ]
   },
   {
     "id": "honey",
@@ -650,7 +791,12 @@
     "art": {
       "shape": "jar",
       "color": "#D99A2B"
-    }
+    },
+    "alsoFits": [
+      "ריבה",
+      "סילאן",
+      "סירופ"
+    ]
   },
   {
     "id": "watermelon",
@@ -674,7 +820,12 @@
     "art": {
       "shape": "roundFruit",
       "color": "#3F8F3A"
-    }
+    },
+    "alsoFits": [
+      "מלון",
+      "דלעת",
+      "קישוא"
+    ]
   },
   {
     "id": "yogurt",
@@ -698,7 +849,13 @@
     "art": {
       "shape": "tub",
       "color": "#F3F0E4"
-    }
+    },
+    "alsoFits": [
+      "לבן",
+      "גבינה לבנה",
+      "מעדן",
+      "שמנת"
+    ]
   },
   {
     "id": "corn",
@@ -722,7 +879,12 @@
     "art": {
       "shape": "can",
       "color": "#F2C230"
-    }
+    },
+    "alsoFits": [
+      "אפונה",
+      "שעועית",
+      "גרגירי חומוס"
+    ]
   },
   {
     "id": "butter",
@@ -746,7 +908,12 @@
     "art": {
       "shape": "packet",
       "color": "#F0D078"
-    }
+    },
+    "alsoFits": [
+      "מרגרינה",
+      "גבינה",
+      "שמנת"
+    ]
   },
   {
     "id": "onion",
@@ -770,7 +937,12 @@
     "art": {
       "shape": "root",
       "color": "#C9A96E"
-    }
+    },
+    "alsoFits": [
+      "שום",
+      "שאלוט",
+      "כרישה"
+    ]
   },
   {
     "id": "potato",
@@ -797,7 +969,12 @@
     "art": {
       "shape": "root",
       "color": "#B58B52"
-    }
+    },
+    "alsoFits": [
+      "בטטה",
+      "לפת",
+      "קולורבי"
+    ]
   },
   {
     "id": "lemon",
@@ -823,7 +1000,12 @@
     "art": {
       "shape": "roundFruit",
       "color": "#EFD23C"
-    }
+    },
+    "alsoFits": [
+      "ליים",
+      "אשכולית",
+      "תפוז"
+    ]
   },
   {
     "id": "pineapple",
@@ -847,7 +1029,12 @@
     "art": {
       "shape": "roundFruit",
       "color": "#E0A63C"
-    }
+    },
+    "alsoFits": [
+      "מנגו",
+      "פפאיה",
+      "קוקוס"
+    ]
   },
   {
     "id": "tuna",
@@ -871,7 +1058,12 @@
     "art": {
       "shape": "can",
       "color": "#9BA7B0"
-    }
+    },
+    "alsoFits": [
+      "סרדינים",
+      "סלמון",
+      "דג"
+    ]
   },
   {
     "id": "pasta",
@@ -900,7 +1092,11 @@
     "art": {
       "shape": "packet",
       "color": "#E8C87A"
-    }
+    },
+    "alsoFits": [
+      "אורז",
+      "קוסקוס"
+    ]
   },
   {
     "id": "ketchup",
@@ -924,7 +1120,12 @@
     "art": {
       "shape": "bottle",
       "color": "#C42B22"
-    }
+    },
+    "alsoFits": [
+      "חרדל",
+      "מיונז",
+      "רוטב עגבניות"
+    ]
   },
   {
     "id": "challah",
@@ -950,7 +1151,12 @@
     "art": {
       "shape": "bread",
       "color": "#D8A755"
-    }
+    },
+    "alsoFits": [
+      "לחם",
+      "לחמנייה",
+      "בריוש"
+    ]
   },
   {
     "id": "cream",
@@ -974,7 +1180,13 @@
     "art": {
       "shape": "tub",
       "color": "#F7F4EC"
-    }
+    },
+    "alsoFits": [
+      "חלב",
+      "יוגורט",
+      "לבן",
+      "חמאה"
+    ]
   },
   {
     "id": "nuts",
@@ -1001,7 +1213,13 @@
     "art": {
       "shape": "bag",
       "color": "#A9703C"
-    }
+    },
+    "alsoFits": [
+      "בוטנים",
+      "שקדים",
+      "פיסטוקים",
+      "גרעינים"
+    ]
   },
   {
     "id": "salt",
@@ -1025,7 +1243,12 @@
     "art": {
       "shape": "packet",
       "color": "#E4E7EA"
-    }
+    },
+    "alsoFits": [
+      "סוכר",
+      "פלפל",
+      "תבלין"
+    ]
   },
   {
     "id": "olives",
@@ -1051,7 +1274,12 @@
     "art": {
       "shape": "jar",
       "color": "#4C6B2F"
-    }
+    },
+    "alsoFits": [
+      "חמוצים",
+      "מלפפון חמוץ",
+      "ענבים"
+    ]
   },
   {
     "id": "mushroom",
@@ -1078,7 +1306,11 @@
     "art": {
       "shape": "box",
       "color": "#D9C9B0"
-    }
+    },
+    "alsoFits": [
+      "כרובית",
+      "שמרים"
+    ]
   },
   {
     "id": "jam",
@@ -1102,7 +1334,12 @@
     "art": {
       "shape": "jar",
       "color": "#B8324C"
-    }
+    },
+    "alsoFits": [
+      "דבש",
+      "ממרח",
+      "קונפיטורה"
+    ]
   },
   {
     "id": "garlic",
@@ -1126,7 +1363,12 @@
     "art": {
       "shape": "root",
       "color": "#EDE6D6"
-    }
+    },
+    "alsoFits": [
+      "בצל",
+      "ג׳ינג׳ר",
+      "שאלוט"
+    ]
   },
   {
     "id": "cabbage",
@@ -1150,7 +1392,12 @@
     "art": {
       "shape": "leafy",
       "color": "#9BC46A"
-    }
+    },
+    "alsoFits": [
+      "חסה",
+      "כרובית",
+      "תרד"
+    ]
   },
   {
     "id": "broccoli",
@@ -1174,7 +1421,12 @@
     "art": {
       "shape": "leafy",
       "color": "#3F7A32"
-    }
+    },
+    "alsoFits": [
+      "כרובית",
+      "כרוב",
+      "תרד"
+    ]
   },
   {
     "id": "hotdog",
@@ -1201,7 +1453,12 @@
     "art": {
       "shape": "packet",
       "color": "#D98A8A"
-    }
+    },
+    "alsoFits": [
+      "המבורגר",
+      "קבב",
+      "סלמי"
+    ]
   },
   {
     "id": "pizza",
@@ -1225,7 +1482,12 @@
     "art": {
       "shape": "box",
       "color": "#D65A2E"
-    }
+    },
+    "alsoFits": [
+      "לחם",
+      "פשטידה",
+      "בורקס"
+    ]
   },
   {
     "id": "flour",
@@ -2610,7 +2872,12 @@
     "art": {
       "shape": "star",
       "color": "#F5C518"
-    }
+    },
+    "alsoFits": [
+      "כוכב",
+      "אש",
+      "כדור אש"
+    ]
   },
   {
     "id": "moon",
@@ -2635,7 +2902,12 @@
     "art": {
       "shape": "moon",
       "color": "#DCE0E4"
-    }
+    },
+    "alsoFits": [
+      "כוכב",
+      "שמש",
+      "לוויין"
+    ]
   },
   {
     "id": "earth",
@@ -2659,7 +2931,12 @@
     "art": {
       "shape": "planet",
       "color": "#3D7FC4"
-    }
+    },
+    "alsoFits": [
+      "מאדים",
+      "נוגה",
+      "כוכב לכת"
+    ]
   },
   {
     "id": "astronaut",
@@ -2687,7 +2964,12 @@
     "art": {
       "shape": "rocket",
       "color": "#E8EEF4"
-    }
+    },
+    "alsoFits": [
+      "טייס",
+      "צוללן",
+      "חוקר"
+    ]
   },
   {
     "id": "mars",
@@ -2713,7 +2995,12 @@
     "art": {
       "shape": "planet",
       "color": "#C4543A"
-    }
+    },
+    "alsoFits": [
+      "נוגה",
+      "צדק",
+      "כוכב אדום"
+    ]
   },
   {
     "id": "venus",
@@ -2739,7 +3026,12 @@
     "art": {
       "shape": "planet",
       "color": "#E0A860"
-    }
+    },
+    "alsoFits": [
+      "מאדים",
+      "כוכב חמה",
+      "כוכב הערב"
+    ]
   },
   {
     "id": "saturn",
@@ -2765,7 +3057,12 @@
     "art": {
       "shape": "ringedPlanet",
       "color": "#E0C88A"
-    }
+    },
+    "alsoFits": [
+      "אורנוס",
+      "צדק",
+      "נפטון"
+    ]
   },
   {
     "id": "jupiter",
@@ -2791,7 +3088,12 @@
     "art": {
       "shape": "planet",
       "color": "#C89A6A"
-    }
+    },
+    "alsoFits": [
+      "שבתאי",
+      "השמש",
+      "נפטון"
+    ]
   },
   {
     "id": "mercury",
@@ -3195,7 +3497,12 @@
     "art": {
       "shape": "medal",
       "color": "#F5C518"
-    }
+    },
+    "alsoFits": [
+      "גביע",
+      "מדליית כסף",
+      "פרס"
+    ]
   },
   {
     "id": "torch",
@@ -3222,7 +3529,11 @@
     "art": {
       "shape": "torch",
       "color": "#E8703A"
-    }
+    },
+    "alsoFits": [
+      "נר",
+      "אבוקה"
+    ]
   },
   {
     "id": "rings",
@@ -3250,7 +3561,12 @@
     "art": {
       "shape": "rings",
       "color": "#3A7FC4"
-    }
+    },
+    "alsoFits": [
+      "דגל אולימפי",
+      "לפיד",
+      "סמל"
+    ]
   },
   {
     "id": "marathon",
@@ -3734,7 +4050,12 @@
     "art": {
       "shape": "rocket",
       "color": "#DCE4EC"
-    }
+    },
+    "alsoFits": [
+      "מטוס",
+      "טיל",
+      "מעבורת"
+    ]
   },
   {
     "id": "satellite",
@@ -3761,7 +4082,12 @@
     "art": {
       "shape": "satellite",
       "color": "#C9D6E4"
-    }
+    },
+    "alsoFits": [
+      "חללית",
+      "תחנת חלל",
+      "ירח"
+    ]
   },
   {
     "id": "telescope",
@@ -3787,7 +4113,12 @@
     "art": {
       "shape": "satellite",
       "color": "#8FA6C0"
-    }
+    },
+    "alsoFits": [
+      "משקפת",
+      "מיקרוסקופ",
+      "זכוכית מגדלת"
+    ]
   },
   {
     "id": "eclipse",
@@ -3814,7 +4145,12 @@
     "art": {
       "shape": "star",
       "color": "#FFC93C"
-    }
+    },
+    "alsoFits": [
+      "ליקוי ירח",
+      "שקיעה",
+      "לילה"
+    ]
   },
   {
     "id": "asteroid",
@@ -3840,7 +4176,12 @@
     "art": {
       "shape": "moon",
       "color": "#9A9186"
-    }
+    },
+    "alsoFits": [
+      "מטאור",
+      "שביט",
+      "סלע"
+    ]
   },
   {
     "id": "spacesuit",
@@ -3866,7 +4207,12 @@
     "art": {
       "shape": "rocket",
       "color": "#F0F3F7"
-    }
+    },
+    "alsoFits": [
+      "מדים",
+      "קסדה",
+      "מצנח"
+    ]
   },
   {
     "id": "crater",
@@ -4287,7 +4633,12 @@
     "art": {
       "shape": "ball",
       "color": "#E8843A"
-    }
+    },
+    "alsoFits": [
+      "כדוריד",
+      "כדור",
+      "טניס"
+    ]
   },
   {
     "id": "swimming",
@@ -4313,7 +4664,12 @@
     "art": {
       "shape": "wave",
       "color": "#3AA0D6"
-    }
+    },
+    "alsoFits": [
+      "קפיצה למים",
+      "צלילה",
+      "פולו מים"
+    ]
   },
   {
     "id": "highjump",
@@ -4339,7 +4695,12 @@
     "art": {
       "shape": "shoe",
       "color": "#C9432F"
-    }
+    },
+    "alsoFits": [
+      "קפיצה לרוחק",
+      "קפיצה במוט",
+      "משוכות"
+    ]
   },
   {
     "id": "tabletennis",
@@ -4366,7 +4727,12 @@
     "art": {
       "shape": "ball",
       "color": "#E85D75"
-    }
+    },
+    "alsoFits": [
+      "טניס",
+      "בדמינטון",
+      "סקווש"
+    ]
   },
   {
     "id": "stadium",
@@ -4393,7 +4759,12 @@
     "art": {
       "shape": "trophy",
       "color": "#9AA857"
-    }
+    },
+    "alsoFits": [
+      "אולם",
+      "מגרש",
+      "ארנה"
+    ]
   },
   {
     "id": "skiing",
@@ -4859,7 +5230,12 @@
     "art": {
       "shape": "ears",
       "color": "#2E2E2E"
-    }
+    },
+    "alsoFits": [
+      "דונלד דאק",
+      "עכבר",
+      "גופי"
+    ]
   },
   {
     "id": "elsa",
@@ -4885,7 +5261,12 @@
     "art": {
       "shape": "snowflake",
       "color": "#8FD3EC"
-    }
+    },
+    "alsoFits": [
+      "אנה",
+      "מלכת השלג",
+      "נסיכה"
+    ]
   },
   {
     "id": "nemo",
@@ -4909,7 +5290,12 @@
     "art": {
       "shape": "fish",
       "color": "#E5781C"
-    }
+    },
+    "alsoFits": [
+      "דורי",
+      "מרלין",
+      "דג"
+    ]
   },
   {
     "id": "simba",
@@ -4933,7 +5319,12 @@
     "art": {
       "shape": "paw",
       "color": "#E0A040"
-    }
+    },
+    "alsoFits": [
+      "מופאסה",
+      "סקאר",
+      "אריה"
+    ]
   },
   {
     "id": "olaf",
@@ -4957,7 +5348,12 @@
     "art": {
       "shape": "snowflake",
       "color": "#EAF6FB"
-    }
+    },
+    "alsoFits": [
+      "איש שלג",
+      "סוון",
+      "אלזה"
+    ]
   },
   {
     "id": "dumbo",
@@ -4981,7 +5377,12 @@
     "art": {
       "shape": "ears",
       "color": "#9AB4C8"
-    }
+    },
+    "alsoFits": [
+      "פיל",
+      "בייבי",
+      "הפיל המעופף"
+    ]
   },
   {
     "id": "ariel",
@@ -5007,7 +5408,12 @@
     "art": {
       "shape": "fish",
       "color": "#4FA88F"
-    }
+    },
+    "alsoFits": [
+      "בת ים",
+      "אלזה",
+      "נסיכה"
+    ]
   },
   {
     "id": "cinderella",
@@ -5033,7 +5439,12 @@
     "art": {
       "shape": "slipper",
       "color": "#CFE4F5"
-    }
+    },
+    "alsoFits": [
+      "שלגייה",
+      "אורורה",
+      "היפהפייה הנרדמת"
+    ]
   },
   {
     "id": "peterpan",
@@ -5059,7 +5470,11 @@
     "art": {
       "shape": "star",
       "color": "#4C9E52"
-    }
+    },
+    "alsoFits": [
+      "טינקרבל",
+      "ונדי"
+    ]
   },
   {
     "id": "woody",
@@ -5085,7 +5500,12 @@
     "art": {
       "shape": "shoe",
       "color": "#C4894A"
-    }
+    },
+    "alsoFits": [
+      "באז",
+      "בוקר",
+      "שריף"
+    ]
   },
   {
     "id": "aladdin",
@@ -5109,7 +5529,12 @@
     "art": {
       "shape": "lamp",
       "color": "#E0A040"
-    }
+    },
+    "alsoFits": [
+      "הג׳יני",
+      "סינבד",
+      "עלי באבא"
+    ]
   },
   {
     "id": "mulan",
@@ -5133,7 +5558,12 @@
     "art": {
       "shape": "rose",
       "color": "#E8A0B4"
-    }
+    },
+    "alsoFits": [
+      "פוקהונטס",
+      "מרידה",
+      "לוחמת"
+    ]
   },
   {
     "id": "pinocchio",
@@ -5157,7 +5587,12 @@
     "art": {
       "shape": "pencil",
       "color": "#E8B972"
-    }
+    },
+    "alsoFits": [
+      "ג׳פטו",
+      "בובה",
+      "ג׳ימיני קריקט"
+    ]
   },
   {
     "id": "genie",
@@ -5184,7 +5619,12 @@
     "art": {
       "shape": "lamp",
       "color": "#4FA8D8"
-    }
+    },
+    "alsoFits": [
+      "אלאדין",
+      "שד",
+      "מכשף"
+    ]
   },
   {
     "id": "mufasa",

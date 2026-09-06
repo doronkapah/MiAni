@@ -208,6 +208,20 @@ export function checkRiddle(
     }
   }
 
+  /*
+   * חלופה שהמנוע מקבל כתשובה אינה חלופה — הילד פשוט צדק.
+   * "עוף בגריל" מכיל את "עוף", ו"מיץ" רחוק מ"מים" בהקשה אחת במקלדת.
+   */
+  for (const option of candidate.alsoFits ?? []) {
+    const result = checkAnswer({ guess: option, target: mine, others: targets });
+    if (result.status === "correct") {
+      add("חלופות", `"${option}" מתקבלת כתשובה נכונה, ולכן היא לא חלופה`);
+    }
+  }
+  if (new Set(candidate.alsoFits ?? []).size !== (candidate.alsoFits ?? []).length) {
+    add("חלופות", "יש חלופה כפולה");
+  }
+
   if (!crossCheck) return problems;
 
   const bank = [...riddles, ...neighbours];

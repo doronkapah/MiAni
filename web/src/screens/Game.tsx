@@ -58,7 +58,12 @@ export function Game({
   const [riddle, setRiddle] = useState<PublicRiddle | null>(null);
   const [greeting, setGreeting] = useState("");
   const [guess, setGuess] = useState("");
-  const [feedback, setFeedback] = useState<{ text: string; tone: "close" | "wrong" } | null>(null);
+  const [feedback, setFeedback] = useState<{
+    text: string;
+    tone: "close" | "wrong";
+    /** ניחוש שהיה הגיוני — מציעים עליו רמז שיבדיל */
+    offerDistinguish?: boolean;
+  } | null>(null);
   const [solved, setSolved] = useState<Solved | null>(null);
   const [chatOpen, setChatOpen] = useState(false);
   const [chatLeft, setChatLeft] = useState(profile.chat.left);
@@ -166,9 +171,18 @@ export function Game({
           log("recipe", `נפתח מתכון: ${recipe.name}`, { who: profile.name });
         }
       } else {
-        setFeedback({ text: result.message, tone: result.status });
-        setGuess("");
+        setFeedback({
+          text: result.message,
+          tone: result.status,
+          offerDistinguish: Boolean(result.plausible),
+        });
+        /*
+         * הניחוש נשאר בתיבה. ילד שכתב "פסטה" בשגיאה אחת צריך לתקן
+         * אות, לא להקליד הכול מחדש — וילד שניחש הגיונית צריך לראות
+         * מה הוא כתב בזמן שקוראים לו למה זה לא זה.
+         */
         inputRef.current?.focus();
+        inputRef.current?.setSelectionRange(text.length, text.length);
       }
     } catch (error) {
       log("answer", (error as Error).message, { who: profile.name, level: "error" });
@@ -328,23 +342,46 @@ export function Game({
                     checkGuess();
                   }}
                 >
-                  <input
-                    ref={inputRef}
-                    value={guess}
-                    onChange={(event) => setGuess(event.target.value)}
-                    placeholder="מה אני? כתבו כאן…"
-                    maxLength={40}
-                    autoComplete="off"
-                  />
+                  <span className="guess-field">
+                    <input
+                      ref={inputRef}
+                      value={guess}
+                      onChange={(event) => setGuess(event.target.value)}
+                      placeholder="מה אני? כתבו כאן…"
+                      aria-label="הניחוש שלי"
+                      maxLength={40}
+                      autoComplete="off"
+                      enterKeyHint="send"
+                    />
+                    {guess && (
+                      <button
+                        type="button"
+                        className="clear-guess"
+                        onClick={() => {
+                          setGuess("");
+                          setFeedback(null);
+                          inputRef.current?.focus();
+                        }}
+                        aria-label="מחיקת מה שכתבתי"
+                      >
+                        ×
+                      </button>
+                    )}
+                  </span>
                   <button className="btn primary big" type="submit" disabled={!guess.trim()}>
                     בדקו!
                   </button>
                 </form>
 
                 {feedback && (
-                  <p className={`feedback ${feedback.tone}`} role="status">
-                    {feedback.text}
-                  </p>
+                  <div className={`feedback ${feedback.tone}`} role="status">
+                    <p>{feedback.text}</p>
+                    {feedback.offerDistinguish && riddle.hasMoreClues && (
+                      <button className="btn distinguish" onClick={askHint}>
+                        💡 רמז שיבדיל ביניהם
+                      </button>
+                    )}
+                  </div>
                 )}
 
                 <div className="actions">

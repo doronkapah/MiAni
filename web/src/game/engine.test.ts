@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
+import type { MissResult, SolvedResult } from "./engine";
 
 /**
  * בדיקות למנוע שרץ בדפדפן.
@@ -598,5 +599,147 @@ describe("ויתור בחידת היום", () => {
     engine.startRiddle(player.id, "daily");
     engine.revealAnswer(player.id, "daily");
     expect(marketProgress(player.id).rating).toBe(before);
+  });
+});
+
+describe("הוגנות המשוב", () => {
+  beforeEach(() => storage.clear());
+
+  /** הגיל שפותח את הרמה המבוקשת */
+  const AGE_FOR_LEVEL: Record<number, number> = { 1: 5, 2: 7, 3: 9, 4: 11, 5: 18, 6: 18 };
+
+  /** מתחיל סבב על חידה מסוימת, בלי להסתמך על ההגרלה */
+  function playing(riddleId: string) {
+    const wanted = riddleById.get(riddleId)!;
+    const player = newPlayer(AGE_FOR_LEVEL[wanted.level] ?? 7);
+    for (let attempt = 0; attempt < 300; attempt += 1) {
+      const started = engine.startRiddle(player.id, wanted.world);
+      if (started.riddle?.id === riddleId) return { player, riddle: wanted };
+      if (started.done) break;
+      engine.skipRiddle(player.id, wanted.world);
+    }
+    throw new Error(`לא הצלחתי להגיע ל-${riddleId}`);
+  }
+
+  it("ניחוש הגיוני מוכר ככזה, ומוצע עליו רמז מבחין", () => {
+    const { player } = playing("apple");
+    const result = engine.submitAnswer(player.id, "דובדבן", "market");
+    expect(result.status).not.toBe("correct");
+
+    const miss = result as MissResult;
+    expect(miss.plausible?.guess).toBe("דובדבן");
+    expect(miss.message).toContain("דובדבן");
+    expect(miss.message).toContain("ניחוש חכם");
+  });
+
+  it("פריט אחר מאותו מדף מקבל את המכנה המשותף", () => {
+    const { player } = playing("apple");
+    const miss = engine.submitAnswer(player.id, "עגבנייה", "market") as MissResult;
+    expect(miss.plausible?.shared).toBe("פירות וירקות");
+    expect(miss.message).toContain("פירות וירקות");
+  });
+
+  it('"זו תשובה לחידה אחרת" הוחלף בהכוונה', () => {
+    const { player } = playing("apple");
+    const miss = engine.submitAnswer(player.id, "מכונית", "market") as MissResult;
+    expect(miss.plausible).toBeUndefined();
+    expect(miss.message).not.toContain("לחידה אחרת");
+  });
+
+  it("אין הצעת רמז מבחין כשנגמרו הרמזים", () => {
+    const { player, riddle } = playing("apple");
+    for (let index = 0; index < riddle.clues.length + 2; index += 1) {
+      engine.nextHint(player.id, "market");
+    }
+    const miss = engine.submitAnswer(player.id, "דובדבן", "market") as MissResult;
+    expect(miss.hasMoreClues).toBe(false);
+    expect(miss.plausible).toBeUndefined();
+  });
+
+  it("פתרון מהרמז הראשון נאמר במילים נכונות", () => {
+    const { player, riddle } = playing("apple");
+    const result = engine.submitAnswer(player.id, riddle.answer, "market");
+    expect(result.status).toBe("correct");
+    const solved = result as SolvedResult;
+    expect(solved.celebration.note).toContain("מהרמז הראשון");
+    expect(solved.celebration.note).not.toContain("בלי רמזים בכלל");
+  });
+
+  it("פתרון בעזרת רמזים מקבל עידוד משלו", () => {
+    const { player, riddle } = playing("apple");
+    engine.nextHint(player.id, "market");
+    const solved = engine.submitAnswer(player.id, riddle.answer, "market") as SolvedResult;
+    expect(solved.celebration.title).toBe("כל הכבוד!");
+    expect(solved.celebration.note).toBeTruthy();
+    expect(solved.celebration.noHints).toBe(false);
+  });
+});
+
+describe("יציבות: רענון, שחקנים ולחיצות כפולות", () => {
+  beforeEach(() => storage.clear());
+
+  it("ההתקדמות שורדת רענון — הנתונים באחסון ולא בזיכרון", () => {
+    const player = newPlayer(8);
+    const riddle = engine.startRiddle(player.id, "market").riddle!;
+    engine.submitAnswer(player.id, riddleById.get(riddle.id)!.answer, "market");
+
+    // אותו אחסון, מודול טרי — כמו טעינת הדף מחדש
+    const after = store.getProfile(player.id)!;
+    expect(after.solved).toContain(riddle.id);
+    expect(progressIn(after, "market").rating).toBeGreaterThan(3);
+  });
+
+  it("שני שחקנים על אותו מכשיר לא מתערבבים", () => {
+    const first = newPlayer(5);
+    const second = newPlayer(11);
+
+    const one = engine.startRiddle(first.id, "market").riddle!;
+    engine.submitAnswer(first.id, riddleById.get(one.id)!.answer, "market");
+
+    expect(store.getProfile(second.id)!.solved).toEqual([]);
+    expect(store.getProfile(first.id)!.solved).toEqual([one.id]);
+  });
+
+  it("לחיצה כפולה על אותה תשובה לא סופרת פעמיים", () => {
+    const player = newPlayer(8);
+    const riddle = engine.startRiddle(player.id, "market").riddle!;
+    const answer = riddleById.get(riddle.id)!.answer;
+
+    engine.submitAnswer(player.id, answer, "market");
+    const solvedOnce = store.getProfile(player.id)!.solved.length;
+    // הסבב נסגר, ולכן ניחוש נוסף כבר לא שייך לחידה הזאת
+    expect(() => engine.submitAnswer(player.id, answer, "market")).toThrow();
+    expect(store.getProfile(player.id)!.solved.length).toBe(solvedOnce);
+  });
+
+  it("לחיצה כפולה על רמז לא מדלגת על רמז", () => {
+    const player = newPlayer(9);
+    engine.startRiddle(player.id, "market");
+    const first = engine.nextHint(player.id, "market");
+    const second = engine.nextHint(player.id, "market");
+    expect(second.clues.length).toBe(first.clues.length + 1);
+  });
+
+  it("מעבר בין עולמות שומר על ההתקדמות של כל אחד", () => {
+    const player = newPlayer(8);
+
+    const market = engine.startRiddle(player.id, "market").riddle!;
+    engine.submitAnswer(player.id, riddleById.get(market.id)!.answer, "market");
+    const marketRating = progressIn(store.getProfile(player.id)!, "market").rating;
+
+    const space = engine.startRiddle(player.id, "space").riddle!;
+    expect(space.id).not.toBe(market.id);
+    engine.revealAnswer(player.id, "space");
+
+    // הירידה בחלל לא נגעה בסופר
+    expect(progressIn(store.getProfile(player.id)!, "market").rating).toBe(marketRating);
+  });
+
+  it("חזרה לעולם מחזירה את אותה חידה שנפתחה בו", () => {
+    const player = newPlayer(8);
+    const first = engine.startRiddle(player.id, "space").riddle!;
+    engine.startRiddle(player.id, "market");
+    const again = engine.startRiddle(player.id, "space").riddle!;
+    expect(again.id).toBe(first.id);
   });
 });

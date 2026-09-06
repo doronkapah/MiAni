@@ -25,6 +25,7 @@ import {
   type RecipeProgress,
 } from "../../../shared/recipes";
 import { aisleView, solvedAisleView, type AisleView } from "../../../shared/aisles";
+import { plausibleGuess, type Plausible } from "../../../shared/plausible";
 import {
   DAILY,
   dailyRiddle,
@@ -322,21 +323,38 @@ export interface Celebration {
 /** אבני הדרך של הרצף — מספיק דלילות כדי שיישארו מיוחדות */
 export const STREAK_MILESTONES = [3, 5, 10, 15, 20, 30, 50];
 
-function celebrate(streak: number, noHints: boolean): Celebration {
+/**
+ * החגיגה על הפתרון.
+ *
+ * `cluesUsed` הוא כמה רמזים היו על המסך, וזה תמיד לפחות אחד —
+ * ולכן "בלי רמזים בכלל" היה פשוט לא נכון. פתרון בעזרת רמזים הוא
+ * גם הצלחה, ומגיע לו משפט משלו ולא שתיקה.
+ */
+function celebrate(streak: number, cluesUsed: number): Celebration {
+  const firstClue = cluesUsed <= 1;
   const milestone = STREAK_MILESTONES.includes(streak) ? streak : undefined;
+
   if (milestone) {
     return {
       title: `🔥 ${milestone} ברצף!`,
-      note: noHints ? "והפעם גם בלי רמזים" : "אתם בכיוון",
+      note: firstClue ? "והפעם כבר מהרמז הראשון" : "אתם בכיוון",
       streak,
       milestone,
-      noHints,
+      noHints: firstClue,
     };
   }
-  if (noHints) {
-    return { title: "מדהים!", note: "פתרתם בלי רמזים בכלל 🤯", streak, noHints };
+  if (firstClue) {
+    return { title: "מדהים!", note: "פתרתם מהרמז הראשון 🤯", streak, noHints: true };
   }
-  return { title: "כל הכבוד!", streak, noHints };
+  if (cluesUsed === 2) {
+    return { title: "כל הכבוד!", note: "רמז אחד הספיק לכם", streak, noHints: false };
+  }
+  return {
+    title: "כל הכבוד!",
+    note: "אספתם את הרמזים והגעתם לתשובה — בדיוק ככה זה עובד",
+    streak,
+    noHints: false,
+  };
 }
 
 export interface SolvedResult {
@@ -356,6 +374,13 @@ export interface MissResult {
   status: "close" | "wrong";
   message: string;
   offerHint: boolean;
+  /**
+   * הניחוש היה הגיוני — פריט אמיתי שמתאים לרמזים שנחשפו.
+   * המסך מודה בזה, ומציע רמז שיבדיל בין השניים.
+   */
+  plausible?: Plausible;
+  /** האם יש עוד רמז לתת. בלעדיו אין מה להציע */
+  hasMoreClues: boolean;
 }
 
 export type AnswerResult = SolvedResult | MissResult;
@@ -409,17 +434,24 @@ export function submitAnswer(
       profile: publicProfile(updated, world),
       unlockedRecipes: unlocked,
       aisleView: solvedAisleView(riddle.world, riddle.aisle),
-      celebration: celebrate(answerStreak, noHints),
+      celebration: celebrate(answerStreak, round.cluesRevealed),
     };
   }
 
   round.wrongGuesses += 1;
   stats.recordMiss(profile.id, riddle.id, result.status);
 
+  const plausible = plausibleGuess(guess, riddle) ?? undefined;
+  const level = levelOf(progressIn(profile, world).rating);
+  const hasMoreClues =
+    round.cluesRevealed < Math.min(riddle.clues.length, cluesAtLevel(level));
+
   return {
     status: result.status,
-    message: feedback(result.status, result.reason, round.wrongGuesses),
-    offerHint: round.wrongGuesses >= 3,
+    message: feedback(result.status, result.reason, round.wrongGuesses, plausible),
+    offerHint: round.wrongGuesses >= 2 || Boolean(plausible),
+    plausible: plausible && hasMoreClues ? plausible : undefined,
+    hasMoreClues,
   };
 }
 
@@ -514,18 +546,37 @@ export function skipRiddle(profileId: string, world: string = DEFAULT_WORLD): Sk
 }
 
 /** משוב לשחקן — עידוד, אף פעם לא נזיפה, ואף פעם לא רמז לתשובה */
+/**
+ * מה אומרים לילד שלא קלע.
+ *
+ * הכלל: אם הניחוש הגיוני — מודים בזה קודם. "לא הפעם" על תשובה
+ * שמתאימה לרמזים מלמד שהחשיבה לא נחשבת, וזו בדיוק ההפך ממה
+ * שהמשחק מנסה לעשות.
+ */
 function feedback(
   status: "close" | "wrong",
   reason: string,
   wrongGuesses: number,
+  plausible?: Plausible,
 ): string {
   if (status === "close") {
     if (reason === "partial-word") return "כמעט! זה חלק מהתשובה — חסרה עוד מילה 🙂";
     return "ממש ממש קרוב! נסו שוב.";
   }
   if (reason === "too-short") return "כתבו לי מילה שלמה ואבדוק אותה.";
-  if (reason === "ambiguous") return "זו תשובה לחידה אחרת. תחשבו שוב על הרמזים.";
-  if (wrongGuesses >= 3) return "לא זה. אולי כדאי לבקש עוד רמז?";
+
+  if (plausible) {
+    const opening = `${plausible.guess} זה ניחוש חכם`;
+    if (plausible.shared) {
+      return `${opening} — גם הוא ב${plausible.shared}, והוא מתאים לרמזים. אבל אני משהו אחר.`;
+    }
+    return `${opening}, והוא באמת מתאים לרמזים. אבל אני משהו אחר.`;
+  }
+
+  if (reason === "ambiguous") {
+    return "הניחוש הזה מתאים גם לפריט אחר. תוסיפו מילה, או בקשו עוד רמז.";
+  }
+  if (wrongGuesses >= 3) return "עוד לא. הרמז הבא יצמצם את האפשרויות.";
   return "לא הפעם. נסו עוד ניחוש!";
 }
 
@@ -548,10 +599,14 @@ function submitDaily(profileId: string, guess: string): AnswerResult {
 
   if (result.status !== "correct") {
     stats.recordMiss(profile.id, riddle.id, result.status);
+    const plausible = plausibleGuess(guess, riddle) ?? undefined;
+    const hasMoreClues = state.cluesRevealed < riddle.clues.length;
     return {
       status: result.status,
-      message: feedback(result.status, result.reason, 1),
-      offerHint: state.cluesRevealed < riddle.clues.length,
+      message: feedback(result.status, result.reason, 1, plausible),
+      offerHint: hasMoreClues,
+      plausible: plausible && hasMoreClues ? plausible : undefined,
+      hasMoreClues,
     };
   }
 
