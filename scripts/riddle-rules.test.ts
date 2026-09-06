@@ -27,6 +27,9 @@ function candidate(overrides: Partial<Riddle> = {}): Riddle {
   } as Riddle;
 }
 
+/** בלי ההצלבה מול כל הבנק — לכללים שלא נוגעים בהבחנה */
+const fast = (riddle: Riddle) => checkRiddle(riddle, [], { crossCheck: false });
+
 describe("כללי החידה", () => {
   it("מועמדת תקינה עוברת", () => {
     expect(checkRiddle(candidate())).toEqual([]);
@@ -47,7 +50,7 @@ describe("כללי החידה", () => {
       clues: ["אפרסמון גדל על עץ.", "אני כתום ורך."],
       cluesNikud: ["אֲפַרְסְמוֹן גָּדֵל עַל עֵץ.", "אֲנִי כָּתוֹם וְרַךְ."],
     });
-    expect(checkRiddle(broken).some((p) => p.rule === "דליפה")).toBe(true);
+    expect(fast(broken).some((p) => p.rule === "דליפה")).toBe(true);
   });
 
   it("תופסת שלט שמכיל את התשובה", () => {
@@ -58,7 +61,7 @@ describe("כללי החידה", () => {
       aisle: "מאפייה",
     });
     expect(
-      checkRiddle(broken).some((p) => p.rule === "דליפה" && p.detail.includes("שלט")),
+      fast(broken).some((p) => p.rule === "דליפה" && p.detail.includes("שלט")),
     ).toBe(true);
   });
 
@@ -75,8 +78,7 @@ describe("כללי החידה", () => {
         "אֲנִי מַבְשִׁיל בַּסְּתָיו.",
       ],
     });
-    const problems = checkRiddle(broken);
-    expect(problems.some((p) => p.rule === "כתיב מלא")).toBe(true);
+    expect(fast(broken).some((p) => p.rule === "כתיב מלא")).toBe(true);
   });
 
   it("תופסת קובוץ במקום שורוק", () => {
@@ -84,37 +86,37 @@ describe("כללי החידה", () => {
       clues: ["כולם אוהבים אותי.", "אני מבשיל בסתיו."],
       cluesNikud: ["כֻּלָּם אוֹהֲבִים אוֹתִי.", "אֲנִי מַבְשִׁיל בַּסְּתָיו."],
     });
-    expect(checkRiddle(broken).some((p) => p.detail.includes("קובוץ"))).toBe(true);
+    expect(fast(broken).some((p) => p.detail.includes("קובוץ"))).toBe(true);
   });
 
   it("תופסת מנוקד שלא תואם לרגיל", () => {
     const broken = candidate({
       cluesNikud: ["אֲנִי אָדוֹם לְגַמְרֵי.", "אֲנִי מַבְשִׁיל בַּסְּתָיו."],
     });
-    expect(checkRiddle(broken).some((p) => p.rule === "cluesNikud")).toBe(true);
+    expect(fast(broken).some((p) => p.rule === "cluesNikud")).toBe(true);
   });
 
   it("תופסת מקום שלא קיים בעולם", () => {
     expect(
-      checkRiddle(candidate({ aisle: "מחלקת הדגים" })).some((p) => p.rule === "aisle"),
+      fast(candidate({ aisle: "מחלקת הדגים" })).some((p) => p.rule === "aisle"),
     ).toBe(true);
   });
 
   it("תופסת רמה שלא קיימת בעולם", () => {
     // האולימפיאדה מתחילה ברמה 2 — אין בה רמה 1
     const broken = candidate({ world: "olympics", level: 1, aisle: "אתלטיקה" });
-    expect(checkRiddle(broken).some((p) => p.rule === "level")).toBe(true);
+    expect(fast(broken).some((p) => p.rule === "level")).toBe(true);
   });
 
   it("תופסת צבע לא תקין", () => {
     expect(
-      checkRiddle(candidate({ art: { shape: "roundFruit", color: "כתום" } as Riddle["art"] }))
+      fast(candidate({ art: { shape: "roundFruit", color: "כתום" } as Riddle["art"] }))
         .some((p) => p.rule === "art"),
     ).toBe(true);
   });
 
   it("תופסת מזהה שכבר קיים", () => {
-    expect(checkRiddle(candidate({ id: "banana" })).some((p) => p.rule === "id")).toBe(true);
+    expect(fast(candidate({ id: "banana" })).some((p) => p.rule === "id")).toBe(true);
   });
 
   it("בודקת מועמדות גם זו מול זו", () => {

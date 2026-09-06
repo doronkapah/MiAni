@@ -905,3 +905,62 @@ describe("סבב משפחתי", () => {
     expect(group.createSession([solo.id], "coop", 2, "market", 0).roundLength).toBe(0);
   });
 });
+
+describe("שמירה על פרופילים קיימים", () => {
+  beforeEach(() => storage.clear());
+
+  it("פרופיל שנוצר לפני העולמות ממשיך לעבוד", () => {
+    // מבנה ישן: rating בשורש, בלי worlds, בלי יכולת, בלי חידת יום
+    const legacy = {
+      id: "old_1",
+      name: "ותיק",
+      age: 8,
+      address: "male",
+      avatar: "cat",
+      rating: 3.4,
+      streak: 2,
+      answerStreak: 5,
+      solved: ["apple", "milk"],
+      revealed: [],
+      recipes: [],
+      createdAt: 1,
+      chat: { day: "", count: 0 },
+    };
+    storage.setItem("agali:profiles", JSON.stringify([legacy]));
+
+    const loaded = store.getProfile("old_1")!;
+    expect(progressIn(loaded, "market").rating).toBeCloseTo(3.4);
+    expect(loaded.solved).toEqual(["apple", "milk"]);
+
+    // וכל מה שנוסף מאז נגזר ולא מתפוצץ
+    const view = engine.publicProfile(loaded, "market");
+    expect(view.reading).toBe("fluent");
+    expect(view.answering).toBe("typing");
+    expect(view.goal).not.toBeNull();
+    expect(engine.dailyView("old_1").total).toBe(0);
+  });
+
+  it("ההתקדמות הישנה לא נדרסת בכניסה לעולם חדש", () => {
+    const player = newPlayer(9);
+    const before = progressIn(store.getProfile(player.id)!, "market").rating;
+
+    engine.startRiddle(player.id, "disney");
+    engine.startRiddle(player.id, "olympics");
+
+    expect(progressIn(store.getProfile(player.id)!, "market").rating).toBe(before);
+  });
+
+  it("גיבוי ישן נטען, כולל השדות החדשים בברירת מחדל", () => {
+    const player = store.createProfile({
+      name: "בדיקה", age: 6, address: "female", avatar: "cat",
+      reading: "learning", answering: "pictures",
+    });
+    const backup = store.exportBackup();
+    storage.clear();
+    store.importBackup(backup);
+
+    const back = store.getProfile(player.id)!;
+    expect(back.reading).toBe("learning");
+    expect(back.answering).toBe("pictures");
+  });
+});
