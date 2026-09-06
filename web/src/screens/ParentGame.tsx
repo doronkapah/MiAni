@@ -47,6 +47,10 @@ export function ParentGame({
   const [showAnswer, setShowAnswer] = useState(false);
   const [asked, setAsked] = useState(0);
   const [roundOver, setRoundOver] = useState(false);
+  /** מה שנפתר בסבב הזה, לסיכום בסוף */
+  const [solvedItems, setSolvedItems] = useState<
+    { id: string; answer: string; art: GroupOutcome["art"] }[]
+  >([]);
   const [voiceReady, setVoiceReady] = useState(canSpeak());
   const [recipeQueue, setRecipeQueue] = useState<{ who: string; recipe: Recipe }[]>([]);
   const info = getWorld(session.world);
@@ -92,6 +96,12 @@ export function ParentGame({
   function award(winnerIds: string[]) {
     const result = awardSolve(session, winnerIds);
     setAsked((count) => count + 1);
+    if (result && !result.gaveUp) {
+      setSolvedItems((list) => [
+        ...list,
+        { id: riddle!.id, answer: result.answer, art: result.art },
+      ]);
+    }
     if (!result) return;
     setOutcome(result);
     refreshPlayers();
@@ -124,6 +134,8 @@ export function ParentGame({
     speak(riddle.clues.join(" "));
   }
 
+  const roundEnded = session.roundLength > 0 && asked >= session.roundLength;
+
   if (finished) {
     return (
       <div className="finished">
@@ -149,6 +161,20 @@ export function ParentGame({
       <div className="finished round-end">
         <h1>🎉 סיימתם סבב של {session.roundLength}</h1>
 
+        {solvedItems.length > 0 && (
+          <div className="round-items">
+            <p className="muted small">מה שאספתם בסבב הזה:</p>
+            <div className="round-item-row">
+              {solvedItems.map((item) => (
+                <span className="round-item" key={item.id} title={item.answer}>
+                  <Product shape={item.art.shape} color={item.art.color} size={44} />
+                  <small>{item.answer}</small>
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
         <ul className="round-scores">
           {scored.map((player) => (
             <li key={player.id} className={(wins[player.id] ?? 0) === best && best > 0 ? "top" : ""}>
@@ -165,6 +191,15 @@ export function ParentGame({
           {session.mode === "coop"
             ? "פתרתם ביחד. כל אחד קיבל את הפריטים לאוסף שלו."
             : "כל אחד שומר את מה שפתר. אפשר לשחק עוד סבב מתי שתרצו."}
+        </p>
+
+        {/*
+          זה לא סבב נפרד מהמשחק — זו אותה התקדמות. שווה שההורה
+          ידע את זה, ולא יגלה בפעם הבאה שהחידות נהיו קשות.
+        */}
+        <p className="muted small">
+          מה שנפתר כאן נשמר אצל כל ילד: הפריטים נכנסים לאוסף שלו, וההתקדמות
+          נספרת גם במשחק העצמאי.
         </p>
 
         <div className="row">
@@ -192,7 +227,13 @@ export function ParentGame({
         <button className="who" onClick={onExit}>
           <span className="who-text">
             <strong>הורה שואל</strong>
-            <small>{session.mode === "coop" ? "שיתוף פעולה" : "תחרותי"}</small>
+            <small>
+              {players.length === 1
+                ? "משחק אחד על אחד"
+                : session.mode === "coop"
+                  ? "ביחד"
+                  : "תחרות"}
+            </small>
           </span>
         </button>
 
@@ -330,14 +371,14 @@ export function ParentGame({
               <button
                 className="btn primary big"
                 onClick={() => {
-                  if (session.roundLength > 0 && asked >= session.roundLength) {
+                  if (roundEnded) {
                     setRoundOver(true);
                     return;
                   }
                   nextRiddle();
                 }}
               >
-                החידה הבאה
+                {roundEnded ? "סיכום הסבב" : "החידה הבאה"}
               </button>
             </div>
             )}

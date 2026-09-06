@@ -1065,3 +1065,87 @@ describe("ספירת רמזים ולשון פנייה", () => {
     expect(miss.message).not.toContain("נסו");
   });
 });
+
+describe("מצב ההורה והמשחק העצמאי — אותה התקדמות", () => {
+  beforeEach(() => storage.clear());
+
+  /**
+   * זו לא הפרדה, וזו הכוונה: לילד יש התקדמות אחת. הבדיקות כאן
+   * מתעדות את זה במפורש, כדי שאם מישהו ישנה את ההתנהגות בעתיד
+   * הוא יראה שזו החלטה ולא תופעת לוואי.
+   */
+  function parentRound(age = 8) {
+    const child = newPlayer(age);
+    const session = group.createSession([child.id], "coop", 2, "market", 5, false);
+    const riddle = group.startGroupRiddle(session)!;
+    return { child, session, riddle };
+  }
+
+  it("פתרון בסבב ההורה מעלה את הדירוג במשחק העצמאי", () => {
+    const { child, session } = parentRound();
+    const before = marketProgress(child.id).rating;
+
+    group.awardSolve(session, [child.id]);
+
+    expect(marketProgress(child.id).rating).toBeGreaterThan(before);
+  });
+
+  it("החידה שנפתרה בסבב לא חוזרת במשחק העצמאי", () => {
+    const { child, session, riddle } = parentRound();
+    group.awardSolve(session, [child.id]);
+
+    expect(store.getProfile(child.id)!.solved).toContain(riddle.id);
+    for (let attempt = 0; attempt < 30; attempt += 1) {
+      const next = engine.startRiddle(child.id, "market").riddle;
+      if (!next) break;
+      expect(next.id).not.toBe(riddle.id);
+      engine.skipRiddle(child.id, "market");
+    }
+  });
+
+  it("הפריט נכנס לאותו אוסף בדיוק", () => {
+    const { child, session, riddle } = parentRound();
+    group.awardSolve(session, [child.id]);
+
+    const cart = engine.publicProfile(store.getProfile(child.id)!, "market").cart;
+    expect(cart.some((item) => item.id === riddle.id)).toBe(true);
+  });
+
+  it("סבב בעולם אחד לא נוגע בעולם אחר", () => {
+    const child = newPlayer(8);
+    const before = progressIn(store.getProfile(child.id)!, "space").rating;
+
+    const session = group.createSession([child.id], "coop", 2, "market", 5, false);
+    group.startGroupRiddle(session);
+    group.awardSolve(session, [child.id]);
+
+    expect(progressIn(store.getProfile(child.id)!, "space").rating).toBe(before);
+  });
+
+  it("בשיתוף פעולה גם מי שלא ענה מתקדם — זו הכוונה", () => {
+    const first = newPlayer(8);
+    const second = newPlayer(8);
+    const session = group.createSession([first.id, second.id], "coop", 2, "market", 5, false);
+    group.startGroupRiddle(session);
+
+    const before = marketProgress(second.id).rating;
+    group.awardSolve(session, [first.id]);
+
+    expect(marketProgress(second.id).rating).toBeGreaterThan(before);
+  });
+
+  it("בתחרות רק מי שפתר מתקדם", () => {
+    const first = newPlayer(8);
+    const second = newPlayer(8);
+    const session = group.createSession(
+      [first.id, second.id], "competitive", 2, "market", 5, false,
+    );
+    group.startGroupRiddle(session);
+
+    const before = marketProgress(second.id).rating;
+    group.awardSolve(session, [first.id]);
+
+    expect(marketProgress(second.id).rating).toBe(before);
+    expect(marketProgress(first.id).rating).toBeGreaterThan(before);
+  });
+});

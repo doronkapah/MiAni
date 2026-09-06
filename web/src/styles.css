@@ -3420,3 +3420,44 @@ body {
     margin-top: 0;
   }
 }
+
+
+/* --- סיכום הסבב: מה נאסף --- */
+
+.round-items {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: min(460px, 100%);
+}
+
+.round-item-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+
+.round-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 8px;
+  border: 2px solid var(--line);
+  border-radius: 14px;
+  background: var(--card);
+}
+
+.round-item small {
+  font-size: 13px;
+  color: var(--ink-2);
+  max-width: 9ch;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.setup-note {
+  margin-top: 4px;
+}

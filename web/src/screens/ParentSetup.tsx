@@ -195,6 +195,15 @@ export function ParentSetup({
           )}
         </div>
 
+        {/*
+          הורה שבוחר רמה צריך לדעת שזו לא רמה נפרדת מהמשחק —
+          ההתקדמות היא אותה התקדמות.
+        */}
+        <p className="muted small setup-note">
+          מה שנפתר בסבב נשמר אצל כל ילד: הפריטים נכנסים לאוסף שלו, וההתקדמות
+          נספרת גם במשחק העצמאי שלו.
+        </p>
+
         <div className="row">
           <button
             className="btn primary big"
