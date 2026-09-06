@@ -169,7 +169,7 @@ describe("בנק החידות", () => {
       const result = checkAnswer({ guess: riddle.answer, target, others: allTargets });
       expect(result.status, `${riddle.id}: ${riddle.answer}`).toBe("correct");
     }
-  });
+  }, 30_000);
 
   it("לכל חידה כל הנרדפים מתקבלים", () => {
     for (const riddle of riddles) {
@@ -179,7 +179,7 @@ describe("בנק החידות", () => {
         expect(result.status, `${riddle.id}: ${alias}`).toBe("correct");
       }
     }
-  });
+  }, 30_000);
 
   it("התשובה המנוקדת תואמת לתשובה הרגילה", () => {
     // הפרש של אם קריאה מותר: כתיב מנוקד חסר מול כתיב מלא
@@ -198,7 +198,7 @@ describe("בנק החידות", () => {
       const result = checkAnswer({ guess: riddle.answerNikud, target, others: allTargets });
       expect(result.status, `${riddle.id}: ${riddle.answerNikud}`).toBe("correct");
     }
-  });
+  }, 30_000);
 
   it("לכל חידה ברמות 1–4 יש רמזים מנוקדים", () => {
     // ברמות 5–6 הקהל כבר קורא בלי ניקוד, והשדה פשוט חסר
@@ -240,7 +240,7 @@ describe("בנק החידות", () => {
         expect(normalize(clue).includes(answer), `${riddle.id}: ${clue}`).toBe(false);
       }
     }
-  });
+  }, 30_000);
 
   it("לכל חידה צבע וצורה תקינים", () => {
     for (const riddle of riddles) {

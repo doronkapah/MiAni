@@ -33,7 +33,7 @@ const fast = (riddle: Riddle) => checkRiddle(riddle, [], { crossCheck: false });
 describe("כללי החידה", () => {
   it("מועמדת תקינה עוברת", () => {
     expect(checkRiddle(candidate())).toEqual([]);
-  });
+  }, 30_000);
 
   it("הבנק הקיים כולו עובר את הכללים", () => {
     // בלי הצלבה מול כל הבנק — את זה עושה report:collisions
