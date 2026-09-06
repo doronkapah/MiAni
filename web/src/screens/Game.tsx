@@ -90,6 +90,14 @@ export function Game({
   const [inRound, setInRound] = useState(0);
   const [muted, setMuted] = useState(() => readFlag(MUTE_KEY, profile.id, false));
   const inputRef = useRef<HTMLInputElement>(null);
+  /*
+   * מנעול נגד לחיצה כפולה.
+   *
+   * `solved` הוא state, והוא לא מתעדכן באותו טיק — שתי הקשות
+   * מהירות על אותה תמונה היו שתיהן רואות אותו ריק, והשנייה הייתה
+   * נופלת על "אין חידה פעילה". ref מתעדכן מיד.
+   */
+  const answering = useRef(false);
 
   const canHear = voiceReady && !muted;
   /*
@@ -149,6 +157,7 @@ export function Game({
     setGreeting(data.greeting ?? "");
     if (data.profile) setProfile(data.profile);
     setSolved(null);
+    answering.current = false;
     setFeedback(null);
     setGuess("");
     setChatOpen(false);
@@ -178,7 +187,8 @@ export function Game({
   /** אותו מסלול לשתי הדרכים לענות — הקלדה ובחירה */
   function answer(raw: string) {
     const text = raw.trim();
-    if (!text || solved) return;
+    if (!text || solved || answering.current) return;
+    answering.current = true;
     try {
       const result = submitAnswer(profile.id, text, world);
       log("answer", `ניחוש: ${text}`, {
@@ -210,10 +220,17 @@ export function Game({
          */
         inputRef.current?.focus();
         inputRef.current?.setSelectionRange(text.length, text.length);
+        // טעות — משחררים מיד, אפשר לנסות שוב
+        answering.current = false;
       }
+      /*
+       * אחרי פתרון המנעול נשאר סגור עד שהחידה הבאה נטענת.
+       * שחרור מיידי הוא בדיוק המרוץ שהוא אמור למנוע.
+       */
     } catch (error) {
       log("answer", (error as Error).message, { who: profile.name, level: "error" });
       setFeedback({ text: (error as Error).message, tone: "wrong" });
+      answering.current = false;
     }
   }
 
@@ -234,7 +251,8 @@ export function Game({
   }
 
   function giveUp() {
-    if (solved) return;
+    if (solved || answering.current) return;
+    answering.current = true;
     const data = revealAnswer(profile.id, world);
     setProfile(data.profile);
     setSolved({ ...data, levelUp: false, gaveUp: true });
