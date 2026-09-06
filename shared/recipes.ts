@@ -10,6 +10,7 @@
 
 import recipesData from "./data/recipes.json";
 import { stripNikud } from "./matcher";
+import type { Riddle } from "./types";
 
 export interface RecipeSource {
   id: string;
@@ -116,4 +117,79 @@ export function recipeProgress(
     held: ingredientsHeld(recipe, solved),
     needed: recipe.totalNeeded,
   }));
+}
+
+export interface Goal {
+  id: string;
+  name: string;
+  /** כמה כבר נאספו, וכמה צריך בסך הכול */
+  held: number;
+  needed: number;
+  /** הפריטים שכבר יש, לפי סדר האיסוף */
+  have: { id: string; answer: string; art: Riddle["art"] }[];
+}
+
+/**
+ * היעד הקרוב ביותר בעולם.
+ *
+ * "תאספו פריטים" הוא לא יעד — הוא הוראה. יעד הוא שם, מספר, ותמונה
+ * של מה שכבר יש. בוחרים את הסט שהכי קרוב להשלמה, וכשאין התקדמות
+ * בכלל בוחרים את הקטן ביותר — כדי שהראשון יהיה בר־השגה במפגש אחד.
+ */
+export function nextGoal(
+  solvedIds: string[],
+  unlocked: string[],
+  world: string,
+  bank: Riddle[],
+): Goal | null {
+  const solved = new Set(solvedIds);
+  const known = new Set(unlocked);
+  const byId = new Map(bank.map((riddle) => [riddle.id, riddle]));
+
+  const open = recipesOfWorld(world).filter(
+    (recipe) => !known.has(recipe.id) && !isComplete(recipe, solved),
+  );
+  if (!open.length) return null;
+
+  const scored = open.map((recipe) => {
+    const held = ingredientsHeld(recipe, solved);
+    const members = [...recipe.requires, ...(recipe.anyOf?.items ?? [])];
+
+    /*
+     * כמה רחוק הסט הזה בפועל: הרמה של הפריט הקשה ביותר
+     * מבין הקלים שבו. סט שדורש רמה 4 הוא לא יעד ראשון, הוא
+     * הבטחה רחוקה — גם אם יש בו פחות פריטים.
+     */
+    const levels = members
+      .map((id) => byId.get(id)?.level ?? 99)
+      .sort((a, b) => a - b)
+      .slice(0, recipe.totalNeeded);
+    const reach = levels.length ? Math.max(...levels) : 99;
+
+    return { recipe, held, reach, ratio: held / recipe.totalNeeded };
+  });
+
+  scored.sort(
+    (a, b) =>
+      b.ratio - a.ratio ||
+      a.reach - b.reach ||
+      a.recipe.totalNeeded - b.recipe.totalNeeded ||
+      (a.recipe.id < b.recipe.id ? -1 : 1),
+  );
+
+  const best = scored[0]!;
+  const members = [...best.recipe.requires, ...(best.recipe.anyOf?.items ?? [])];
+
+  return {
+    id: best.recipe.id,
+    name: best.recipe.name,
+    held: best.held,
+    needed: best.recipe.totalNeeded,
+    have: members
+      .filter((id) => solved.has(id))
+      .slice(0, best.recipe.totalNeeded)
+      .map((id) => byId.get(id))
+      .filter((riddle): riddle is Riddle => Boolean(riddle))
+      .map((riddle) => ({ id: riddle.id, answer: riddle.answer, art: riddle.art })),
+  };
 }

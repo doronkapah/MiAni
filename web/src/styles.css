@@ -3006,3 +3006,75 @@ body {
 .choice:active {
   transform: scale(0.97);
 }
+
+
+/* ----------------------------------------------------------- היעד */
+
+.goal-strip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  margin-bottom: 10px;
+  padding: 8px 12px;
+  border: 2px solid var(--line);
+  border-radius: 14px;
+  background: var(--card);
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+}
+
+.goal-strip:hover,
+.goal-strip:focus-visible {
+  border-color: var(--green);
+}
+
+.goal-name {
+  font-family: "Secular One", sans-serif;
+  font-size: 16px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.goal-dots {
+  display: flex;
+  gap: 4px;
+  margin-inline-start: auto;
+}
+
+/*
+ * מה שחסר מוצג כמקום ריק ולא בשמו: שם של פריט חסר
+ * הוא התשובה של חידה שעוד לא נשאלה.
+ */
+.goal-dot {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  border: 2px dashed var(--line2, var(--line));
+}
+
+.goal-dot.on {
+  border-style: solid;
+  border-color: var(--green);
+  background: var(--green-soft);
+}
+
+.goal-count {
+  font-family: "Secular One", sans-serif;
+  font-size: 15px;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.advanced {
+  margin: 6px 0 0;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: var(--green-soft);
+  color: var(--green-deep);
+  font-size: 16px;
+}

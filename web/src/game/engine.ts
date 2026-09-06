@@ -20,7 +20,9 @@ import {
 import { greeting } from "../../../shared/prompt";
 import {
   newlyCompleted,
+  nextGoal,
   recipeProgress,
+  type Goal,
   type Recipe,
   type RecipeProgress,
 } from "../../../shared/recipes";
@@ -107,6 +109,8 @@ export interface PublicProfile {
   cart: CartItem[];
   chat: { used: number; left: number };
   recipes: RecipeProgress[];
+  /** היעד הקרוב ביותר בעולם הזה — מה אוספים עכשיו, ולמה */
+  goal: Goal | null;
 }
 
 export function publicProfile(profile: Profile, world: string = DEFAULT_WORLD): PublicProfile {
@@ -140,6 +144,7 @@ export function publicProfile(profile: Profile, world: string = DEFAULT_WORLD): 
     })),
     chat: store.chatUsage(profile, store.getSettings().dailyLimit),
     recipes: recipeProgress(profile.solved, profile.recipes, world),
+    goal: nextGoal(profile.solved, profile.recipes, world, riddles),
   };
 }
 
@@ -417,6 +422,8 @@ function celebrate(streak: number, cluesUsed: number): Celebration {
 
 export interface SolvedResult {
   status: "correct";
+  /** היעד שהפתרון הזה קידם, אם קידם */
+  advanced?: { name: string; held: number; needed: number };
   answer: string;
   reveal: string;
   aisle: string;
@@ -482,8 +489,23 @@ export function submitAnswer(
     })!;
     rounds.delete(key(profileId, world));
 
+    /*
+     * האם הפתרון קידם יעד? משווים לפני ואחרי, כי סט שנפתח *עכשיו*
+     * כבר לא מופיע ברשימת היעדים הפתוחים.
+     */
+    const goalBefore = nextGoal(profile.solved, profile.recipes, world, riddles);
+    const goalAfter = nextGoal(solved, updated.recipes, world, riddles);
+    const advanced =
+      goalBefore &&
+      goalAfter &&
+      goalBefore.id === goalAfter.id &&
+      goalAfter.held > goalBefore.held
+        ? { name: goalAfter.name, held: goalAfter.held, needed: goalAfter.needed }
+        : undefined;
+
     return {
       status: "correct",
+      advanced,
       answer: riddle.answerNikud,
       reveal: riddle.reveal,
       aisle: riddle.aisle,

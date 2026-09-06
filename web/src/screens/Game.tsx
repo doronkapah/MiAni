@@ -37,6 +37,8 @@ interface Solved {
   gaveUp: boolean;
   aisleView: AisleView;
   celebration?: Celebration;
+  /** היעד שהפתרון קידם — רק כשפתרו, לא כשגילו */
+  advanced?: { name: string; held: number; needed: number };
 }
 
 export function Game({
@@ -315,6 +317,37 @@ export function Game({
             />
           )}
 
+          {/*
+            היעד הקרוב. "תאספו פריטים" הוא הוראה, לא יעד — יעד הוא
+            שם, מספר, ותמונה של מה שכבר יש.
+          */}
+          {!daily && profile.goal && (
+            <button
+              className="goal-strip"
+              onClick={() => setOverlay("book")}
+              aria-label={`היעד: ${profile.goal.name}, ${profile.goal.held} מתוך ${profile.goal.needed}`}
+            >
+              <span className="goal-name">
+                🎯 {profile.goal.name}
+              </span>
+              <span className="goal-dots" aria-hidden="true">
+                {Array.from({ length: profile.goal.needed }, (_, index) => {
+                  const item = profile.goal!.have[index];
+                  return item ? (
+                    <span className="goal-dot on" key={item.id} title={item.answer}>
+                      <Product shape={item.art.shape} color={item.art.color} size={26} />
+                    </span>
+                  ) : (
+                    <span className="goal-dot" key={`empty-${index}`} />
+                  );
+                })}
+              </span>
+              <span className="goal-count">
+                {profile.goal.held}/{profile.goal.needed}
+              </span>
+            </button>
+          )}
+
           <section className="riddle-card">
             {!solved && riddle && (
               <>
@@ -471,6 +504,16 @@ export function Game({
                 )}
                 <p className="answer">{solved.answer}</p>
                 <p className="reveal">{solved.reveal}</p>
+
+                {solved.advanced && (
+                  <p className="advanced" role="status">
+                    עוד צעד ל{solved.advanced.name} — {solved.advanced.held} מתוך{" "}
+                    {solved.advanced.needed}
+                    {solved.advanced.needed - solved.advanced.held === 1
+                      ? ", נשאר אחד!"
+                      : ""}
+                  </p>
+                )}
 
                 <Tip id="collection" profileId={profile.id} when={!daily}>
                   הפריט נכנס {info.collection.into}. כשמצטברים מספיק — נפתח{" "}

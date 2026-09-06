@@ -27,6 +27,7 @@ const storage = new MemoryStorage();
 globalThis.localStorage = storage as unknown as Storage;
 
 const { riddleById } = await import("../../../shared/bank");
+const { recipeById } = await import("../../../shared/recipes");
 const { commonTypos } = await import("../../../scripts/typo-report");
 const { newlyCompleted } = await import("../../../shared/recipes");
 const engine = await import("./engine");
@@ -809,5 +810,64 @@ describe("התאמה ליכולת", () => {
     const player = newPlayer(8);
     expect(engine.shiftLevel(player.id, "olympics", -1)).toBe(2);
     expect(engine.shiftLevel(player.id, "olympics", -1)).toBe(2);
+  });
+});
+
+describe("יעד קרוב", () => {
+  beforeEach(() => storage.clear());
+
+  it("שחקן חדש רואה יעד עם שם, בלי שפתר כלום", () => {
+    const player = newPlayer(6);
+    const view = engine.publicProfile(store.getProfile(player.id)!, "market");
+    expect(view.goal).not.toBeNull();
+    expect(view.goal!.name.length).toBeGreaterThan(2);
+    expect(view.goal!.held).toBe(0);
+    expect(view.goal!.needed).toBeGreaterThan(0);
+  });
+
+  it("לכל עולם יש יעד ראשון", () => {
+    const player = newPlayer(8);
+    for (const world of ["market", "space", "olympics", "disney"]) {
+      const view = engine.publicProfile(store.getProfile(player.id)!, world);
+      expect(view.goal, world).not.toBeNull();
+    }
+  });
+
+  it("היעד הראשון של כל עולם ניתן להשלמה מרמות נמוכות", () => {
+    // סט פתיחה שדורש רמה 5 הוא לא יעד ראשון, הוא הבטחה רחוקה
+    const player = newPlayer(6);
+    for (const world of ["market", "space", "olympics", "disney"]) {
+      const goal = engine.publicProfile(store.getProfile(player.id)!, world).goal!;
+      const recipe = recipeById.get(goal.id)!;
+      const members = [...recipe.requires, ...(recipe.anyOf?.items ?? [])];
+      const easiest = members
+        .map((id) => riddleById.get(id)!.level)
+        .sort((a, b) => a - b)
+        .slice(0, recipe.totalNeeded);
+      expect(Math.max(...easiest), `${world}: ${goal.name}`).toBeLessThanOrEqual(3);
+    }
+  });
+
+  it("פתרון שמקדם יעד מדווח על כך", () => {
+    const player = newPlayer(6);
+    const goal = engine.publicProfile(store.getProfile(player.id)!, "market").goal!;
+    const recipe = recipeById.get(goal.id)!;
+    const members = new Set([...recipe.requires, ...(recipe.anyOf?.items ?? [])]);
+
+    // משחקים עד שעולה פריט ששייך ליעד
+    let advanced: SolvedResult["advanced"];
+    for (let attempt = 0; attempt < 200 && !advanced; attempt += 1) {
+      const started = engine.startRiddle(player.id, "market");
+      if (!started.riddle) break;
+      if (members.has(started.riddle.id)) {
+        const answer = riddleById.get(started.riddle.id)!.answer;
+        advanced = (engine.submitAnswer(player.id, answer, "market") as SolvedResult).advanced;
+      } else {
+        engine.skipRiddle(player.id, "market");
+      }
+    }
+    expect(advanced?.name).toBe(goal.name);
+    expect(advanced?.held).toBe(1);
+    expect(advanced?.needed).toBe(goal.needed);
   });
 });

@@ -264,6 +264,25 @@ function Baddies() {
   );
 }
 
+function FirstFriends() {
+  return (
+    <>
+      <circle cx="24" cy="30" r="10" fill="#2E2E2E" />
+      <circle cx="52" cy="30" r="10" fill="#2E2E2E" />
+      <circle cx="38" cy="50" r="18" fill="#2E2E2E" />
+      <circle cx="38" cy="54" r="10" fill="#E8C9A8" />
+      <ellipse cx="72" cy="46" rx="18" ry="12" fill="#E5781C" />
+      <path d="M88 46 98 36v20z" fill="#C4553A" />
+      <path d="M64 38q6 3 6 16" fill="none" stroke="#FFFFFF" strokeWidth="3" />
+      <circle cx="50" cy="82" r="12" fill="#F2F7FB" />
+      <circle cx="50" cy="66" r="8" fill="#F2F7FB" />
+      <path d="M58 66l10 3-10 3z" fill="#E5781C" />
+      <circle cx="47" cy="64" r="1.6" fill="#2E2E2E" />
+      <circle cx="53" cy="64" r="1.6" fill="#2E2E2E" />
+    </>
+  );
+}
+
 const ART: Record<string, () => React.ReactNode> = {
   omelet: Omelet,
   fruitsalad: FruitSalad,
@@ -282,6 +301,7 @@ const ART: Record<string, () => React.ReactNode> = {
   pridelands: PrideLands,
   princesses: Princesses,
   baddies: Baddies,
+  firstfriends: FirstFriends,
 };
 
 export function RecipeArt({
